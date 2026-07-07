@@ -1,0 +1,29 @@
+{"data":{"command":"cat /Users/imjunseob/agawaeuleo/Plans.md 2\u003e/dev/null || echo \"FILE_NOT_FOUND\""},"id":"event-000001","state":"stopped","ts":"2026-07-07T21:55:13Z","type":"tool.bash"}
+{"data":{"command":"ls -la /Users/imjunseob/agawaeuleo/ 2\u003e/dev/null; echo \"---SEARCH---\"; find /Users/imjunseob/agawaeuleo -maxdepth 2 -iname \"plans.md\" 2\u003e/dev/null"},"id":"event-000002","state":"stopped","ts":"2026-07-07T21:55:17Z","type":"tool.bash"}
+{"data":{"file_path":"/Users/imjunseob/agawaeuleo/agawaeuleo_spec.md"},"id":"event-000003","state":"stopped","ts":"2026-07-07T22:01:59Z","type":"tool.edit"}
+{"data":{"file_path":"/Users/imjunseob/agawaeuleo/agawaeuleo_spec.md"},"id":"event-000004","state":"stopped","ts":"2026-07-07T22:02:37Z","type":"tool.edit"}
+{"data":{"file_path":"/Users/imjunseob/agawaeuleo/agawaeuleo_spec.md"},"id":"event-000005","state":"stopped","ts":"2026-07-07T22:03:48Z","type":"tool.edit"}
+{"data":{"file_path":"/Users/imjunseob/agawaeuleo/agawaeuleo_spec.md"},"id":"event-000006","state":"stopped","ts":"2026-07-07T22:04:28Z","type":"tool.edit"}
+{"data":{"file_path":"/Users/imjunseob/agawaeuleo/agawaeuleo_spec.md"},"id":"event-000007","state":"stopped","ts":"2026-07-07T22:04:55Z","type":"tool.edit"}
+{"data":{"command":"grep -nEi \"TODO|FIXME|XXX|HACK|api[_-]?key\\s*[:=]\\s*['\\\"][A-Za-z0-9]|secret\\s*[:=]\\s*['\\\"][A-Za-z0-9]|AKIA[0-9A-Z]{16}|sk-[A-Za-z0-9]{20}|eyJ[A-Za-z0-9_-]{20}|-----BEGIN\" /Users/imjunseob/agawaeuleo/a"},"id":"event-000008","state":"stopped","ts":"2026-07-07T22:05:05Z","type":"tool.bash"}
+{"data":{"file_path":"/Users/imjunseob/agawaeuleo/agawaeuleo_spec.md"},"id":"event-000009","state":"stopped","ts":"2026-07-07T22:05:35Z","type":"tool.edit"}
+{"data":{"file_path":"/Users/imjunseob/agawaeuleo/agawaeuleo_spec.md"},"id":"event-000010","state":"stopped","ts":"2026-07-07T22:06:05Z","type":"tool.edit"}
+{"data":{"file_path":"/Users/imjunseob/agawaeuleo/agawaeuleo_spec.md"},"id":"event-000011","state":"stopped","ts":"2026-07-07T22:06:47Z","type":"tool.edit"}
+{"data":{"file_path":"/Users/imjunseob/agawaeuleo/agawaeuleo_spec.md"},"id":"event-000012","state":"stopped","ts":"2026-07-07T22:07:29Z","type":"tool.edit"}
+{"data":{"command":"grep -nEi \"TODO|FIXME|HACK|XXX|api[_-]?key\\s*[:=]\\s*['\\\"][A-Za-z0-9]|secret\\s*[:=]\\s*['\\\"][A-Za-z0-9]|AKIA[0-9A-Z]{16}|sk-[A-Za-z0-9]{20}|eyJ[A-Za-z0-9_-]{20}\" /Users/imjunseob/agawaeuleo/agawaeuleo_s"},"id":"event-000013","state":"stopped","ts":"2026-07-07T22:07:42Z","type":"tool.bash"}
+{"data":{"file_path":"/Users/imjunseob/agawaeuleo/agawaeuleo_spec.md"},"id":"event-000014","state":"stopped","ts":"2026-07-07T22:08:03Z","type":"tool.edit"}
+{"data":{"file_path":"/Users/imjunseob/agawaeuleo/agawaeuleo_spec.md"},"id":"event-000015","state":"stopped","ts":"2026-07-07T22:08:28Z","type":"tool.edit"}
+{"data":{"file_path":"/Users/imjunseob/agawaeuleo/agawaeuleo_spec.md"},"id":"event-000016","state":"stopped","ts":"2026-07-07T22:09:03Z","type":"tool.edit"}
+{"data":{"file_path":"/Users/imjunseob/agawaeuleo/agawaeuleo_spec.md"},"id":"event-000017","state":"stopped","ts":"2026-07-07T22:09:41Z","type":"tool.edit"}
+{"data":{"file_path":"/Users/imjunseob/agawaeuleo/agawaeuleo_spec.md"},"id":"event-000018","state":"stopped","ts":"2026-07-07T22:10:08Z","type":"tool.edit"}
+{"data":{"file_path":"/Users/imjunseob/agawaeuleo/agawaeuleo_spec.md"},"id":"event-000019","state":"stopped","ts":"2026-07-07T22:10:47Z","type":"tool.edit"}
+{"data":{"file_path":"/Users/imjunseob/agawaeuleo/agawaeuleo_spec.md"},"id":"event-000020","state":"stopped","ts":"2026-07-07T22:11:23Z","type":"tool.edit"}
+{"data":{"file_path":"/Users/imjunseob/agawaeuleo/agawaeuleo_spec.md"},"id":"event-000021","state":"stopped","ts":"2026-07-07T22:12:11Z","type":"tool.edit"}
+{"data":{"file_path":"/Users/imjunseob/agawaeuleo/agawaeuleo_spec.md"},"id":"event-000022","state":"stopped","ts":"2026-07-07T22:12:57Z","type":"tool.edit"}
+{"data":{"file_path":"/Users/imjunseob/agawaeuleo/agawaeuleo_spec.md"},"id":"event-000023","state":"stopped","ts":"2026-07-07T22:13:35Z","type":"tool.edit"}
+{"data":{"file_path":"/Users/imjunseob/agawaeuleo/agawaeuleo_spec.md"},"id":"event-000024","state":"stopped","ts":"2026-07-07T22:14:11Z","type":"tool.edit"}
+{"data":{"file_path":"/Users/imjunseob/agawaeuleo/agawaeuleo_spec.md"},"id":"event-000025","state":"stopped","ts":"2026-07-07T22:15:03Z","type":"tool.edit"}
+{"data":{"file_path":"/Users/imjunseob/agawaeuleo/agawaeuleo_spec.md"},"id":"event-000026","state":"stopped","ts":"2026-07-07T22:15:44Z","type":"tool.edit"}
+{"data":{"command":"flutter --version 2\u003e\u00261 | head -5; echo \"---\"; dart --version 2\u003e\u00261"},"id":"event-000027","state":"stopped","ts":"2026-07-07T22:25:11Z","type":"tool.bash"}
+{"data":{"command":"ls -la /Users/imjunseob/agawaeuleo/"},"id":"event-000028","state":"stopped","ts":"2026-07-07T22:25:12Z","type":"tool.bash"}
+{"data":{"command":"cat /Users/imjunseob/agawaeuleo/pubspec.yaml; echo \"===LIB===\"; find /Users/imjunseob/agawaeuleo/lib /Users/imjunseob/agawaeuleo/test -type f; echo \"===ORG===\"; grep -r \"applicationId\\|PRODUCT_BUNDLE_"},"id":"event-000029","state":"stopped","ts":"2026-07-07T22:25:21Z","type":"tool.bash"}

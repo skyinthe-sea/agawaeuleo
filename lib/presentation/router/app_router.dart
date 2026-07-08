@@ -117,8 +117,12 @@ GoRouter createAppRouter() {
                 builder: (context, state) => const TrackingScreen(),
                 routes: [
                   GoRoute(
+                    // §11.11 기록 입력은 라우트가 아니라 showModalBottomSheet로
+                    // 연다(홈 FAB/빠른 알약/타임라인에서 직접 호출). 딥링크가
+                    // 죽은 플레이스홀더에 착지하지 않도록 기록 홈으로 리다이렉트.
                     path: RoutePaths.trackingEntrySegment,
                     name: Routes.trackingEntry,
+                    redirect: (context, state) => RoutePaths.tracking,
                     pageBuilder: (context, state) =>
                         _pushPage(context, state, const TrackingEntryScreen()),
                   ),

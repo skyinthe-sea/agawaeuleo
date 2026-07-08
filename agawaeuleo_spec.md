@@ -239,6 +239,7 @@ create table symptoms (
   chosung       text not null,                  -- 'ㅂㅇㅇ' (검색용, 저장 시 생성)
   aliases       text[] default '{}',            -- 동의어 ['가스', '영아산통']
   emoji_or_icon text,                            -- 아이콘 키
+  product_keywords text[] default '{}',          -- 제품 검색 키워드(Edge Function이 사용 — 코드 수정 없이 DB에서 관리)
   order_index   int default 0,
   is_active     boolean default true,
   created_at    timestamptz default now()
@@ -343,7 +344,7 @@ create policy "own favorites" on favorites     for all using (auth.uid() = user_
 serve(async () => {
   const symptoms = await db.from('symptoms').select('*').eq('is_active', true);
   for (const s of symptoms) {
-    const keyword = mapSymptomToKeyword(s);              // 증상→검색 키워드
+    const keywords = s.product_keywords?.length ? s.product_keywords : [s.name]; // 증상→검색 키워드(DB 관리)
     const items = await coupangSearch(keyword);          // 파트너스 상품검색 API (HMAC 서명)
     const withLinks = await Promise.all(
       items.slice(0, N).map(async (it) => ({
@@ -415,9 +416,11 @@ part 'env.g.dart';
 
 @Envied(path: '.env', obfuscate: true)
 abstract class Env {
-  @EnviedField(varName: 'SUPABASE_URL', obfuscate: true)
+  // defaultValue '': 값이 비어 있어도 build_runner가 성공해야 함(§8.2 원칙 — 나중에 값만 채우기).
+  // 미구성 상태는 AppConfig.isConfigured로 런타임에서 가드.
+  @EnviedField(varName: 'SUPABASE_URL', obfuscate: true, defaultValue: '')
   static final String supabaseUrl = _Env.supabaseUrl;
-  @EnviedField(varName: 'SUPABASE_ANON_KEY', obfuscate: true)
+  @EnviedField(varName: 'SUPABASE_ANON_KEY', obfuscate: true, defaultValue: '')
   static final String supabaseAnonKey = _Env.supabaseAnonKey;
   @EnviedField(varName: 'SENTRY_DSN', obfuscate: true, optional: true)
   static final String? sentryDsn = _Env.sentryDsn;

@@ -43,3 +43,15 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Environment secrets & generated envied code
+.env
+lib/config/env.g.dart
+
+# Claude Code session state (machine-local)
+.claude/state/
+.claude/sessions/
+.claude/memory/session-log.md
+
+# Xcode SwiftPM workspace state (Flutter 3.44 SPM integration)
+ios/Runner.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/

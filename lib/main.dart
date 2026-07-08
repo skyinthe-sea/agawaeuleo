@@ -3,10 +3,21 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import 'application/notifiers/theme_mode_notifier.dart';
+import 'application/providers.dart';
 import 'config/theme/theme.dart';
+import 'data/supabase/supabase.dart';
 import 'presentation/router/app_router.dart';
 
-void main() {
+Future<void> main() async {
+  // 플랫폼 채널(shared_preferences·Supabase·drift)을 안전하게 호출하려면 runApp 이전에
+  // 바인딩을 초기화해야 한다.
+  WidgetsFlutterBinding.ensureInitialized();
+
+  // 미구성(.env 비어있음)이면 내부적으로 건너뛰고 false를 반환한다 — 로컬 전용 모드.
+  // supabaseClientProvider가 최초 build에서 정적 isInitialized를 읽으므로, 초기화는
+  // 반드시 runApp 이전에 await 되어야 원격 프로바이더가 올바른 값을 캐시한다.
+  await SupabaseBootstrap.ensureInitialized();
+
   runApp(const ProviderScope(child: AgawaeuleoApp()));
 }
 
@@ -21,6 +32,14 @@ class AgawaeuleoApp extends ConsumerStatefulWidget {
 class _AgawaeuleoAppState extends ConsumerState<AgawaeuleoApp> {
   // 라우터는 앱 수명 동안 한 번만 생성한다(리빌드 시 상태·스택 보존).
   late final GoRouter _router = createAppRouter();
+
+  @override
+  void initState() {
+    super.initState();
+    // 앱 시작 시 동기화 서비스를 1회 기동한다(밀린 pending_ops 플러시 — §5.3). keepAlive
+    // 프로바이더라 이후에도 유지된다. 미구성 시에는 원격 대상이 없어 즉시 no-op이 된다.
+    ref.read(syncServiceProvider);
+  }
 
   @override
   Widget build(BuildContext context) {

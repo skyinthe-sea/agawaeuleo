@@ -1,0 +1,151 @@
+import 'package:flutter/material.dart';
+
+/// §9.5 음영. 회색 금지 — Light는 따뜻한 먹빛 rgba(74,66,50,α).
+/// Dark는 근검정 + 상단 1px 하이라이트. inset(오목/하이라이트)은 Flutter에
+/// 대응 API가 없어 BlurStyle.inner 로 근사.
+@immutable
+class AppShadows extends ThemeExtension<AppShadows> {
+  const AppShadows({
+    required this.e1,
+    required this.e2,
+    required this.e3,
+    required this.e4,
+    required this.press,
+  });
+
+  final List<BoxShadow> e1;
+  final List<BoxShadow> e2;
+  final List<BoxShadow> e3;
+  final List<BoxShadow> e4;
+  final List<BoxShadow> press;
+
+  /// e0 = 음영 없음(양 모드 공통).
+  static const List<BoxShadow> e0 = <BoxShadow>[];
+
+  static const AppShadows light = AppShadows(
+    e1: [
+      BoxShadow(
+        color: Color.fromRGBO(74, 66, 50, 0.06),
+        offset: Offset(0, 1),
+        blurRadius: 2,
+      ),
+      BoxShadow(
+        color: Color.fromRGBO(74, 66, 50, 0.04),
+        offset: Offset(0, 1),
+        blurRadius: 1,
+      ),
+    ],
+    e2: [
+      BoxShadow(
+        color: Color.fromRGBO(74, 66, 50, 0.08),
+        offset: Offset(0, 2),
+        blurRadius: 8,
+      ),
+      BoxShadow(
+        color: Color.fromRGBO(74, 66, 50, 0.05),
+        offset: Offset(0, 1),
+        blurRadius: 3,
+      ),
+    ],
+    e3: [
+      BoxShadow(
+        color: Color.fromRGBO(74, 66, 50, 0.10),
+        offset: Offset(0, 8),
+        blurRadius: 24,
+      ),
+      BoxShadow(
+        color: Color.fromRGBO(74, 66, 50, 0.06),
+        offset: Offset(0, 2),
+        blurRadius: 6,
+      ),
+    ],
+    e4: [
+      BoxShadow(
+        color: Color.fromRGBO(74, 66, 50, 0.14),
+        offset: Offset(0, 6),
+        blurRadius: 16,
+      ),
+    ],
+    press: [
+      BoxShadow(
+        color: Color.fromRGBO(74, 66, 50, 0.08),
+        offset: Offset(0, 1),
+        blurRadius: 3,
+        blurStyle: BlurStyle.inner,
+      ),
+    ],
+  );
+
+  static const AppShadows dark = AppShadows(
+    e1: [
+      BoxShadow(
+        color: Color.fromRGBO(0, 0, 0, 0.4),
+        offset: Offset(0, 1),
+        blurRadius: 2,
+      ),
+      BoxShadow(
+        color: Color.fromRGBO(255, 255, 255, 0.04),
+        offset: Offset(0, 1),
+        blurStyle: BlurStyle.inner,
+      ),
+    ],
+    e2: [
+      BoxShadow(
+        color: Color.fromRGBO(0, 0, 0, 0.5),
+        offset: Offset(0, 2),
+        blurRadius: 10,
+      ),
+    ],
+    e3: [
+      BoxShadow(
+        color: Color.fromRGBO(0, 0, 0, 0.6),
+        offset: Offset(0, 10),
+        blurRadius: 30,
+      ),
+    ],
+    e4: [
+      BoxShadow(
+        color: Color.fromRGBO(0, 0, 0, 0.55),
+        offset: Offset(0, 8),
+        blurRadius: 20,
+      ),
+    ],
+    press: [
+      BoxShadow(
+        color: Color.fromRGBO(0, 0, 0, 0.5),
+        offset: Offset(0, 1),
+        blurRadius: 3,
+        blurStyle: BlurStyle.inner,
+      ),
+    ],
+  );
+
+  @override
+  AppShadows copyWith({
+    List<BoxShadow>? e1,
+    List<BoxShadow>? e2,
+    List<BoxShadow>? e3,
+    List<BoxShadow>? e4,
+    List<BoxShadow>? press,
+  }) {
+    return AppShadows(
+      e1: e1 ?? this.e1,
+      e2: e2 ?? this.e2,
+      e3: e3 ?? this.e3,
+      e4: e4 ?? this.e4,
+      press: press ?? this.press,
+    );
+  }
+
+  @override
+  AppShadows lerp(covariant ThemeExtension<AppShadows>? other, double t) {
+    if (other is! AppShadows) return this;
+    return AppShadows(
+      e1: BoxShadow.lerpList(e1, other.e1, t)!,
+      e2: BoxShadow.lerpList(e2, other.e2, t)!,
+      e3: BoxShadow.lerpList(e3, other.e3, t)!,
+      e4: BoxShadow.lerpList(e4, other.e4, t)!,
+      press: BoxShadow.lerpList(press, other.press, t)!,
+    );
+  }
+}

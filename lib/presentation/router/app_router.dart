@@ -1,0 +1,317 @@
+import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+
+import '../../config/theme/theme.dart';
+import '../features/auth/login_screen.dart';
+import '../features/auth/permission_priming_screen.dart';
+import '../features/auth/reset_password_screen.dart';
+import '../features/auth/signup_screen.dart';
+import '../features/favorites/favorites_screen.dart';
+import '../features/home/home_screen.dart';
+import '../features/onboarding/onboarding_screen.dart';
+import '../features/onboarding/splash_screen.dart';
+import '../features/profile/baby_profile_screen.dart';
+import '../features/profile/profile_screen.dart';
+import '../features/search/search_screen.dart';
+import '../features/settings/account_screen.dart';
+import '../features/settings/settings_screen.dart';
+import '../features/settings/terms_viewer_screen.dart';
+import '../features/symptom_detail/symptom_detail_screen.dart';
+import '../features/tracking/tracking_entry_screen.dart';
+import '../features/tracking/tracking_screen.dart';
+import '../features/tracking/tracking_summary_screen.dart';
+import '../widgets/navigation/app_bottom_nav.dart';
+import 'routes.dart';
+
+final GlobalKey<NavigatorState> rootNavigatorKey = GlobalKey<NavigatorState>(
+  debugLabel: 'root',
+);
+final GlobalKey<NavigatorState> _homeNavigatorKey = GlobalKey<NavigatorState>(
+  debugLabel: 'home',
+);
+final GlobalKey<NavigatorState> _trackingNavigatorKey =
+    GlobalKey<NavigatorState>(debugLabel: 'tracking');
+final GlobalKey<NavigatorState> _profileNavigatorKey =
+    GlobalKey<NavigatorState>(debugLabel: 'profile');
+
+/// §4.1 라우트 트리 + §10.2 전환(탭 fade-through 200ms / push shared-axis X 300ms).
+GoRouter createAppRouter() {
+  return GoRouter(
+    navigatorKey: rootNavigatorKey,
+    initialLocation: RoutePaths.splash,
+    routes: [
+      GoRoute(
+        path: RoutePaths.splash,
+        name: Routes.splash,
+        builder: (context, state) => const SplashScreen(),
+      ),
+      GoRoute(
+        path: RoutePaths.onboarding,
+        name: Routes.onboarding,
+        pageBuilder: (context, state) =>
+            _pushPage(context, state, const OnboardingScreen()),
+      ),
+      GoRoute(
+        path: RoutePaths.login,
+        name: Routes.login,
+        pageBuilder: (context, state) =>
+            _pushPage(context, state, const LoginScreen()),
+      ),
+      GoRoute(
+        path: RoutePaths.signup,
+        name: Routes.signup,
+        pageBuilder: (context, state) =>
+            _pushPage(context, state, const SignupScreen()),
+      ),
+      GoRoute(
+        path: RoutePaths.resetPassword,
+        name: Routes.resetPassword,
+        pageBuilder: (context, state) =>
+            _pushPage(context, state, const ResetPasswordScreen()),
+      ),
+      GoRoute(
+        path: RoutePaths.permissionPriming,
+        name: Routes.permissionPriming,
+        pageBuilder: (context, state) =>
+            _pushPage(context, state, const PermissionPrimingScreen()),
+      ),
+      StatefulShellRoute.indexedStack(
+        builder: (context, state, navigationShell) =>
+            _ShellScaffold(navigationShell: navigationShell),
+        branches: [
+          StatefulShellBranch(
+            navigatorKey: _homeNavigatorKey,
+            routes: [
+              GoRoute(
+                path: RoutePaths.home,
+                name: Routes.home,
+                builder: (context, state) => const HomeScreen(),
+                routes: [
+                  GoRoute(
+                    path: RoutePaths.searchSegment,
+                    name: Routes.search,
+                    pageBuilder: (context, state) =>
+                        _pushPage(context, state, const SearchScreen()),
+                  ),
+                  GoRoute(
+                    path: RoutePaths.symptomSegment,
+                    name: Routes.symptomDetail,
+                    pageBuilder: (context, state) => _pushPage(
+                      context,
+                      state,
+                      SymptomDetailScreen(
+                        slug: state.pathParameters[RouteParams.slug]!,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            navigatorKey: _trackingNavigatorKey,
+            routes: [
+              GoRoute(
+                path: RoutePaths.tracking,
+                name: Routes.tracking,
+                builder: (context, state) => const TrackingScreen(),
+                routes: [
+                  GoRoute(
+                    path: RoutePaths.trackingEntrySegment,
+                    name: Routes.trackingEntry,
+                    pageBuilder: (context, state) =>
+                        _pushPage(context, state, const TrackingEntryScreen()),
+                  ),
+                  GoRoute(
+                    path: RoutePaths.trackingSummarySegment,
+                    name: Routes.trackingSummary,
+                    pageBuilder: (context, state) => _pushPage(
+                      context,
+                      state,
+                      const TrackingSummaryScreen(),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            navigatorKey: _profileNavigatorKey,
+            routes: [
+              GoRoute(
+                path: RoutePaths.profile,
+                name: Routes.profile,
+                builder: (context, state) => const ProfileScreen(),
+                routes: [
+                  GoRoute(
+                    path: RoutePaths.babyProfileSegment,
+                    name: Routes.babyProfile,
+                    pageBuilder: (context, state) =>
+                        _pushPage(context, state, const BabyProfileScreen()),
+                  ),
+                  GoRoute(
+                    path: RoutePaths.favoritesSegment,
+                    name: Routes.favorites,
+                    pageBuilder: (context, state) =>
+                        _pushPage(context, state, const FavoritesScreen()),
+                  ),
+                  GoRoute(
+                    path: RoutePaths.settingsSegment,
+                    name: Routes.settings,
+                    pageBuilder: (context, state) =>
+                        _pushPage(context, state, const SettingsScreen()),
+                    routes: [
+                      GoRoute(
+                        path: RoutePaths.accountSegment,
+                        name: Routes.account,
+                        pageBuilder: (context, state) =>
+                            _pushPage(context, state, const AccountScreen()),
+                      ),
+                      GoRoute(
+                        path: RoutePaths.termsSegment,
+                        name: Routes.terms,
+                        pageBuilder: (context, state) => _pushPage(
+                          context,
+                          state,
+                          TermsViewerScreen(
+                            doc: state.pathParameters[RouteParams.doc]!,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ],
+      ),
+    ],
+  );
+}
+
+const Duration _pushDuration = Duration(milliseconds: 300);
+const double _sharedAxisShift = 30;
+
+/// §10.2 push = shared-axis X(슬라이드+페이드) 300ms. reduce-motion 시 0ms.
+CustomTransitionPage<void> _pushPage(
+  BuildContext context,
+  GoRouterState state,
+  Widget child,
+) {
+  final duration = AppMotion.resolve(context, _pushDuration);
+  return CustomTransitionPage<void>(
+    key: state.pageKey,
+    transitionDuration: duration,
+    reverseTransitionDuration: duration,
+    transitionsBuilder: _sharedAxisX,
+    child: child,
+  );
+}
+
+Widget _sharedAxisX(
+  BuildContext context,
+  Animation<double> animation,
+  Animation<double> secondaryAnimation,
+  Widget child,
+) {
+  const fadeIn = Interval(0.30, 1, curve: Curves.easeOut);
+  const fadeOut = Interval(0, 0.30, curve: Curves.easeIn);
+  return AnimatedBuilder(
+    animation: Listenable.merge([animation, secondaryAnimation]),
+    builder: (context, child) {
+      final a = animation.value;
+      final s = secondaryAnimation.value;
+      final covered = s > 0;
+      final dx = covered
+          ? -AppMotion.enter.transform(s) * _sharedAxisShift
+          : (1 - AppMotion.enter.transform(a)) * _sharedAxisShift;
+      final opacity = covered ? 1 - fadeOut.transform(s) : fadeIn.transform(a);
+      return Opacity(
+        opacity: opacity.clamp(0.0, 1.0),
+        child: Transform.translate(offset: Offset(dx, 0), child: child),
+      );
+    },
+    child: child,
+  );
+}
+
+class _ShellScaffold extends StatelessWidget {
+  const _ShellScaffold({required this.navigationShell});
+
+  final StatefulNavigationShell navigationShell;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: _FadeThroughSwitcher(
+        index: navigationShell.currentIndex,
+        child: navigationShell,
+      ),
+      bottomNavigationBar: AppBottomNav(
+        currentIndex: navigationShell.currentIndex,
+        onTap: (index) => navigationShell.goBranch(
+          index,
+          initialLocation: index == navigationShell.currentIndex,
+        ),
+      ),
+    );
+  }
+}
+
+/// §10.2 탭 전환 fade-through 200ms. IndexedStack 셸의 상태를 보존하기 위해
+/// 단일 라이브 자식(navigationShell)을 유지하고, 인덱스 변경 시에만 페이드+스케일을 재생한다.
+class _FadeThroughSwitcher extends StatefulWidget {
+  const _FadeThroughSwitcher({required this.index, required this.child});
+
+  final int index;
+  final Widget child;
+
+  @override
+  State<_FadeThroughSwitcher> createState() => _FadeThroughSwitcherState();
+}
+
+class _FadeThroughSwitcherState extends State<_FadeThroughSwitcher>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 200),
+    value: 1,
+  );
+
+  late final Animation<double> _fade = CurvedAnimation(
+    parent: _controller,
+    curve: AppMotion.enter,
+  );
+
+  late final Animation<double> _scale = Tween<double>(
+    begin: 0.92,
+    end: 1,
+  ).animate(_fade);
+
+  @override
+  void didUpdateWidget(_FadeThroughSwitcher oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.index != widget.index) {
+      if (AppMotion.reduceMotion(context)) {
+        _controller.value = 1;
+      } else {
+        _controller.forward(from: 0);
+      }
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FadeTransition(
+      opacity: _fade,
+      child: ScaleTransition(scale: _scale, child: widget.child),
+    );
+  }
+}

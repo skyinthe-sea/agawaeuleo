@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:sentry_flutter/sentry_flutter.dart';
 
 import 'application/notification_providers.dart';
 import 'application/notifiers/theme_mode_notifier.dart';
 import 'application/providers.dart';
+import 'config/env.dart';
 import 'config/theme/theme.dart';
 import 'data/supabase/supabase.dart';
+import 'l10n/app_localizations.dart';
 import 'presentation/router/app_router.dart';
 
 Future<void> main() async {
@@ -19,7 +22,22 @@ Future<void> main() async {
   // 반드시 runApp 이전에 await 되어야 원격 프로바이더가 올바른 값을 캐시한다.
   await SupabaseBootstrap.ensureInitialized();
 
-  runApp(const ProviderScope(child: AgawaeuleoApp()));
+  // 크래시 리포팅(§3.3): SENTRY_DSN 이 비어 있으면(미구성) 완전히 건너뛰고 현 동작 그대로
+  // runApp 한다 — Sentry 를 초기화하지 않으므로 미구성 환경·테스트에 회귀가 없다.
+  final dsn = Env.sentryDsn;
+  if (dsn == null || dsn.isEmpty) {
+    runApp(const ProviderScope(child: AgawaeuleoApp()));
+    return;
+  }
+
+  // DSN 이 설정된 경우에만 Sentry 로 앱 실행을 감싼다. appRunner 안에서 runApp 을 호출해
+  // 초기화 이후의 프레임/에러를 계측한다.
+  await SentryFlutter.init((options) {
+    options
+      ..dsn = dsn
+      // 프라이버시 존중(§8·§13): 개인 식별정보(PII)를 기본 첨부하지 않는다.
+      ..sendDefaultPii = false;
+  }, appRunner: () => runApp(const ProviderScope(child: AgawaeuleoApp())));
 }
 
 /// 앱 루트. 테마 모드(라이트/다크/시스템)와 go_router를 배선한다.
@@ -56,6 +74,10 @@ class _AgawaeuleoAppState extends ConsumerState<AgawaeuleoApp> {
     return MaterialApp.router(
       title: '아가왜울어',
       debugShowCheckedModeBanner: false,
+      // §3.3 i18n 구조 배선: 로컬라이제이션 델리게이트 + 지원 로케일(ko).
+      // 기존 하드코딩 문자열은 그대로 두고, 우선 구조만 연결한다(전면 이관은 범위 밖).
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
       theme: AppTheme.light(),
       darkTheme: AppTheme.dark(),
       themeMode: themeMode,

@@ -100,24 +100,35 @@ Future<void> showDeleteAccountConfirmFlow(
 
   final messenger = ScaffoldMessenger.of(context);
   final auth = ref.read(authRepositoryProvider);
-  // 파기 진행 중 차단 다이얼로그(중복 탭 방지).
+  // §10.3 200ms 미만 작업엔 스피너를 띄우지 않는다(깜빡임 방지). 200ms 지나도
+  // 진행 중이면 그때 차단 다이얼로그(중복 탭 방지)를 띄운다.
+  var completed = false;
+  var spinnerShown = false;
   unawaited(
-    showDialog<void>(
-      context: context,
-      barrierDismissible: false,
-      builder: (_) => const Center(child: CircularProgressIndicator()),
-    ),
+    Future<void>.delayed(const Duration(milliseconds: 200), () {
+      if (completed || !context.mounted) return;
+      spinnerShown = true;
+      unawaited(
+        showDialog<void>(
+          context: context,
+          barrierDismissible: false,
+          builder: (_) => const Center(child: CircularProgressIndicator()),
+        ),
+      );
+    }),
   );
   try {
     await auth.deleteAccount();
     // 삭제 후 게스트 우선으로 익명 세션 복귀(§3.3) → 스플래시가 재분기.
     await auth.ensureSignedIn();
+    completed = true;
     if (!context.mounted) return;
-    Navigator.of(context, rootNavigator: true).pop(); // 진행 다이얼로그 닫기
+    if (spinnerShown) Navigator.of(context, rootNavigator: true).pop();
     context.go(RoutePaths.splash);
   } on AppException catch (error) {
+    completed = true;
     if (!context.mounted) return;
-    Navigator.of(context, rootNavigator: true).pop(); // 진행 다이얼로그 닫기
+    if (spinnerShown) Navigator.of(context, rootNavigator: true).pop();
     _showError(messenger, error.message);
   }
 }

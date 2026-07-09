@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
 
 /// §9.5 음영. 회색 금지 — Light는 따뜻한 먹빛 rgba(74,66,50,α).
-/// Dark는 근검정 + 상단 1px 하이라이트. inset(오목/하이라이트)은 Flutter에
-/// 대응 API가 없어 BlurStyle.inner 로 근사.
+/// Dark는 근검정 드롭 + 상단 1px 하이라이트.
+///
+/// [press](오목) 인셋과 다크 상단 하이라이트는 `BlurStyle.inner` 로는 불투명 fill
+/// 뒤에 그려져 가려진다(무효과). 따라서 [press] 는 소비처(app_card)에서
+/// `foregroundDecoration` 으로 자식 위에 덧그려 렌더하고, 다크 상단 하이라이트는
+/// [topHighlight] 색으로 노출해 소비처가 상단 1px 보더로 렌더한다.
 @immutable
 class AppShadows extends ThemeExtension<AppShadows> {
   const AppShadows({
@@ -11,13 +15,21 @@ class AppShadows extends ThemeExtension<AppShadows> {
     required this.e3,
     required this.e4,
     required this.press,
+    this.topHighlight,
   });
 
   final List<BoxShadow> e1;
   final List<BoxShadow> e2;
   final List<BoxShadow> e3;
   final List<BoxShadow> e4;
+
+  /// §9.5 press 오목. `BlurStyle.inner` 인셋 — 소비처에서 `foregroundDecoration`
+  /// 으로 자식 위에 덧그려야 실제로 보인다(fill 뒤 boxShadow로는 가려짐).
   final List<BoxShadow> press;
+
+  /// §9.5 다크 카드 상단 1px 하이라이트(카드를 띄우는 먹빛 위 얇은 빛). Light는 없음(null).
+  /// 소비처(app_card)가 상단 보더로 렌더한다.
+  final Color? topHighlight;
 
   /// e0 = 음영 없음(양 모드 공통).
   static const List<BoxShadow> e0 = <BoxShadow>[];
@@ -77,16 +89,13 @@ class AppShadows extends ThemeExtension<AppShadows> {
   );
 
   static const AppShadows dark = AppShadows(
+    // 상단 하이라이트는 [topHighlight] 보더로 렌더한다(인셋 그림자는 fill에 가려 무효과).
+    topHighlight: Color.fromRGBO(255, 255, 255, 0.04),
     e1: [
       BoxShadow(
         color: Color.fromRGBO(0, 0, 0, 0.4),
         offset: Offset(0, 1),
         blurRadius: 2,
-      ),
-      BoxShadow(
-        color: Color.fromRGBO(255, 255, 255, 0.04),
-        offset: Offset(0, 1),
-        blurStyle: BlurStyle.inner,
       ),
     ],
     e2: [
@@ -127,6 +136,7 @@ class AppShadows extends ThemeExtension<AppShadows> {
     List<BoxShadow>? e3,
     List<BoxShadow>? e4,
     List<BoxShadow>? press,
+    Color? topHighlight,
   }) {
     return AppShadows(
       e1: e1 ?? this.e1,
@@ -134,6 +144,7 @@ class AppShadows extends ThemeExtension<AppShadows> {
       e3: e3 ?? this.e3,
       e4: e4 ?? this.e4,
       press: press ?? this.press,
+      topHighlight: topHighlight ?? this.topHighlight,
     );
   }
 
@@ -146,6 +157,7 @@ class AppShadows extends ThemeExtension<AppShadows> {
       e3: BoxShadow.lerpList(e3, other.e3, t)!,
       e4: BoxShadow.lerpList(e4, other.e4, t)!,
       press: BoxShadow.lerpList(press, other.press, t)!,
+      topHighlight: Color.lerp(topHighlight, other.topHighlight, t),
     );
   }
 }

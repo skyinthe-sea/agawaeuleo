@@ -10,10 +10,12 @@
 | `migrations/0002_rls.sql` | RLS 정책(공개 읽기 / 본인 소유) + 계정삭제 cascade 검증 주석 | §7.2 |
 | `migrations/0003_cron.sql` | pg_cron 스케줄(매일 KST 05:00·17:00) → Edge Function 호출 | §7.4 |
 | `migrations/0004_seed.sql` | 증상 16종 + 증상별 참고정보 시드 (**의료 콘텐츠 초안 — 배포 전 검수 필수**) | §3.1·§13.3 |
+| `migrations/0005_cleanup_cron.sql` | pg_cron 스케줄(주 1회 KST 일 04:00) → 유휴 익명 계정 정리 Edge Function 호출 | §3.3 |
 | `functions/refresh-products/` | 제품 갱신 Edge Function (별도 작업) | §7.3 |
 | `functions/delete-account/` | 계정 삭제 Edge Function (앱 내 회원 탈퇴, 스토어 필수) | §3.3·§11.16·§13.4 |
+| `functions/cleanup-anonymous/` | 유휴 익명 계정 정리 Edge Function (90일 초과 미사용 게스트 파기) | §3.3 |
 
-마이그레이션은 파일명 순서(0001 → 0002 → 0003 → 0004)대로 적용해야 한다. FK·RLS·cron 이 앞 단계 오브젝트에 의존한다.
+마이그레이션은 파일명 순서(0001 → 0002 → 0003 → 0004 → 0005)대로 적용해야 한다. FK·RLS·cron 이 앞 단계 오브젝트에 의존한다.
 
 > ⚠️ **0004_seed.sql 는 검수 전 프로덕션 금지**: 시드의 의학 문구는 Claude 가 작성한 초안이며
 > 배포 전 의료 전문가 검수가 필요하다(체크리스트: `supabase/CONTENT_REVIEW.md`). `supabase db push`
@@ -165,6 +167,34 @@ supabase functions deploy delete-account
   전체가 `user_id` FK `on delete cascade` 인지 마이그레이션에서 확인할 것(파기 완결 전제).
 - 대시보드 **Authentication → Providers** 에서 Apple/Google 프로바이더를 활성화해야 소셜 연결이
   동작한다(계정 삭제 자체는 프로바이더와 무관).
+
+### 유휴 익명 계정 정리 함수 배포 (`cleanup-anonymous` — §3.3)
+
+게스트 우선 정책상 앱은 부팅 시 익명 로그인을 만든다. 앱을 한 번만 열고 이탈한 게스트의
+익명 계정이 누적되지 않도록, 주 1회 `cleanup-anonymous` 를 호출해 **마지막 활동이 90일을
+초과한 `is_anonymous` 계정을 파기**한다. 개인 데이터(babies·tracking_logs·favorites 등)는
+`auth.users` 삭제 시 `on delete cascade` FK 로 함께 삭제된다(§8 요약 참조).
+
+`refresh-products` 와 동일하게 **`CRON_SECRET` 공유 비밀로 보호**하므로 플랫폼 JWT 검증은
+끄고(`--no-verify-jwt`) 배포한다(호출자 본인 JWT 를 검증하는 `delete-account` 와 다름 — 이
+함수는 Admin API 로 계정을 지우므로 반드시 서버 비밀 뒤에 둔다).
+
+```bash
+supabase functions deploy cleanup-anonymous --no-verify-jwt
+# CRON_SECRET 은 refresh-products 배포 시 이미 설정했다면 그대로 공유된다(같은 프로젝트 시크릿).
+# 아직 없다면:
+supabase secrets set CRON_SECRET="$(openssl rand -hex 32)"
+```
+
+- 임계 일수·1회 삭제 상한은 환경변수로 조정 가능:
+  `CLEANUP_INACTIVE_DAYS`(기본 `90`), `CLEANUP_MAX_DELETIONS`(기본 `500`).
+- cron 스케줄(`0005_cleanup_cron.sql`)은 §3 의 Vault 시크릿 `refresh_products_token` 을
+  **재사용**한다(두 cron 이 같은 `CRON_SECRET` 을 공유하는 전제). 별도 시크릿을 쓰려면
+  `0005_cleanup_cron.sql` 의 `vault.decrypted_secrets` 조회 `name` 을 바꾸고, §3 절차로 그
+  이름의 시크릿을 추가 등록할 것.
+- `0005_cleanup_cron.sql` 안의 `<PROJECT_REF>` 도 `db push` 전에 실제 ref 로 치환해야 한다
+  (§4 와 동일). 스케줄: UTC 토 19:00 == **KST 일요일 04:00**(주 1회).
+- 확인/수동 실행/해제 쿼리는 §6 과 동일한 패턴(잡 이름만 `cleanup-anonymous-weekly`).
 
 ## 8. RLS · 계정 삭제 요약
 

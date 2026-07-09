@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../config/theme/theme.dart';
 import '../../widgets/buttons/ghost_button.dart';
 import '../../widgets/navigation/app_app_bar.dart';
+import '../../widgets/skeletons/skeleton_blocks.dart';
 import '../../widgets/states/empty_state.dart';
 import '../../widgets/states/error_state.dart';
 import 'baby_edit_screen.dart';
@@ -27,7 +28,7 @@ class BabyProfileScreen extends ConsumerWidget {
       backgroundColor: colors.paperBg,
       appBar: const AppAppBar(title: '아기 프로필'),
       body: babiesAsync.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
+        loading: () => const SafeArea(top: false, child: SkeletonList()),
         error: (error, _) =>
             ErrorState(onRetry: () => ref.invalidate(babiesProvider)),
         data: (babies) {

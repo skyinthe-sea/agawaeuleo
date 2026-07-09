@@ -587,7 +587,7 @@ Edge Function에서 `Deno.env.get('COUPANG_ACCESS_KEY')`로 사용. 앱 코드/�
 | 바텀시트 등장 | 스프링 슬라이드업 + 배경 스크림 페이드 | slide 300ms `easeOutBack` / scrim 200ms |
 | Pull-to-refresh | 수묵 잉크 드롭이 번지는 커스텀 인디케이터 | 잉크 원 확장 |
 | 트래킹 수치 | 숫자 티커(count-up) | 500ms `easeOutCubic` |
-| 토스트/스낵바 | 하단에서 슬라이드업 + 자동 페이드아웃 | in 200ms / out 200ms |
+| 토스트/스낵바 | 하단에서 슬라이드업 + 자동 페이드아웃 | 프레임워크 기본(~250ms — Flutter SnackBar는 전환 길이 커스텀 미지원, 커스텀 토스트 도입 시 200ms) |
 | 테마 전환 | 전체 색상 크로스페이드 | 300ms |
 | FAB(기록 추가) | 진입 스케일인(스프링), 스크롤 시 확장/축소(라벨 접힘) | scale 300ms `easeOutBack` |
 

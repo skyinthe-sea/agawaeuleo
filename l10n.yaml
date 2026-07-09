@@ -1,0 +1,11 @@
+# Flutter gen-l10n 설정 (§3.3 i18n 구조 마련).
+# `flutter pub get` 시 arb-dir 의 .arb 를 읽어 AppLocalizations 코드를 생성한다.
+# 지금은 구조만 배선한다 — 앱의 하드코딩 문자열 전면 이관은 범위 밖(키만 최소 등록).
+arb-dir: lib/l10n
+template-arb-file: app_ko.arb
+output-localization-file: app_localizations.dart
+output-class: AppLocalizations
+# (합성 패키지는 폐기됨 — gen-l10n 이 소스 트리 arb-dir/lib/l10n 로 직접 생성한다.)
+# 미번역 키가 있어도 빌드를 막지 않는다(구조 단계).
+untranslated-messages-file: lib/l10n/untranslated.txt
+nullable-getter: false

@@ -5,17 +5,39 @@ import 'package:package_info_plus/package_info_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../config/theme/theme.dart';
+import '../../../../core/notifications/notifications.dart';
 
-/// §11.16 "권한 꺼져있으면 안내+설정 이동". 실제 OS 알림 권한 상태를 감지하는
-/// 로직(플랫폼별 권한 조회·요청)은 M5에서 완성한다 — 여기서는 마스터 토글이 켜져
-/// 있을 때 항상 안내 문구를 보여주고, "설정 열기"는 기기 설정 앱으로 이동을
-/// 시도하는 최선 노력(best-effort) 동작만 제공한다.
+/// §11.16 "권한 꺼져있으면 안내+설정 이동" · §11.6(개정) "설정 → 알림 진입도 프라이밍
+/// 노출 지점".
+///
+/// 이 위젯은 **OS 권한이 켜져 있지 않을 때만** 노출된다(노출 판단은 호출부에서
+/// [notificationPermissionStatusProvider]로 배선). 상태에 따라 행동이 달라진다.
+///   - [NotificationPermissionStatus.notDetermined]: 아직 요청 전 → "알림 켜기"로
+///     권한 프라이밍 화면([onOpenPriming])을 띄워 이유를 먼저 설명하고 요청한다.
+///   - [NotificationPermissionStatus.denied]: 이미 꺼짐 → OS는 재요청을 띄우지
+///     않으므로 기기 설정 앱으로 이동("설정 열기")을 안내한다.
 class NotificationPermissionHint extends StatelessWidget {
-  const NotificationPermissionHint({super.key});
+  const NotificationPermissionHint({
+    required this.status,
+    required this.onOpenPriming,
+    super.key,
+  });
+
+  /// 현재 OS 알림 권한 상태(호출부에서 granted가 아닐 때만 이 위젯을 노출한다).
+  final NotificationPermissionStatus status;
+
+  /// "알림 켜기" 탭 시 권한 프라이밍 화면으로 진입시키는 콜백(§11.6 개정).
+  final VoidCallback onOpenPriming;
+
+  bool get _isNotDetermined =>
+      status == NotificationPermissionStatus.notDetermined;
 
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
+    final message = _isNotDetermined
+        ? '알림을 켜면 다음 수유 예상 시각과 기록 리마인더를 받을 수 있어요'
+        : '기기 알림 권한이 꺼져 있어 알림을 받을 수 없어요';
     return Padding(
       padding: const EdgeInsets.fromLTRB(
         AppSpacing.x4,
@@ -28,14 +50,17 @@ class NotificationPermissionHint extends StatelessWidget {
         children: [
           Expanded(
             child: Text(
-              '기기 알림 권한이 꺼져 있으면 알림을 받을 수 없어요',
+              message,
               style: context.texts.caption.copyWith(color: colors.ink500),
             ),
           ),
-          TextButton(
-            onPressed: () => _openNotificationSettings(),
-            child: const Text('설정 열기'),
-          ),
+          if (_isNotDetermined)
+            TextButton(onPressed: onOpenPriming, child: const Text('알림 켜기'))
+          else
+            TextButton(
+              onPressed: _openNotificationSettings,
+              child: const Text('설정 열기'),
+            ),
         ],
       ),
     );

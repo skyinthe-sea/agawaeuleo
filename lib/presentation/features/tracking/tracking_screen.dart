@@ -627,10 +627,16 @@ class _RecordFab extends StatelessWidget {
   final bool expanded;
   final VoidCallback onTap;
 
+  /// §10.2 FAB 스케일인/라벨 확축: 300ms easeOutBack(스프링).
+  static const Duration _springDuration = Duration(milliseconds: 300);
+
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
-    return Material(
+    final reduce = context.reduceMotion;
+    final Duration motion = reduce ? Duration.zero : _springDuration;
+
+    final Widget fab = Material(
       color: colors.accent,
       borderRadius: AppRadius.brFull,
       elevation: 0,
@@ -643,8 +649,9 @@ class _RecordFab extends StatelessWidget {
           borderRadius: AppRadius.brFull,
           onTap: onTap,
           child: AnimatedContainer(
-            duration: context.reduceMotion ? Duration.zero : AppMotion.base,
-            curve: AppMotion.standard,
+            // §10.2 라벨 확장/축소도 진입과 동일 파라미터(300ms easeOutBack).
+            duration: motion,
+            curve: AppMotion.spring,
             height: 56,
             padding: const EdgeInsets.symmetric(horizontal: AppSpacing.x20),
             child: Row(
@@ -652,10 +659,8 @@ class _RecordFab extends StatelessWidget {
               children: [
                 Icon(Icons.add_rounded, color: colors.paperRaised),
                 AnimatedSize(
-                  duration: context.reduceMotion
-                      ? Duration.zero
-                      : AppMotion.base,
-                  curve: AppMotion.standard,
+                  duration: motion,
+                  curve: AppMotion.spring,
                   child: expanded
                       ? Padding(
                           padding: const EdgeInsets.only(left: AppSpacing.x8),
@@ -673,6 +678,15 @@ class _RecordFab extends StatelessWidget {
           ),
         ),
       ),
+    );
+
+    if (reduce) return fab;
+    // §10.2 진입 스케일인(스프링) — .8→1, 300ms easeOutBack(오버슈트).
+    return fab.animate().scale(
+      begin: const Offset(0.8, 0.8),
+      end: const Offset(1, 1),
+      duration: _springDuration,
+      curve: AppMotion.spring,
     );
   }
 }

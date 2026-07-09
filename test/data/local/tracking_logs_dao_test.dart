@@ -102,6 +102,29 @@ void main() {
       )..where((t) => t.id.equals('t1'))).getSingle();
       expect(row.serverId, 'server-uuid-123');
     });
+
+    test('deleteByBabyId는 해당 아기 기록만 지우고 삭제된 id를 돌려준다(§11.14)', () async {
+      final t = DateTime(2026, 7, 8, 9);
+      await dao.upsert(makeLog(id: 'a', babyId: 'baby-a', startedAt: t));
+      await dao.upsert(makeLog(id: 'b', babyId: 'baby-a', startedAt: t));
+      await dao.upsert(makeLog(id: 'c', babyId: 'baby-b', startedAt: t));
+
+      final removed = await dao.deleteByBabyId('baby-a');
+      expect(removed, containsAll(['a', 'b']));
+      expect(removed, hasLength(2));
+
+      expect(await dao.getById('a'), isNull);
+      expect(await dao.getById('b'), isNull);
+      expect(await dao.getById('c'), isNotNull);
+    });
+
+    test('countAll은 전체 기록 수를 돌려준다(§3.3 백업 임계값)', () async {
+      final t = DateTime(2026, 7, 8, 9);
+      expect(await dao.countAll(), 0);
+      await dao.upsert(makeLog(id: 'a', startedAt: t));
+      await dao.upsert(makeLog(id: 'b', startedAt: t));
+      expect(await dao.countAll(), 2);
+    });
   });
 
   group('일자별 조회 (§11.10 타임라인)', () {

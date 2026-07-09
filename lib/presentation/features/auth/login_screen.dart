@@ -283,15 +283,34 @@ class AuthStagger extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final column = Column(
+    if (context.reduceMotion) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: children,
+      );
+    }
+    // §10.2 요소별 40ms 간격 stagger — 각 자식을 지연을 늘려가며 fadeIn + slideY.
+    const interval = Duration(milliseconds: 40);
+    return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: children,
+      children: [
+        for (var i = 0; i < children.length; i++)
+          children[i]
+              .animate()
+              .fadeIn(
+                delay: interval * i,
+                duration: AppMotion.base,
+                curve: AppMotion.enter,
+              )
+              .slideY(
+                begin: 0.04,
+                end: 0,
+                delay: interval * i,
+                duration: AppMotion.base,
+                curve: AppMotion.enter,
+              ),
+      ],
     );
-    if (context.reduceMotion) return column;
-    return column
-        .animate()
-        .fadeIn(duration: AppMotion.base, curve: AppMotion.enter)
-        .slideY(begin: 0.04, curve: AppMotion.enter, duration: AppMotion.base);
   }
 }
 

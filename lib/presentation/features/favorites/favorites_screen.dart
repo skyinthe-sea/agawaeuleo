@@ -10,6 +10,7 @@ import '../../../core/haptics/app_haptics.dart';
 import '../../../domain/entities/entities.dart';
 import '../../router/routes.dart';
 import '../../widgets/navigation/app_app_bar.dart';
+import '../../widgets/skeletons/skeleton_blocks.dart';
 import '../../widgets/states/empty_state.dart';
 import '../../widgets/states/error_state.dart';
 import 'providers/favorites_providers.dart';
@@ -151,7 +152,18 @@ class _SymptomGrid extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final async = ref.watch(favoriteSymptomsProvider);
     return async.when(
-      loading: () => const Center(child: CircularProgressIndicator()),
+      loading: () => GridView.builder(
+        padding: const EdgeInsets.all(AppSpacing.screenPadding),
+        physics: const NeverScrollableScrollPhysics(),
+        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 2,
+          mainAxisSpacing: AppSpacing.x12,
+          crossAxisSpacing: AppSpacing.x12,
+          mainAxisExtent: 120,
+        ),
+        itemCount: 6,
+        itemBuilder: (_, _) => const SymptomCardSkeleton(),
+      ),
       error: (error, _) =>
           ErrorState(onRetry: () => ref.invalidate(favoritesProvider)),
       data: (symptoms) {
@@ -206,7 +218,8 @@ class _ProductList extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final async = ref.watch(favoriteProductsProvider);
     return async.when(
-      loading: () => const Center(child: CircularProgressIndicator()),
+      loading: () =>
+          SkeletonList(builder: (_, _) => const ProductCardSkeleton()),
       error: (error, _) =>
           ErrorState(onRetry: () => ref.invalidate(favoritesProvider)),
       data: (products) {

@@ -9,15 +9,19 @@ import '../../../application/providers.dart';
 import '../../../config/theme/theme.dart';
 import '../../../core/haptics/app_haptics.dart';
 import '../../../core/notifications/notifications.dart';
+import '../../../data/local/daos/tracking_logs_dao.dart';
 import '../../../domain/entities/tracking_log.dart';
+import '../../../domain/repositories/auth_repository.dart';
 import '../../router/app_router.dart';
 import '../../router/routes.dart';
 import '../../widgets/animated/check_draw.dart';
 import '../../widgets/animated/number_ticker.dart';
 import '../../widgets/buttons/ghost_button.dart';
 import '../../widgets/buttons/primary_button.dart';
+import '../../widgets/sheets/app_bottom_sheet.dart';
 import 'tracking_elapsed_ticker.dart';
 import 'tracking_format.dart';
+import 'widgets/backup_priming_sheet.dart';
 
 /// §11.11 기록 추가/편집 시트를 모달로 연다(라우트 아님).
 ///
@@ -29,12 +33,10 @@ Future<void> showTrackingEntrySheet(
   TrackingType? presetType,
   TrackingLog? log,
 }) {
-  return showModalBottomSheet<void>(
-    context: context,
-    useRootNavigator: true,
-    isScrollControlled: true,
-    backgroundColor: Colors.transparent,
-    barrierColor: context.colors.ink900.withValues(alpha: 0.32),
+  // §10.2 공용 바텀시트 오프너로 열어 slide 300ms easeOutBack + 스크림/이탈 200ms
+  // 스펙 전환을 적용한다(reduce-motion 시 즉시). 스크림·투명 배경은 헬퍼가 처리.
+  return showAppBottomSheet<void>(
+    context,
     builder: (_) =>
         _TrackingEntrySheet(babyId: babyId, presetType: presetType, log: log),
   );
@@ -91,7 +93,9 @@ class _TrackingEntrySheetState extends ConsumerState<_TrackingEntrySheet> {
       _type = log.type;
       _startedAt = log.startedAt;
       _endedAt = log.endedAt ?? DateTime.now();
-      _amount = log.amount ?? 120;
+      // 종료(진행 중 타이머) 시트의 "양(선택)"은 기본값을 강제하지 않는다(§11.11) —
+      // 미입력(0)이면 _stopTimer가 amount=null로 저장해 시간 기반 기록을 유지한다.
+      _amount = log.amount ?? (_mode == _EntryMode.stop ? 0 : 120);
       _note.text = log.note ?? '';
       switch (log.type) {
         case TrackingType.feed:
@@ -122,6 +126,8 @@ class _TrackingEntrySheetState extends ConsumerState<_TrackingEntrySheet> {
     final messenger = ScaffoldMessenger.of(context);
     // 위젯이 pop 되기 전에 캡처(성공 후 트리 언마운트 시 ref 접근 방지).
     final scheduler = ref.read(feedingReminderSchedulerProvider);
+    final auth = ref.read(authRepositoryProvider);
+    final trackingDao = ref.read(trackingLogsDaoProvider);
     try {
       await op();
       if (!mounted) return;
@@ -137,7 +143,11 @@ class _TrackingEntrySheetState extends ConsumerState<_TrackingEntrySheet> {
         nav.pop();
       }
       // §11.6 첫 기록 저장 직후 1회 알림 권한 프라이밍(맥락 있는 시점 → 수락률↑).
-      await _maybeShowPriming();
+      final primingShown = await _maybeShowPriming();
+      // §3.3 프라이밍과 동시 노출 금지(프라이밍 우선) — 프라이밍이 뜨지 않았을 때만 백업 유도.
+      if (!primingShown) {
+        await _maybeShowBackupPriming(auth: auth, trackingDao: trackingDao);
+      }
     } catch (_) {
       if (!mounted) return;
       setState(() => _saving = false);
@@ -149,12 +159,33 @@ class _TrackingEntrySheetState extends ConsumerState<_TrackingEntrySheet> {
 
   /// §11.6 첫 기록 저장 직후 알림 프라이밍을 1회 노출한다. 실제 루트 라우터가 붙어 있을
   /// 때만(=앱 부팅 경로) 이동하며, 위젯 테스트처럼 라우터가 없으면 조용히 건너뛴다.
-  Future<void> _maybeShowPriming() async {
+  /// 프라이밍을 실제로 띄웠으면 `true`를 반환한다(백업 유도와의 동시 노출 방지용).
+  Future<bool> _maybeShowPriming() async {
+    final rootContext = rootNavigatorKey.currentContext;
+    if (rootContext == null) return false;
+    final show = await NotificationPrimingPrefs.shouldShowAfterFirstRecord();
+    if (!show || !rootContext.mounted) return false;
+    rootContext.pushNamed(Routes.permissionPriming);
+    return true;
+  }
+
+  /// §3.3 기록이 임계값에 도달하면 게스트에게 1회 백업(계정 연결)을 유도한다.
+  /// 프라이밍과의 동시 노출을 피하려고 프라이밍이 뜨지 않았을 때만 호출된다.
+  Future<void> _maybeShowBackupPriming({
+    required AuthRepository auth,
+    required TrackingLogsDao trackingDao,
+  }) async {
     final rootContext = rootNavigatorKey.currentContext;
     if (rootContext == null) return;
-    final show = await NotificationPrimingPrefs.shouldShowAfterFirstRecord();
-    if (!show || !rootContext.mounted) return;
-    rootContext.pushNamed(Routes.permissionPriming);
+    // 게스트(미연결)만 대상 — 이미 계정 연결됐다면 백업은 진행 중이다.
+    final isGuest = !auth.isSignedIn || auth.isAnonymous;
+    if (!isGuest) return;
+    if (!await BackupPrimingPrefs.shouldShow()) return;
+    final count = await trackingDao.countAll();
+    if (count < BackupPrimingPrefs.threshold) return;
+    await BackupPrimingPrefs.markShown();
+    if (!rootContext.mounted) return;
+    await showBackupPrimingSheet(rootContext);
   }
 
   String? _composedNote() {
@@ -431,7 +462,8 @@ class _TrackingEntrySheetState extends ConsumerState<_TrackingEntrySheet> {
           const SizedBox(height: AppSpacing.x16),
           _FieldLabel('방향'),
           _ChoiceChips<String>(
-            value: _breastSide ?? '왼쪽',
+            // 선택 전에는 미선택(어느 칩도 선택되지 않음) 상태로 표시한다.
+            value: _breastSide,
             options: const ['왼쪽', '오른쪽'],
             labelOf: (v) => v,
             onChanged: (v) => setState(() => _breastSide = v),
@@ -761,7 +793,8 @@ class _ChoiceChips<T> extends StatelessWidget {
     super.key,
   });
 
-  final T value;
+  /// null이면 선택된 칩이 없다(명시 선택 전 미선택 표시 — §11.11 방향 칩).
+  final T? value;
   final List<T> options;
   final String Function(T) labelOf;
   final ValueChanged<T> onChanged;

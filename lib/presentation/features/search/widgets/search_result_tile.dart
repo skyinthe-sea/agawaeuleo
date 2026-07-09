@@ -2,6 +2,7 @@ import 'package:agawaeuleo/config/theme/theme.dart';
 import 'package:agawaeuleo/core/haptics/app_haptics.dart';
 import 'package:agawaeuleo/domain/entities/symptom.dart';
 import 'package:agawaeuleo/presentation/widgets/animated/ink_wash_splash.dart';
+import 'package:agawaeuleo/presentation/widgets/symptom/symptom_icon.dart';
 import 'package:flutter/material.dart';
 
 import '../search_highlight.dart';
@@ -71,7 +72,6 @@ class _IconCircle extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
-    final key = symptom.emojiOrIcon;
     return Container(
       width: SearchResultTile._iconSize,
       height: SearchResultTile._iconSize,
@@ -80,9 +80,11 @@ class _IconCircle extends StatelessWidget {
         shape: BoxShape.circle,
       ),
       alignment: Alignment.center,
-      child: (key != null && key.isNotEmpty)
-          ? Text(key, style: context.texts.heading)
-          : Icon(Icons.spa_outlined, size: 20, color: colors.accent),
+      child: Icon(
+        SymptomIcons.resolve(symptom.emojiOrIcon),
+        size: 20,
+        color: colors.accent,
+      ),
     );
   }
 }

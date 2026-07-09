@@ -70,12 +70,26 @@ class BabyRepositoryImpl implements BabyRepository {
 
   @override
   Future<void> delete(String id) async {
+    // §11.14 아기 삭제 시 관련 기록도 함께 삭제한다(삭제 다이얼로그 안내와 일치).
+    // 로컬은 FK cascade가 없으므로 명시적으로 지우고, 서버 전파는 아래 큐로 처리한다.
+    final trackingDao = _dao.attachedDatabase.trackingLogsDao;
+    final orphanLogIds = await trackingDao.deleteByBabyId(id);
     await _dao.deleteById(id);
     // 삭제된 아기가 선택돼 있었다면 선택 해제(§11.10 전환 일관성).
     if (await getSelectedBabyId() == id) {
       await selectBaby(null);
     }
     if (!syncEnabled) return;
+    // 관련 기록의 원격 삭제 전파 — 기존 큐 패턴 준수(미동기화 큐 취소 → delete 연산).
+    for (final logId in orphanLogIds) {
+      await _pendingOps.removeByLocalId(logId);
+      await _pendingOps.enqueue(
+        opType: PendingOpType.delete,
+        entityType: SyncEntityType.trackingLog,
+        localId: logId,
+        payload: '',
+      );
+    }
     await _pendingOps.removeByLocalId(id);
     await _pendingOps.enqueue(
       opType: PendingOpType.delete,

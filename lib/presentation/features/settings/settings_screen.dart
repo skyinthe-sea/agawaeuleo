@@ -3,8 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../../application/notification_providers.dart';
 import '../../../application/notifiers/theme_mode_notifier.dart';
 import '../../../config/theme/theme.dart';
+import '../../../core/notifications/notifications.dart';
 import '../../router/routes.dart';
 import '../../widgets/animated/shimmer_skeleton.dart';
 import '../../widgets/navigation/app_app_bar.dart';
@@ -107,6 +109,16 @@ class SettingsScreen extends ConsumerWidget {
     NotificationSettings settings,
   ) {
     final controller = ref.read(notificationSettingsProvider.notifier);
+    // §11.16·§11.6(개정): OS 권한이 켜져 있지 않을 때만 안내를 노출한다.
+    // granted → 숨김, 조회 중(loading)·unknown(판단 불가) → 오탐 방지 위해 숨김.
+    final permissionStatus = ref
+        .watch(notificationPermissionStatusProvider)
+        .value;
+    final showPermissionHint =
+        settings.masterEnabled &&
+        permissionStatus != null &&
+        !permissionStatus.isGranted &&
+        permissionStatus != NotificationPermissionStatus.unknown;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -146,7 +158,11 @@ class SettingsScreen extends ConsumerWidget {
             ),
           ],
         ),
-        if (settings.masterEnabled) const NotificationPermissionHint(),
+        if (showPermissionHint)
+          NotificationPermissionHint(
+            status: permissionStatus,
+            onOpenPriming: () => context.pushNamed(Routes.permissionPriming),
+          ),
       ],
     );
   }

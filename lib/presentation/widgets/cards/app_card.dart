@@ -51,14 +51,28 @@ class _AppCardState extends State<AppCard> {
     widget.onTap?.call();
   }
 
+  /// §9.5 카드 보더. 다크는 상단 1px 하이라이트([AppShadows.topHighlight]) + 나머지
+  /// [line] 으로 카드를 띄운다(인셋 그림자로는 fill에 가려 무효과이므로 보더로 렌더).
+  Border? _cardBorder(BuildContext context) {
+    if (!widget.showBorder) return null;
+    final colors = context.colors;
+    final highlight = context.shadows.topHighlight;
+    if (highlight == null) return Border.all(color: colors.line);
+    final side = BorderSide(color: colors.line);
+    return Border(
+      top: BorderSide(color: highlight),
+      left: side,
+      right: side,
+      bottom: side,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
     final shadows = context.shadows;
     final Color surface = widget.color ?? colors.paperCard;
-    final Border? border = widget.showBorder
-        ? Border.all(color: colors.line)
-        : null;
+    final Border? border = _cardBorder(context);
 
     if (!_tappable) {
       return Container(
@@ -87,9 +101,18 @@ class _AppCardState extends State<AppCard> {
         decoration: BoxDecoration(
           color: surface,
           borderRadius: widget.borderRadius,
-          boxShadow: _pressed ? shadows.press : shadows.e1,
+          // 눌림 시 e1 부양감 제거 — 오목함은 아래 foregroundDecoration으로 표현.
+          boxShadow: _pressed ? AppShadows.e0 : shadows.e1,
           border: border,
         ),
+        // §9.5 press 오목: 인셋 그림자를 자식 위(foregroundDecoration)에 덧그려야
+        // 실제로 보인다. boxShadow(fill 뒤)로는 불투명 배경에 가려 무효과.
+        foregroundDecoration: _pressed
+            ? BoxDecoration(
+                borderRadius: widget.borderRadius,
+                boxShadow: shadows.press,
+              )
+            : null,
         child: Material(
           type: MaterialType.transparency,
           borderRadius: widget.borderRadius,

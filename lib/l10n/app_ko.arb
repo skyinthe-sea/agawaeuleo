@@ -1,0 +1,19 @@
+{
+  "@@locale": "ko",
+  "appTitle": "아가왜울어",
+  "@appTitle": {
+    "description": "앱 이름 (스플래시·설정·시스템 앱 전환기 표기)"
+  },
+  "commonOk": "확인",
+  "@commonOk": {
+    "description": "확인 버튼 라벨"
+  },
+  "commonCancel": "취소",
+  "@commonCancel": {
+    "description": "취소 버튼 라벨"
+  },
+  "commonRetry": "다시 시도",
+  "@commonRetry": {
+    "description": "오류 상태에서 재시도 버튼 라벨"
+  }
+}

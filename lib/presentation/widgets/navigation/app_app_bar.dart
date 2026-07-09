@@ -103,8 +103,9 @@ class _AppBarButton extends StatelessWidget {
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
       onTap: onTap,
+      // §2-3 최소 터치타깃 48dp(아이콘 24는 유지, 히트 영역 폭만 40→48).
       child: SizedBox(
-        width: 40,
+        width: 48,
         height: AppAppBar._height,
         child: Center(child: Icon(icon, size: 24, color: color)),
       ),

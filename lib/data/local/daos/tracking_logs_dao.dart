@@ -29,6 +29,23 @@ class TrackingLogsDao extends DatabaseAccessor<AppDatabase>
   Future<int> deleteById(String id) =>
       (delete(trackingLogs)..where((t) => t.id.equals(id))).go();
 
+  /// §11.14 아기 삭제 시 해당 아기의 기록을 일괄 삭제한다.
+  /// 원격 삭제 전파(`pending_ops`)를 위해 삭제된 기록의 로컬 id 목록을 반환한다.
+  Future<List<String>> deleteByBabyId(String babyId) async {
+    final query = select(trackingLogs)..where((t) => t.babyId.equals(babyId));
+    final rows = await query.get();
+    final ids = rows.map((r) => r.id).toList();
+    await (delete(trackingLogs)..where((t) => t.babyId.equals(babyId))).go();
+    return ids;
+  }
+
+  /// §3.3 전체 기록 수(백업 유도 임계값 판단용).
+  Future<int> countAll() {
+    final count = trackingLogs.id.count();
+    final query = selectOnly(trackingLogs)..addColumns([count]);
+    return query.map((row) => row.read(count) ?? 0).getSingle();
+  }
+
   /// 동기화 완료 후 서버 uuid 기록.
   Future<int> setServerId(String id, String serverId) =>
       (update(trackingLogs)..where((t) => t.id.equals(id))).write(

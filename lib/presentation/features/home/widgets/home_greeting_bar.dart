@@ -79,17 +79,20 @@ class _BellButton extends StatelessWidget {
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,
         onTap: onTap,
+        // §2-3 최소 터치타깃 48dp(아이콘 크기 24는 유지, 히트 영역만 확대).
         child: SizedBox(
-          width: 44,
-          height: 44,
+          width: 48,
+          height: 48,
           child: Stack(
             alignment: Alignment.center,
             children: [
               Icon(Icons.notifications_none_rounded, size: 24, color: color),
               if (hasUnread)
+                // 히트 영역이 48로 커지며 중앙 아이콘 위치가 2px 이동해도
+                // 배지 dot이 벨 우상단에 붙어 보이도록 좌표를 함께 조정.
                 Positioned(
-                  top: 11,
-                  right: 11,
+                  top: 13,
+                  right: 13,
                   child: Container(
                     width: 8,
                     height: 8,

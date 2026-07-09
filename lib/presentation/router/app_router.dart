@@ -46,7 +46,10 @@ GoRouter createAppRouter() {
       GoRoute(
         path: RoutePaths.splash,
         name: Routes.splash,
-        builder: (context, state) => const SplashScreen(),
+        // §11.1 스플래시 → 다음 화면 fade-through(페이드+미세 스케일). 스플래시가
+        // 페이드아웃하며 아래 화면(홈/온보딩)을 드러낸다.
+        pageBuilder: (context, state) =>
+            _fadeThroughPage(context, state, const SplashScreen()),
       ),
       GoRoute(
         path: RoutePaths.onboarding,
@@ -199,6 +202,40 @@ GoRouter createAppRouter() {
 
 const Duration _pushDuration = Duration(milliseconds: 300);
 const double _sharedAxisShift = 30;
+
+/// §11.1 스플래시 라우트 전환 = fade-through(페이드 + 0.96→1 미세 스케일) 300ms.
+/// 진입(forward)은 페이드인, 이탈(reverse)은 페이드아웃 — 다음 화면과 크로스페이드.
+/// reduce-motion 시 0ms.
+CustomTransitionPage<void> _fadeThroughPage(
+  BuildContext context,
+  GoRouterState state,
+  Widget child,
+) {
+  final duration = AppMotion.resolve(context, _pushDuration);
+  return CustomTransitionPage<void>(
+    key: state.pageKey,
+    transitionDuration: duration,
+    reverseTransitionDuration: duration,
+    transitionsBuilder: _fadeThrough,
+    child: child,
+  );
+}
+
+Widget _fadeThrough(
+  BuildContext context,
+  Animation<double> animation,
+  Animation<double> secondaryAnimation,
+  Widget child,
+) {
+  final curved = CurvedAnimation(parent: animation, curve: AppMotion.enter);
+  return FadeTransition(
+    opacity: curved,
+    child: ScaleTransition(
+      scale: Tween<double>(begin: 0.96, end: 1).animate(curved),
+      child: child,
+    ),
+  );
+}
 
 /// §10.2 push = shared-axis X(슬라이드+페이드) 300ms. reduce-motion 시 0ms.
 CustomTransitionPage<void> _pushPage(

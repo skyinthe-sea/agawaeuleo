@@ -19,7 +19,8 @@ abstract class BabyRepository {
   /// 아기 수정. 수정된 프로필을 반환.
   Future<Baby> update(Baby baby);
 
-  /// 아기 삭제(관련 기록은 on delete cascade — §7.1).
+  /// 아기 삭제(§11.14). 관련 기록도 함께 삭제한다 — 로컬은 일괄 삭제하고,
+  /// 원격은 `pending_ops` 큐로 전파(서버는 on delete cascade — §7.1)한다.
   Future<void> delete(String id);
 
   /// 현재 선택된 아기 id 관찰(다둥이 전환 — §11.10). 로컬 저장. 없으면 null.

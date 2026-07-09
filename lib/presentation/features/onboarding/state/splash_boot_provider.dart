@@ -19,9 +19,8 @@ enum SplashDestination {
 ///   - [AuthRepository.ensureSignedIn]으로 게스트(익명) 세션을 자동 생성(§4.1) — 인증을
 ///     강제하지 않는다(§2-8). 오프라인 등으로 실패해도 로컬 폴백이 있어 부팅을 막지 않는다.
 ///
-/// TODO(M5): 원격 config 게이트(강제 업데이트/점검) — `appConfigRepositoryProvider`로
-/// `RemoteAppConfig`를 조회해 `isForceUpdateRequired`/`maintenance`를 이 시점에 분기
-/// 처리한다(§3.3, §7.1 `app_config`). 현재는 게이트 없이 항상 통과.
+/// 원격 config 게이트(강제 업데이트/점검, §3.3)는 이 부팅 분기와 병렬로 `appGateProvider`가
+/// 담당하며, `SplashScreen`이 게이트 통과 시에만 여기서 산출한 목적지로 이동한다.
 final splashBootProvider = FutureProvider.autoDispose<SplashDestination>((
   ref,
 ) async {

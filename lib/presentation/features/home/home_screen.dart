@@ -99,10 +99,9 @@ class HomeScreen extends ConsumerWidget {
       (baby != null && baby.name.trim().isNotEmpty) ? baby.name : '오늘도 힘내세요';
 
   void _onBellTap(BuildContext context) {
-    // 알림 목록 화면은 아직 라우트가 없어(통합 단계 처리) 안내만 노출한다.
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(const SnackBar(content: Text('알림은 곧 제공됩니다')));
+    // §11.7 "벨 아이콘 탭 → (알림 목록 or 설정)". 별도 알림 목록 화면은 범위 밖이라
+    // 알림 토글이 모여 있는 설정 화면(§11.16 알림 그룹)으로 이동한다.
+    context.go(RoutePaths.settingsLocation);
   }
 
   List<Widget> _buildLoadingSlivers(BuildContext context) => <Widget>[

@@ -11,6 +11,7 @@
 | `migrations/0003_cron.sql` | pg_cron 스케줄(매일 KST 05:00·17:00) → Edge Function 호출 | §7.4 |
 | `migrations/0004_seed.sql` | 증상 16종 + 증상별 참고정보 시드 (**의료 콘텐츠 초안 — 배포 전 검수 필수**) | §3.1·§13.3 |
 | `functions/refresh-products/` | 제품 갱신 Edge Function (별도 작업) | §7.3 |
+| `functions/delete-account/` | 계정 삭제 Edge Function (앱 내 회원 탈퇴, 스토어 필수) | §3.3·§11.16·§13.4 |
 
 마이그레이션은 파일명 순서(0001 → 0002 → 0003 → 0004)대로 적용해야 한다. FK·RLS·cron 이 앞 단계 오브젝트에 의존한다.
 
@@ -146,6 +147,24 @@ supabase secrets set \
 > 위 `CRON_SECRET` 값을 §3 의 Vault 시크릿 `refresh_products_token` 에도 **똑같이** 등록해야
 > cron 호출이 통과한다(둘이 다르면 401). 쿠팡 키가 아직 없으면(파트너스 승인 전) 함수는
 > no-op 성공을 반환하므로(§6.4), `CRON_SECRET` 만 설정해도 파이프라인 배선을 미리 검증할 수 있다.
+
+### 계정 삭제 함수 배포 (`delete-account` — §3.3·§13.4, 스토어 필수)
+
+앱의 "설정 › 계정 관리 › 계정 삭제"가 **현재 사용자 JWT** 로 호출하는 함수다. `refresh-products`
+와 달리 `CRON_SECRET` 이 아니라 **호출자 본인의 access token 을 검증**하므로 플랫폼 JWT 검증을
+**켠 채(기본값, `--no-verify-jwt` 금지)** 배포한다.
+
+```bash
+supabase functions deploy delete-account
+```
+
+- 별도 시크릿 설정이 필요 없다. 함수가 쓰는 `SUPABASE_URL` / `SUPABASE_ANON_KEY` /
+  `SUPABASE_SERVICE_ROLE_KEY` 는 Edge 런타임에 자동 주입된다(`service_role` 키는 앱에 절대 노출 금지).
+- 개인 데이터(babies·tracking_logs·favorites 등)는 `auth.users` 삭제 시 `on delete cascade`
+  FK(0001_schema.sql·0002_rls.sql)로 함께 파기된다 — §8 요약 참조. 배포 전, 개인 소유 테이블
+  전체가 `user_id` FK `on delete cascade` 인지 마이그레이션에서 확인할 것(파기 완결 전제).
+- 대시보드 **Authentication → Providers** 에서 Apple/Google 프로바이더를 활성화해야 소셜 연결이
+  동작한다(계정 삭제 자체는 프로바이더와 무관).
 
 ## 8. RLS · 계정 삭제 요약
 

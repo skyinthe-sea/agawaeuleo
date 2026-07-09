@@ -59,12 +59,35 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
+	<!-- 딥링크 (§3.3): 커스텀 스킴 agawaeuleo://symptom/<slug> — go_router가 처리. -->
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>agawaeuleo</string>
+			</array>
+		</dict>
+	</array>
+	<!-- Universal Links (https): TODO(발주자) — Associated Domains 엔타이틀먼트에
+	     applinks:agawaeuleo.example.com 를 추가하고, 도메인의
+	     https://<도메인>/.well-known/apple-app-site-association 를 게시해 검증을 완료할 것.
+	     (Info.plist가 아니라 Runner.entitlements + Signing & Capabilities에서 설정) -->
 	<key>UISupportedInterfaceOrientations~ipad</key>
 	<array>
 		<string>UIInterfaceOrientationPortrait</string>
 		<string>UIInterfaceOrientationPortraitUpsideDown</string>
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
+	</array>
+	<!-- 알림 (§3.2 S4 · §11.6 · §3.3): 로컬 알림 권한은 런타임 요청(프라이밍 화면)이라
+	     별도 Info.plist 키가 필요 없다. 아래는 FCM 원격 푸시 수신용 백그라운드 모드로,
+	     google-services 설정이 추가되면(§12) 활용된다. 설정 전에도 무해하다. -->
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>remote-notification</string>
 	</array>
 </dict>
 </plist>

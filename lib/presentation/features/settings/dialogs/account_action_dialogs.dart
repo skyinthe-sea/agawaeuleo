@@ -1,17 +1,26 @@
-import 'package:flutter/material.dart';
+import 'dart:async';
 
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+
+import '../../../../application/providers.dart';
 import '../../../../config/theme/theme.dart';
+import '../../../../core/error/app_exception.dart';
+import '../../../router/routes.dart';
 import '../../../widgets/inputs/app_text_field.dart';
 
-/// §11.16 계정 그룹 다이얼로그 골격.
+/// §11.16 계정 그룹 다이얼로그. [AccountScreen]에서 [WidgetRef]를 받아 실제 세션 종료·
+/// 서버 계정 파기까지 완결한다(§13.4 스토어 필수 요건).
 ///
-/// **범위**: 여기 있는 두 플로우는 확인 UI만 완성한다. 실제 세션 종료/서버 계정
-/// 파기 호출과 그 이후 내비게이션(홈·스플래시 이동)은 M5(계정 연결/삭제) 몫이다.
-/// [SettingsScreen]/[AccountScreen] 양쪽에서 공유해 쓴다.
+/// 게스트 우선 원칙(§3.3): 로그아웃/삭제 후에는 익명 세션으로 복귀시켜 앱을 계속 쓸 수
+/// 있게 한다. 미구성(데모) 환경에서는 [AuthRepository]가 로컬 신원만 다루므로 무해하게 동작.
 
-/// "로그아웃" 탭 → 확인 다이얼로그. 확인 시 true를 반환할 뿐, 실제 로그아웃은
-/// 호출부가 TODO로 남긴 자리에서 M5가 연결한다.
-Future<void> showLogoutConfirmDialog(BuildContext context) async {
+/// "로그아웃" 탭 → 확인 다이얼로그 → 세션 종료 → 게스트(익명) 복귀 → 홈.
+Future<void> showLogoutConfirmDialog(
+  BuildContext context,
+  WidgetRef ref,
+) async {
   final colors = context.colors;
   final confirmed = await showDialog<bool>(
     context: context,
@@ -32,16 +41,34 @@ Future<void> showLogoutConfirmDialog(BuildContext context) async {
   );
   if (confirmed != true || !context.mounted) return;
 
-  // TODO(M5): ref.read(authRepositoryProvider).signOut() 호출 → 세션 종료 후
-  //   게스트(익명) 세션 재부트스트랩 또는 인증 화면 이동(§11.16 동작 참고).
-  ScaffoldMessenger.of(
-    context,
-  ).showSnackBar(const SnackBar(content: Text('로그아웃 기능은 곧 제공될 예정이에요')));
+  final messenger = ScaffoldMessenger.of(context);
+  final auth = ref.read(authRepositoryProvider);
+  try {
+    await auth.signOut();
+    // 게스트 우선: 세션을 비운 뒤 익명으로 다시 부트스트랩(§3.3 익명 복귀).
+    await auth.ensureSignedIn();
+    if (!context.mounted) return;
+    context.go(RoutePaths.home);
+    messenger
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        const SnackBar(
+          content: Text('로그아웃했어요'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+  } on AppException catch (error) {
+    if (!context.mounted) return;
+    _showError(messenger, error.message);
+  }
 }
 
-/// "계정 삭제" 탭 → 2단계 확인(§11.16, 스토어 필수 요건).
-/// 1단계: 삭제 결과 경고. 2단계: 재확인 문구 입력.
-Future<void> showDeleteAccountConfirmFlow(BuildContext context) async {
+/// "계정 삭제" 탭 → 2단계 확인(§11.16, 스토어 필수 요건) → 서버 계정·데이터 파기 →
+/// 게스트(익명) 복귀 → 스플래시.
+Future<void> showDeleteAccountConfirmFlow(
+  BuildContext context,
+  WidgetRef ref,
+) async {
   final colors = context.colors;
   final proceed = await showDialog<bool>(
     context: context,
@@ -71,11 +98,36 @@ Future<void> showDeleteAccountConfirmFlow(BuildContext context) async {
   );
   if (confirmed != true || !context.mounted) return;
 
-  // TODO(M5): ref.read(authRepositoryProvider).deleteAccount() 호출(서버 계정·
-  //   데이터 파기) 후 스플래시/온보딩으로 이동(§11.16, 스토어 필수 요건).
-  ScaffoldMessenger.of(
-    context,
-  ).showSnackBar(const SnackBar(content: Text('계정 삭제 기능은 곧 제공될 예정이에요')));
+  final messenger = ScaffoldMessenger.of(context);
+  final auth = ref.read(authRepositoryProvider);
+  // 파기 진행 중 차단 다이얼로그(중복 탭 방지).
+  unawaited(
+    showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const Center(child: CircularProgressIndicator()),
+    ),
+  );
+  try {
+    await auth.deleteAccount();
+    // 삭제 후 게스트 우선으로 익명 세션 복귀(§3.3) → 스플래시가 재분기.
+    await auth.ensureSignedIn();
+    if (!context.mounted) return;
+    Navigator.of(context, rootNavigator: true).pop(); // 진행 다이얼로그 닫기
+    context.go(RoutePaths.splash);
+  } on AppException catch (error) {
+    if (!context.mounted) return;
+    Navigator.of(context, rootNavigator: true).pop(); // 진행 다이얼로그 닫기
+    _showError(messenger, error.message);
+  }
+}
+
+void _showError(ScaffoldMessengerState messenger, String message) {
+  messenger
+    ..hideCurrentSnackBar()
+    ..showSnackBar(
+      SnackBar(content: Text(message), behavior: SnackBarBehavior.floating),
+    );
 }
 
 /// 계정 삭제 2단계: "삭제"를 직접 입력해야 버튼이 활성화되는 재확인 다이얼로그.

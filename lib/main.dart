@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import 'application/notification_providers.dart';
 import 'application/notifiers/theme_mode_notifier.dart';
 import 'application/providers.dart';
 import 'config/theme/theme.dart';
@@ -39,6 +40,12 @@ class _AgawaeuleoAppState extends ConsumerState<AgawaeuleoApp> {
     // 앱 시작 시 동기화 서비스를 1회 기동한다(밀린 pending_ops 플러시 — §5.3). keepAlive
     // 프로바이더라 이후에도 유지된다. 미구성 시에는 원격 대상이 없어 즉시 no-op이 된다.
     ref.read(syncServiceProvider);
+
+    // 알림 인프라 기동: 로컬 알림 채널·타임존 초기화(§3.2 S4)와 FCM 토큰 확보(§12).
+    // 권한 요청은 하지 않는다 — 프라이밍 화면(§11.6)에서 맥락과 함께 요청한다. 두 호출 모두
+    // 미구성(파이어베이스 설정 파일 없음 등) 환경을 내부 가드로 흡수하므로 부팅을 막지 않는다.
+    ref.read(notificationServiceProvider).ensureInitialized();
+    ref.read(fcmClientProvider).ensureInitialized();
   }
 
   @override

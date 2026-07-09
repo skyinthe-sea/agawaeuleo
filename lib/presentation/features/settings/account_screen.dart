@@ -61,7 +61,7 @@ class AccountScreen extends ConsumerWidget {
                 SettingsTile(
                   label: '로그아웃',
                   icon: Icons.logout_rounded,
-                  onTap: () => showLogoutConfirmDialog(context),
+                  onTap: () => showLogoutConfirmDialog(context, ref),
                 ),
               ],
             ),
@@ -73,7 +73,7 @@ class AccountScreen extends ConsumerWidget {
                   icon: Icons.delete_outline_rounded,
                   iconColor: colors.coral,
                   labelColor: colors.coral,
-                  onTap: () => showDeleteAccountConfirmFlow(context),
+                  onTap: () => showDeleteAccountConfirmFlow(context, ref),
                 ),
               ],
             ),

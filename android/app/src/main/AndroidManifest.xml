@@ -1,4 +1,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- 알림 (§3.2 S4 · §11.6): Android 13+ 런타임 알림 권한. -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
+    <!-- 재부팅 후 예약된 로컬 알림(다음 수유 예상 등) 재등록 — flutter_local_notifications. -->
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
     <application
         android:label="agawaeuleo"
         android:name="${applicationName}"
@@ -23,6 +27,27 @@
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
+            </intent-filter>
+
+            <!-- 딥링크 (§3.3): 특정 증상으로 바로 진입. go_router가 /symptom/:slug 처리. -->
+            <!-- 커스텀 스킴: agawaeuleo://symptom/<slug> -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <category android:name="android.intent.category.BROWSABLE"/>
+                <data android:scheme="agawaeuleo"/>
+            </intent-filter>
+
+            <!-- App Links (https). autoVerify + assetlinks.json 검증이 완료돼야 앱이 직접 처리. -->
+            <!-- TODO(발주자): 도메인을 실제 값으로 교체하고, Digital Asset Links(assetlinks.json)를
+                 https://<도메인>/.well-known/assetlinks.json 에 게시해 App Links 검증을 완료할 것. -->
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <category android:name="android.intent.category.BROWSABLE"/>
+                <data android:scheme="https"
+                    android:host="agawaeuleo.example.com"
+                    android:pathPrefix="/symptom"/>
             </intent-filter>
         </activity>
         <!-- Don't delete the meta-data below.

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../application/gate/connectivity_provider.dart';
 import '../../config/theme/theme.dart';
 import '../features/auth/login_screen.dart';
 import '../features/auth/permission_priming_screen.dart';
@@ -21,6 +23,7 @@ import '../features/tracking/tracking_entry_screen.dart';
 import '../features/tracking/tracking_screen.dart';
 import '../features/tracking/tracking_summary_screen.dart';
 import '../widgets/navigation/app_bottom_nav.dart';
+import '../widgets/states/offline_banner.dart';
 import 'routes.dart';
 
 final GlobalKey<NavigatorState> rootNavigatorKey = GlobalKey<NavigatorState>(
@@ -240,17 +243,37 @@ Widget _sharedAxisX(
   );
 }
 
-class _ShellScaffold extends StatelessWidget {
+class _ShellScaffold extends ConsumerWidget {
   const _ShellScaffold({required this.navigationShell});
 
   final StatefulNavigationShell navigationShell;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    // §11.17 전역 오프라인 배너: 값이 없을 때(로딩)는 온라인으로 간주해 배너를 숨긴다.
+    final online = ref.watch(connectivityStatusProvider).asData?.value ?? true;
+
     return Scaffold(
-      body: _FadeThroughSwitcher(
-        index: navigationShell.currentIndex,
-        child: navigationShell,
+      // 상단 세이프에어리어를 셸에서 한 번 소비하고, 배너 아래 본문은 top 인셋을
+      // 제거해(각 화면의 SafeArea 중복 방지) 배너가 시스템 바 바로 아래에 붙게 한다.
+      body: SafeArea(
+        top: true,
+        bottom: false,
+        child: Column(
+          children: [
+            OfflineBanner(visible: !online),
+            Expanded(
+              child: MediaQuery.removePadding(
+                context: context,
+                removeTop: true,
+                child: _FadeThroughSwitcher(
+                  index: navigationShell.currentIndex,
+                  child: navigationShell,
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
       bottomNavigationBar: AppBottomNav(
         currentIndex: navigationShell.currentIndex,

@@ -2,11 +2,16 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
+import '../../../application/notification_providers.dart';
 import '../../../application/providers.dart';
 import '../../../config/theme/theme.dart';
 import '../../../core/haptics/app_haptics.dart';
+import '../../../core/notifications/notifications.dart';
 import '../../../domain/entities/tracking_log.dart';
+import '../../router/app_router.dart';
+import '../../router/routes.dart';
 import '../../widgets/animated/check_draw.dart';
 import '../../widgets/animated/number_ticker.dart';
 import '../../widgets/buttons/ghost_button.dart';
@@ -115,9 +120,13 @@ class _TrackingEntrySheetState extends ConsumerState<_TrackingEntrySheet> {
     setState(() => _saving = true);
     final nav = Navigator.of(context);
     final messenger = ScaffoldMessenger.of(context);
+    // 위젯이 pop 되기 전에 캡처(성공 후 트리 언마운트 시 ref 접근 방지).
+    final scheduler = ref.read(feedingReminderSchedulerProvider);
     try {
       await op();
       if (!mounted) return;
+      // 저장 성공 → "다음 수유 예상" 알림 재예약(§3.2 S4, 스케줄러 내부 가드로 실패 무시).
+      unawaited(scheduler.rescheduleFromRecent(babyId: widget.babyId));
       if (complete) {
         AppHaptics.complete();
         setState(() => _completed = true);
@@ -127,6 +136,8 @@ class _TrackingEntrySheetState extends ConsumerState<_TrackingEntrySheet> {
         AppHaptics.toggle();
         nav.pop();
       }
+      // §11.6 첫 기록 저장 직후 1회 알림 권한 프라이밍(맥락 있는 시점 → 수락률↑).
+      await _maybeShowPriming();
     } catch (_) {
       if (!mounted) return;
       setState(() => _saving = false);
@@ -134,6 +145,16 @@ class _TrackingEntrySheetState extends ConsumerState<_TrackingEntrySheet> {
         const SnackBar(content: Text('저장하지 못했어요. 다시 시도해 주세요.')),
       );
     }
+  }
+
+  /// §11.6 첫 기록 저장 직후 알림 프라이밍을 1회 노출한다. 실제 루트 라우터가 붙어 있을
+  /// 때만(=앱 부팅 경로) 이동하며, 위젯 테스트처럼 라우터가 없으면 조용히 건너뛴다.
+  Future<void> _maybeShowPriming() async {
+    final rootContext = rootNavigatorKey.currentContext;
+    if (rootContext == null) return;
+    final show = await NotificationPrimingPrefs.shouldShowAfterFirstRecord();
+    if (!show || !rootContext.mounted) return;
+    rootContext.pushNamed(Routes.permissionPriming);
   }
 
   String? _composedNote() {

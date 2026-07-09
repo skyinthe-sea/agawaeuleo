@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../../../application/notification_providers.dart';
 import '../../../../application/providers.dart';
 
 /// §11.16 설정 화면 전용 프로바이더. **코드젠 없는 수동 Riverpod**(이 feature 소유).
@@ -100,15 +101,30 @@ class NotificationSettingsController
     NotificationSettings Function(NotificationSettings current) reduce,
   ) async {
     final current = state.value ?? const NotificationSettings();
-    state = AsyncData<NotificationSettings>(reduce(current));
+    final next = reduce(current);
+    state = AsyncData<NotificationSettings>(next);
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool(key, value);
 
-    // TODO(M5): 실제 알림 로직 연동.
-    //  - flutter_local_notifications로 예약된 리마인더 취소/재예약.
-    //  - FCM 토픽 구독/해지(공지 등 서버 발송 알림).
-    //  - 마스터 OFF 시 카테고리와 무관하게 모든 로컬/원격 알림을 실질적으로 중지.
-    //  - OS 알림 권한이 꺼져 있는 경우의 실제 감지·안내(§11.16)도 여기서 함께 처리.
+    await _applyToScheduler(next);
+  }
+
+  /// 저장된 토글 상태를 실제 로컬 알림 예약에 반영한다(§3.2 S4 · §11.16).
+  ///   - 마스터 OFF: 카테고리와 무관하게 예약된 모든 알림을 취소.
+  ///   - 마스터 ON + 수유 리마인더 ON: 최근 기록 기반으로 재예약.
+  ///   - 마스터 ON + 수유 리마인더 OFF: 수유 리마인더만 취소.
+  /// 스케줄러/서비스는 미구성·미부팅 환경을 내부 가드로 흡수하므로 실패해도 무해하다.
+  Future<void> _applyToScheduler(NotificationSettings settings) async {
+    if (!settings.masterEnabled) {
+      await ref.read(notificationServiceProvider).cancelAll();
+      return;
+    }
+    final scheduler = ref.read(feedingReminderSchedulerProvider);
+    if (settings.feedingReminderEnabled) {
+      await scheduler.rescheduleFromRecent();
+    } else {
+      await scheduler.cancel();
+    }
   }
 }
 

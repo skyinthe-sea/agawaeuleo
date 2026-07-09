@@ -51,20 +51,18 @@ class _AppCardState extends State<AppCard> {
     widget.onTap?.call();
   }
 
-  /// §9.5 카드 보더. 다크는 상단 1px 하이라이트([AppShadows.topHighlight]) + 나머지
-  /// [line] 으로 카드를 띄운다(인셋 그림자로는 fill에 가려 무효과이므로 보더로 렌더).
+  /// §9.5 카드 보더 — 양 모드 모두 [line] 헤어라인 1px(균일색).
+  ///
+  /// 다크 상단 하이라이트([AppShadows.topHighlight])를 top 변만 다른 색으로 주면
+  /// `Border` 가 비균일색이 되고, [AppCard.borderRadius] 와 함께 칠할 때
+  /// Flutter `Border.paint()` 의 assert("A borderRadius can only be given on
+  /// borders with uniform colors")가 페인트 도중 발생해 자식(카드 내용)이 렌더되지
+  /// 않는다(release 는 assert 제거로 각진 모서리로 조용히 폴백). 따라서 균일
+  /// [Border.all] 로만 렌더한다 — 라이트가 이미 쓰는 `paintUniformBorderWithRadius`
+  /// 경로와 동일해 다크에서도 둥근 모서리 헤어라인이 정상 렌더된다.
   Border? _cardBorder(BuildContext context) {
     if (!widget.showBorder) return null;
-    final colors = context.colors;
-    final highlight = context.shadows.topHighlight;
-    if (highlight == null) return Border.all(color: colors.line);
-    final side = BorderSide(color: colors.line);
-    return Border(
-      top: BorderSide(color: highlight),
-      left: side,
-      right: side,
-      bottom: side,
-    );
+    return Border.all(color: context.colors.line);
   }
 
   @override

@@ -45,6 +45,7 @@ class SearchFieldBar extends StatelessWidget {
                 onChanged: onChanged,
                 onSubmitted: onSubmitted,
                 cursorColor: colors.accent,
+                textAlignVertical: TextAlignVertical.center,
                 style: context.texts.bodyL.copyWith(color: colors.ink900),
                 decoration: InputDecoration(
                   isDense: true,

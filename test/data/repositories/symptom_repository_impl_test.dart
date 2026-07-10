@@ -64,6 +64,14 @@ void main() {
       expect(names(result), contains('배앓이'));
     });
 
+    test("초성 부분열 'ㅂㅇ' → 배앓이만 반환된다(별칭발 오탐 방지)", () async {
+      // 다른 증상들의 별칭(발열/비염/분유 토함/유치발육/얼굴 붉어짐 등)이
+      // 우연히 초성 'ㅂㅇ'을 포함하더라도, 초성열 질의는 이름에만 매칭되므로
+      // 이름 자체가 'ㅂㅇ'으로 시작하는 '배앓이'만 나와야 한다.
+      final result = await repo.search('ㅂㅇ');
+      expect(names(result), ['배앓이']);
+    });
+
     test('부분 문자열 매칭 — 이름 일부로도 찾는다', () async {
       final result = await repo.search('수면');
       expect(names(result), contains('수면퇴행'));

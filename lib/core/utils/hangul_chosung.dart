@@ -1,6 +1,7 @@
 /// §11.8 한글 초성 추출·매칭.
-/// 완성형 음절의 초성 index = (code − 0xAC00) ~/ 588. 초성열("ㅂㅇㅇ") 매칭,
-/// 부분일치("배앓"), 동의어 배열 매칭, 공백·대소문자 무시를 제공한다.
+/// 완성형 음절의 초성 index = (code − 0xAC00) ~/ 588. 초성열("ㅂㅇㅇ") 매칭은
+/// 이름(target)에만 적용되고, 부분일치("배앓")는 이름·동의어(aliases) 모두에
+/// 적용된다. 공백·대소문자는 무시한다.
 class HangulChosung {
   const HangulChosung._();
 
@@ -64,8 +65,12 @@ class HangulChosung {
   }
 
   /// [query]가 [target] 또는 [aliases] 중 하나에 매칭되면 true.
-  /// 규칙: 공백 제거·소문자화 후 (1) 부분 문자열 일치, 그리고 질의가 초성열이면
-  /// (2) 후보의 초성 문자열에 대한 연속 부분일치.
+  /// 규칙: 질의가 초성열이면 [target]의 초성 문자열에 대해서만 연속 부분일치를
+  /// 검사한다 — 동의어(alias) 문구는 여러 단어가 이어붙는 경우가 많아, 이를
+  /// 초성 매칭 대상에 포함하면 단어 경계와 무관하게 우연히 일치하는 초성
+  /// 조합(예: "얼굴 붉어짐"의 중간 "붉어")으로 무관한 증상이 결과에 섞인다.
+  /// 질의가 일반 텍스트면 공백 제거·소문자화 후 [target]과 [aliases] 모두에
+  /// 대해 부분 문자열 일치를 검사한다.
   static bool matches(
     String query,
     String target, {
@@ -74,12 +79,17 @@ class HangulChosung {
     final q = _normalize(query);
     if (q.isEmpty) return false;
 
-    final chosungQuery = isChosungQuery(q);
-    for (final candidate in <String>[target, ...aliases]) {
-      final nc = _normalize(candidate);
-      if (nc.isEmpty) continue;
-      if (nc.contains(q)) return true;
-      if (chosungQuery && extract(nc).contains(q)) return true;
+    final nt = _normalize(target);
+    if (nt.isEmpty) return false;
+
+    if (isChosungQuery(q)) {
+      return extract(nt).contains(q);
+    }
+
+    if (nt.contains(q)) return true;
+    for (final alias in aliases) {
+      final na = _normalize(alias);
+      if (na.isNotEmpty && na.contains(q)) return true;
     }
     return false;
   }

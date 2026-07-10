@@ -3,7 +3,7 @@ import 'package:agawaeuleo/presentation/widgets/animated/ink_wash_splash.dart';
 import 'package:flutter/material.dart';
 
 /// §11.7 홈 고정 검색 바. 높이 52 · r.full · 배경 `paper.card` · e1 ·
-/// 좌측 돋보기 20 `ink.500` · placeholder `ink.300`.
+/// 좌측 돋보기 20 `ink.500`(텍스트 placeholder 없음, 아이콘만).
 ///
 /// 탭 시 검색 화면으로 Hero 전환한다(태그 계약: `'home-search-bar'` — 검색 화면과 공유).
 class HomeSearchBar extends StatelessWidget {
@@ -13,7 +13,6 @@ class HomeSearchBar extends StatelessWidget {
   static const String heroTag = 'home-search-bar';
 
   static const double height = 52;
-  static const String _hint = '배앓이, ㅂㅇㅇ …';
 
   final VoidCallback onTap;
 
@@ -49,17 +48,6 @@ class HomeSearchBar extends StatelessWidget {
                   children: [
                     const SizedBox(width: AppSpacing.x16),
                     Icon(Icons.search_rounded, size: 20, color: colors.ink500),
-                    const SizedBox(width: AppSpacing.x8),
-                    Expanded(
-                      child: Text(
-                        _hint,
-                        style: context.texts.bodyL.copyWith(
-                          color: colors.ink300,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
                     const SizedBox(width: AppSpacing.x16),
                   ],
                 ),

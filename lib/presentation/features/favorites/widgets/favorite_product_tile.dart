@@ -12,17 +12,24 @@ import '../../../widgets/cards/app_card.dart';
 ///
 /// [collapsing]이 true면 높이·불투명도가 축소되며 실제 목록 제거는 호출부
 /// (지연 후 저장소 반영)가 담당한다 — §11.15 "collapse+fadeOut".
+///
+/// DESIGN v2 §7.4-3 — [addedAt](즐겨찾기 추가일, `Favorite.createdAt` 조인)이
+/// 주어지면 가격/별점 옆에 caption(ink300)으로 표시한다. 없으면 생략.
 class FavoriteProductTile extends StatelessWidget {
   const FavoriteProductTile({
     required this.product,
     required this.collapsing,
     required this.onUnfavorite,
     super.key,
+    this.addedAt,
   });
 
   final Product product;
   final bool collapsing;
   final VoidCallback onUnfavorite;
+
+  /// 즐겨찾기에 추가된 시각. 없으면(§7.4-3) 캡션을 생략한다.
+  final DateTime? addedAt;
 
   Future<void> _openDeeplink() async {
     final uri = Uri.tryParse(product.deeplink);
@@ -80,6 +87,7 @@ class FavoriteProductTile extends StatelessWidget {
                               _PriceRow(
                                 price: product.price,
                                 rating: product.rating,
+                                addedAt: addedAt,
                               ),
                             ],
                           ),
@@ -115,15 +123,19 @@ class FavoriteProductTile extends StatelessWidget {
 }
 
 class _PriceRow extends StatelessWidget {
-  const _PriceRow({required this.price, required this.rating});
+  const _PriceRow({required this.price, required this.rating, this.addedAt});
 
   final int? price;
   final double? rating;
+
+  /// DESIGN v2 §7.4-3 — 즐겨찾기 추가일. 있으면 caption(ink300)으로 노출.
+  final DateTime? addedAt;
 
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
     final texts = context.texts;
+    final added = addedAt;
     return Row(
       crossAxisAlignment: CrossAxisAlignment.baseline,
       textBaseline: TextBaseline.alphabetic,
@@ -142,6 +154,16 @@ class _PriceRow extends StatelessWidget {
             style: texts.caption.copyWith(color: colors.ink500),
           ),
         ],
+        if (added != null)
+          Expanded(
+            child: Text(
+              '${added.month}월 ${added.day}일 추가',
+              textAlign: TextAlign.end,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: texts.caption.copyWith(color: colors.ink300),
+            ),
+          ),
       ],
     );
   }

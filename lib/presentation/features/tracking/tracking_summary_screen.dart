@@ -1,12 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../config/theme/theme.dart';
 import '../../../core/haptics/app_haptics.dart';
 import '../../../domain/entities/tracking_log.dart';
-import '../../widgets/navigation/app_app_bar.dart';
 import '../../widgets/animated/number_ticker.dart';
+import '../../widgets/cards/app_card.dart';
+import '../../widgets/navigation/app_app_bar.dart';
+import '../../widgets/segments/sliding_segment.dart';
 import '../../widgets/skeletons/skeleton_blocks.dart';
+import '../../widgets/states/empty_state.dart';
 import '../../widgets/states/error_state.dart';
 import 'tracking_format.dart';
 import 'tracking_providers.dart';
@@ -51,13 +55,13 @@ class _TrackingSummaryScreenState extends ConsumerState<TrackingSummaryScreen> {
             AppSpacing.x40,
           ),
           children: [
-            _RangeTabs(
-              value: _range,
-              onChanged: (r) {
-                if (r == _range) return;
-                AppHaptics.toggle();
-                setState(() => _range = r);
-              },
+            // DESIGN v2 §4.7/§7.5.4 — 수제 _RangeTabs를 공용 SlidingSegment로.
+            // 선택 가드·햅틱은 SlidingSegment 내부가 처리하므로 여기선 반영만 한다.
+            SlidingSegment<SummaryRange>(
+              items: SummaryRange.values,
+              selected: _range,
+              onChanged: (r) => setState(() => _range = r),
+              labelOf: (r) => r.label,
             ),
             const SizedBox(height: AppSpacing.sectionGap),
             AnimatedSwitcher(
@@ -81,77 +85,6 @@ class _TrackingSummaryScreenState extends ConsumerState<TrackingSummaryScreen> {
   }
 }
 
-// ── 기간 탭 ───────────────────────────────────────────────────────────────
-
-class _RangeTabs extends StatelessWidget {
-  const _RangeTabs({required this.value, required this.onChanged});
-
-  final SummaryRange value;
-  final ValueChanged<SummaryRange> onChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = context.colors;
-    const options = SummaryRange.values;
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final w = constraints.maxWidth / options.length;
-        final index = options.indexOf(value);
-        return Container(
-          height: 44,
-          padding: const EdgeInsets.all(AppSpacing.x4),
-          decoration: BoxDecoration(
-            color: colors.accentWash,
-            borderRadius: AppRadius.brSm,
-          ),
-          child: Stack(
-            children: [
-              AnimatedAlign(
-                duration: context.reduceMotion ? Duration.zero : AppMotion.base,
-                curve: AppMotion.spring,
-                alignment: Alignment(
-                  -1 + (index / (options.length - 1)) * 2,
-                  0,
-                ),
-                child: Container(
-                  width: w - AppSpacing.x8,
-                  height: double.infinity,
-                  decoration: BoxDecoration(
-                    color: colors.accent,
-                    borderRadius: AppRadius.brXs,
-                    boxShadow: context.shadows.e1,
-                  ),
-                ),
-              ),
-              Row(
-                children: [
-                  for (final r in options)
-                    Expanded(
-                      child: GestureDetector(
-                        behavior: HitTestBehavior.opaque,
-                        onTap: () => onChanged(r),
-                        child: Center(
-                          child: Text(
-                            r.label,
-                            style: context.texts.label.copyWith(
-                              color: r == value
-                                  ? colors.paperRaised
-                                  : colors.ink700,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                ],
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
-}
-
 // ── 요약 본문 ─────────────────────────────────────────────────────────────
 
 class _SummaryBody extends StatelessWidget {
@@ -162,11 +95,20 @@ class _SummaryBody extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final total = data.days.fold<int>(0, (s, d) => s + d.total);
+    final reduce = context.reduceMotion;
+    final types = TrackingType.values;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        for (final type in TrackingType.values) ...[
-          _StatCard(type: type, stat: data.stats[type] ?? TypeStat.empty),
+        for (var i = 0; i < types.length; i++) ...[
+          _staggerIn(
+            _StatCard(
+              type: types[i],
+              stat: data.stats[types[i]] ?? TypeStat.empty,
+            ),
+            index: i,
+            reduce: reduce,
+          ),
           const SizedBox(height: AppSpacing.x12),
         ],
         const SizedBox(height: AppSpacing.x12),
@@ -176,7 +118,11 @@ class _SummaryBody extends StatelessWidget {
         ),
         const SizedBox(height: AppSpacing.x16),
         if (total == 0)
-          const _SummaryEmpty()
+          const EmptyState(
+            title: '이 기간에 기록이 없어요',
+            message: '기록 홈에서 첫 기록을 남겨보세요',
+            icon: Icons.insights_rounded,
+          )
         else ...[
           _DayBarChart(days: data.days),
           const SizedBox(height: AppSpacing.sectionGap),
@@ -189,6 +135,27 @@ class _SummaryBody extends StatelessWidget {
         ],
       ],
     );
+  }
+
+  /// DESIGN v2 §7.5.3 통계 카드 진입 stagger — 홈 그리드(§10.2)와 동일 문법
+  /// (fadeIn 260ms + slideY .08, 40ms 간격). reduce-motion 시 즉시 표시.
+  Widget _staggerIn(Widget card, {required int index, required bool reduce}) {
+    if (reduce) {
+      return KeyedSubtree(key: ValueKey('stat-card-$index'), child: card);
+    }
+    return card
+        .animate(key: ValueKey('stat-card-anim-$index'))
+        .fadeIn(
+          duration: AppMotion.base,
+          curve: AppMotion.enter,
+          delay: Duration(milliseconds: 40 * index),
+        )
+        .slideY(
+          begin: 0.08,
+          curve: AppMotion.enter,
+          duration: AppMotion.base,
+          delay: Duration(milliseconds: 40 * index),
+        );
   }
 }
 
@@ -220,14 +187,9 @@ class _StatCard extends StatelessWidget {
     final colors = context.colors;
     final texts = context.texts;
     final style = trackingTypeStyle(context, type);
-    return Container(
-      padding: const EdgeInsets.all(AppSpacing.cardPadding),
-      decoration: BoxDecoration(
-        color: colors.paperCard,
-        borderRadius: AppRadius.brMd,
-        boxShadow: context.shadows.e1,
-        border: Border.all(color: colors.line),
-      ),
+    // DESIGN v2 §5.1/§7.5.1 — 수제 Container 데코를 공용 AppCard(raised)로.
+    return AppCard(
+      emphasis: AppCardEmphasis.raised,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -318,15 +280,11 @@ class _DayRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = context.colors;
     final texts = context.texts;
-    return Container(
+    // DESIGN v2 §5.1/§7.5.1 — 수제 Container 데코를 공용 AppCard(flat)로.
+    return AppCard(
       padding: const EdgeInsets.symmetric(
         horizontal: AppSpacing.cardPadding,
         vertical: AppSpacing.x12,
-      ),
-      decoration: BoxDecoration(
-        color: colors.paperCard,
-        borderRadius: AppRadius.brMd,
-        border: Border.all(color: colors.line),
       ),
       child: Row(
         children: [
@@ -377,41 +335,6 @@ class _CountChip extends StatelessWidget {
           Text(
             '$count',
             style: context.texts.caption.copyWith(color: style.color),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _SummaryEmpty extends StatelessWidget {
-  const _SummaryEmpty();
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = context.colors;
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: AppSpacing.x40),
-      child: Column(
-        children: [
-          Container(
-            width: 72,
-            height: 72,
-            decoration: BoxDecoration(
-              color: colors.accentWash,
-              shape: BoxShape.circle,
-            ),
-            child: Icon(Icons.insights_rounded, size: 36, color: colors.accent),
-          ),
-          const SizedBox(height: AppSpacing.x16),
-          Text(
-            '이 기간에 기록이 없어요',
-            style: context.texts.bodyL.copyWith(color: colors.ink900),
-          ),
-          const SizedBox(height: AppSpacing.x4),
-          Text(
-            '기록 홈에서 첫 기록을 남겨보세요',
-            style: context.texts.body.copyWith(color: colors.ink500),
           ),
         ],
       ),
@@ -583,10 +506,11 @@ class _BarPainter extends CustomPainter {
       canvas.drawRRect(rect, paint);
 
       if (showLabels) {
+        // DESIGN v2 §7.5.8 — fontSize 11 리터럴 대신 AppTypography.caption 기반.
         final tp = TextPainter(
           text: TextSpan(
             text: _weekdays[(days[i].day.weekday - 1) % 7],
-            style: TextStyle(color: labelColor, fontSize: 11),
+            style: AppTypography.caption.copyWith(color: labelColor),
           ),
           textDirection: TextDirection.ltr,
         )..layout();

@@ -41,8 +41,8 @@ TrackingTypeStyle trackingTypeStyle(BuildContext context, TrackingType type) {
         label: '기저귀',
         icon: Icons.child_care_rounded,
         color: c.amber,
-        // amber 전용 wash 토큰이 없어 amber 옅은 톤(§11.17 오프라인 배너와 동일 패턴).
-        wash: c.amber.withValues(alpha: 0.16),
+        // DESIGN v2 §3.1/§7.5.5 — amber 하드코딩 withValues 대신 토큰 amberWash.
+        wash: c.amberWash,
       );
   }
 }

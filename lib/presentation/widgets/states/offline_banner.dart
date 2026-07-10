@@ -4,6 +4,8 @@ import '../../../config/theme/theme.dart';
 
 /// §11.17 오프라인 배너. 상단 슬림 배너(amber 옅은 톤). 복구 시 위로 슬라이드업하며 사라진다.
 /// [visible]로 표시 상태를 제어한다. reduce-motion 시 즉시 표시/숨김.
+/// DESIGN v2 §5.4 — 배경을 `amber.withValues(alpha: 0.16)` 하드코딩 대신 신규
+/// `amberWash` 토큰(§3.1)으로 교체.
 class OfflineBanner extends StatelessWidget {
   const OfflineBanner({
     required this.visible,
@@ -24,7 +26,7 @@ class OfflineBanner extends StatelessWidget {
     final banner = Container(
       key: const ValueKey('offline'),
       width: double.infinity,
-      color: colors.amber.withValues(alpha: 0.16),
+      color: colors.amberWash,
       padding: const EdgeInsets.symmetric(
         horizontal: AppSpacing.screenPadding,
         vertical: AppSpacing.x8,

@@ -8,6 +8,7 @@ import '../../../../application/providers.dart';
 import '../../../../config/theme/theme.dart';
 import '../../../../core/error/app_exception.dart';
 import '../../../router/routes.dart';
+import '../../../widgets/dialogs/app_dialog_shell.dart';
 import '../../../widgets/inputs/app_text_field.dart';
 
 /// §11.16 계정 그룹 다이얼로그. [AccountScreen]에서 [WidgetRef]를 받아 실제 세션 종료·
@@ -15,8 +16,17 @@ import '../../../widgets/inputs/app_text_field.dart';
 ///
 /// 게스트 우선 원칙(§3.3): 로그아웃/삭제 후에는 익명 세션으로 복귀시켜 앱을 계속 쓸 수
 /// 있게 한다. 미구성(데모) 환경에서는 [AuthRepository]가 로컬 신원만 다루므로 무해하게 동작.
-
-/// "로그아웃" 탭 → 확인 다이얼로그 → 세션 종료 → 게스트(익명) 복귀 → 홈.
+///
+/// DESIGN v2 §4.6/§7.7 — 스톡 `AlertDialog` 셸을 [AppDialogShell](destructive)로
+/// 교체했다. 로직(200ms 지연 스피너, "삭제" 재입력)은 불변.
+///
+/// 여기서는 공용 `showAppDialog()` 헬퍼 대신 `showDialog` + `AppDialogShell`을 직접
+/// 조합한다 — 이 앱은 `StatefulShellRoute`(branch별 중첩 Navigator, §app_router)를 쓰므로
+/// `onPrimary`/`onSecondary`에서 팝은 반드시 `builder`가 준 `dialogContext`로 해야
+/// 다이얼로그가 실제로 올라간 Navigator를 정확히 찾는다(바깥 화면의 `context`로 팝하면
+/// 화면 자신이 속한 branch Navigator를 팝해버려 다이얼로그가 안 닫히고 화면이 먼저
+/// 튕겨나가는 버그가 난다). `showAppDialog()`는 바깥 `context`만 캡처된 콜백을
+/// 받으므로 이 위험을 그대로 안고 있다 — P2 위젯 버그로 별도 보고.
 Future<void> showLogoutConfirmDialog(
   BuildContext context,
   WidgetRef ref,
@@ -24,19 +34,16 @@ Future<void> showLogoutConfirmDialog(
   final colors = context.colors;
   final confirmed = await showDialog<bool>(
     context: context,
-    builder: (dialogContext) => AlertDialog(
-      title: const Text('로그아웃 할까요?'),
-      content: const Text('다시 로그인하면 연결된 기록을 이어서 볼 수 있어요.'),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.of(dialogContext).pop(false),
-          child: const Text('취소'),
-        ),
-        TextButton(
-          onPressed: () => Navigator.of(dialogContext).pop(true),
-          child: Text('로그아웃', style: TextStyle(color: colors.coral)),
-        ),
-      ],
+    barrierColor: colors.ink900.withValues(alpha: 0.32),
+    builder: (dialogContext) => AppDialogShell(
+      title: '로그아웃 할까요?',
+      message: '다시 로그인하면 연결된 기록을 이어서 볼 수 있어요.',
+      icon: Icons.logout_rounded,
+      destructive: true,
+      primaryLabel: '로그아웃',
+      onPrimary: () => Navigator.of(dialogContext).pop(true),
+      secondaryLabel: '취소',
+      onSecondary: () => Navigator.of(dialogContext).pop(false),
     ),
   );
   if (confirmed != true || !context.mounted) return;
@@ -72,28 +79,23 @@ Future<void> showDeleteAccountConfirmFlow(
   final colors = context.colors;
   final proceed = await showDialog<bool>(
     context: context,
-    builder: (dialogContext) => AlertDialog(
-      title: const Text('계정을 삭제할까요?'),
-      content: Text(
-        '모든 기록이 삭제되고 되돌릴 수 없어요.',
-        style: TextStyle(color: colors.coral),
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.of(dialogContext).pop(false),
-          child: const Text('취소'),
-        ),
-        TextButton(
-          onPressed: () => Navigator.of(dialogContext).pop(true),
-          child: Text('계속', style: TextStyle(color: colors.coral)),
-        ),
-      ],
+    barrierColor: colors.ink900.withValues(alpha: 0.32),
+    builder: (dialogContext) => AppDialogShell(
+      title: '계정을 삭제할까요?',
+      message: '모든 기록이 삭제되고 되돌릴 수 없어요.',
+      icon: Icons.delete_outline_rounded,
+      destructive: true,
+      primaryLabel: '계속',
+      onPrimary: () => Navigator.of(dialogContext).pop(true),
+      secondaryLabel: '취소',
+      onSecondary: () => Navigator.of(dialogContext).pop(false),
     ),
   );
   if (proceed != true || !context.mounted) return;
 
   final confirmed = await showDialog<bool>(
     context: context,
+    barrierColor: colors.ink900.withValues(alpha: 0.32),
     builder: (_) => const _DeleteAccountReconfirmDialog(),
   );
   if (confirmed != true || !context.mounted) return;
@@ -165,38 +167,26 @@ class _DeleteAccountReconfirmDialogState
 
   @override
   Widget build(BuildContext context) {
-    final colors = context.colors;
-    return AlertDialog(
-      title: const Text('마지막으로 확인할게요'),
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            '계속하려면 아래에 "$_confirmWord"라고 입력해 주세요.',
-            style: context.texts.body.copyWith(color: colors.ink700),
-          ),
-          const SizedBox(height: AppSpacing.x12),
-          AppTextField(
-            controller: _controller,
-            hintText: _confirmWord,
-            autofocus: true,
-            textInputAction: TextInputAction.done,
-            onChanged: (value) =>
-                setState(() => _matches = value.trim() == _confirmWord),
-          ),
-        ],
+    // 이 위젯 자신이 다이얼로그 route의 콘텐츠(= builder가 반환한 트리)이므로,
+    // 이 build의 [context]가 바로 다이얼로그가 실제로 올라간 Navigator의 후손이다
+    // (원 코드와 동일한 안전한 팝 대상 — 위 showLogoutConfirmDialog 문서 참고).
+    return AppDialogShell(
+      title: '마지막으로 확인할게요',
+      message: '계속하려면 아래에 "$_confirmWord"라고 입력해 주세요.',
+      icon: Icons.delete_forever_rounded,
+      destructive: true,
+      content: AppTextField(
+        controller: _controller,
+        hintText: _confirmWord,
+        autofocus: true,
+        textInputAction: TextInputAction.done,
+        onChanged: (value) =>
+            setState(() => _matches = value.trim() == _confirmWord),
       ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.of(context).pop(false),
-          child: const Text('취소'),
-        ),
-        TextButton(
-          onPressed: _matches ? () => Navigator.of(context).pop(true) : null,
-          child: Text('계정 삭제', style: TextStyle(color: colors.coral)),
-        ),
-      ],
+      primaryLabel: '계정 삭제',
+      onPrimary: _matches ? () => Navigator.of(context).pop(true) : null,
+      secondaryLabel: '취소',
+      onSecondary: () => Navigator.of(context).pop(false),
     );
   }
 }

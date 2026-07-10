@@ -147,37 +147,43 @@ class _TopBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(
-        AppSpacing.x8,
-        AppSpacing.x8,
-        AppSpacing.screenPadding,
-        AppSpacing.x8,
+    // DESIGN v2 §7.2-1 — TopBar 하단 상시 헤어라인(AppAppBar와 같은 표면 경계 문법).
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        border: Border(bottom: BorderSide(color: colors.line)),
       ),
-      child: Row(
-        children: [
-          GestureDetector(
-            behavior: HitTestBehavior.opaque,
-            onTap: onBack,
-            child: SizedBox(
-              width: 40,
-              height: 40,
-              child: Center(
-                child: Icon(Icons.arrow_back, size: 24, color: colors.ink900),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(
+          AppSpacing.x8,
+          AppSpacing.x8,
+          AppSpacing.screenPadding,
+          AppSpacing.x8,
+        ),
+        child: Row(
+          children: [
+            GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: onBack,
+              child: SizedBox(
+                width: 40,
+                height: 40,
+                child: Center(
+                  child: Icon(Icons.arrow_back, size: 24, color: colors.ink900),
+                ),
               ),
             ),
-          ),
-          const SizedBox(width: AppSpacing.x4),
-          Expanded(
-            child: SearchFieldBar(
-              controller: controller,
-              focusNode: focusNode,
-              onChanged: onChanged,
-              onSubmitted: onSubmitted,
-              onClear: onClear,
+            const SizedBox(width: AppSpacing.x4),
+            Expanded(
+              child: SearchFieldBar(
+                controller: controller,
+                focusNode: focusNode,
+                onChanged: onChanged,
+                onSubmitted: onSubmitted,
+                onClear: onClear,
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -215,9 +221,17 @@ class _Results extends ConsumerWidget {
             message: '다른 이름이나 초성으로 검색해 보세요',
           );
         }
-        return ListView.builder(
+        // DESIGN v2 §7.2-2 — 카드화하지 않고 행 사이 inset 헤어라인(좌 72dp)으로
+        // 리듬만 부여한다.
+        return ListView.separated(
           padding: const EdgeInsets.symmetric(vertical: AppSpacing.x8),
           itemCount: results.length,
+          separatorBuilder: (context, _) => Divider(
+            height: 1,
+            thickness: 1,
+            indent: SearchResultTile.dividerIndent,
+            color: context.colors.line,
+          ),
           itemBuilder: (context, index) {
             final symptom = results[index];
             final tile = SearchResultTile(

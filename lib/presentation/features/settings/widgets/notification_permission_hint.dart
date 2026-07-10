@@ -16,6 +16,9 @@ import '../../../../core/notifications/notifications.dart';
 ///     권한 프라이밍 화면([onOpenPriming])을 띄워 이유를 먼저 설명하고 요청한다.
 ///   - [NotificationPermissionStatus.denied]: 이미 꺼짐 → OS는 재요청을 띄우지
 ///     않으므로 기기 설정 앱으로 이동("설정 열기")을 안내한다.
+///
+/// DESIGN v2 §7.7/§5.4 — `OfflineBanner`와 동일 문법의 `amberWash` 배너 카드로
+/// 승격(r.sm, amber 20dp 아이콘 + caption + 액션).
 class NotificationPermissionHint extends StatelessWidget {
   const NotificationPermissionHint({
     required this.status,
@@ -35,33 +38,43 @@ class NotificationPermissionHint extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
+    // OfflineBanner와 동일하게 다크 모드에서는 전경색을 amber로 올려 대비를 확보한다.
+    final foreground = context.isDark ? colors.amber : colors.ink700;
     final message = _isNotDetermined
         ? '알림을 켜면 다음 수유 예상 시각과 기록 리마인더를 받을 수 있어요'
         : '기기 알림 권한이 꺼져 있어 알림을 받을 수 없어요';
     return Padding(
-      padding: const EdgeInsets.fromLTRB(
-        AppSpacing.x4,
-        AppSpacing.x8,
-        AppSpacing.x4,
-        0,
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Expanded(
-            child: Text(
-              message,
-              style: context.texts.caption.copyWith(color: colors.ink500),
+      padding: const EdgeInsets.only(top: AppSpacing.x12),
+      child: Container(
+        padding: const EdgeInsets.all(AppSpacing.x12),
+        decoration: BoxDecoration(
+          color: colors.amberWash,
+          borderRadius: AppRadius.brSm,
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.notifications_off_outlined,
+              size: 20,
+              color: colors.amber,
             ),
-          ),
-          if (_isNotDetermined)
-            TextButton(onPressed: onOpenPriming, child: const Text('알림 켜기'))
-          else
-            TextButton(
-              onPressed: _openNotificationSettings,
-              child: const Text('설정 열기'),
+            const SizedBox(width: AppSpacing.iconTextGap),
+            Expanded(
+              child: Text(
+                message,
+                style: context.texts.caption.copyWith(color: foreground),
+              ),
             ),
-        ],
+            if (_isNotDetermined)
+              TextButton(onPressed: onOpenPriming, child: const Text('알림 켜기'))
+            else
+              TextButton(
+                onPressed: _openNotificationSettings,
+                child: const Text('설정 열기'),
+              ),
+          ],
+        ),
       ),
     );
   }

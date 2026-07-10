@@ -74,10 +74,16 @@ class _NavItem extends StatelessWidget {
   final bool selected;
   final VoidCallback onTap;
 
+  /// DESIGN v2 §5.3 활성 탭 먹점 슬롯 높이. 점(3.5dp)이 상단 정렬되어 아이콘과
+  /// 사이에 2dp 여백이 남는다(3.5 + 2 = 5.5).
+  static const double _dotSlotHeight = 5.5;
+  static const double _dotSize = 3.5;
+
   @override
   Widget build(BuildContext context) {
     final c = context.colors;
     final target = selected ? c.accent : c.ink300;
+
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
       onTap: onTap,
@@ -90,6 +96,35 @@ class _NavItem extends StatelessWidget {
           return Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
+              SizedBox(
+                height: _dotSlotHeight,
+                child: Align(
+                  alignment: Alignment.topCenter,
+                  child: AnimatedScale(
+                    scale: selected ? 1 : 0,
+                    duration: AppMotion.resolve(
+                      context,
+                      selected ? AppMotion.base : AppMotion.fast,
+                    ),
+                    curve: selected
+                        ? AppMotion.resolveCurve(context, AppMotion.spring)
+                        : AppMotion.standard,
+                    child: AnimatedOpacity(
+                      opacity: selected ? 1 : 0,
+                      duration: AppMotion.resolve(context, AppMotion.fast),
+                      curve: AppMotion.standard,
+                      child: Container(
+                        width: _dotSize,
+                        height: _dotSize,
+                        decoration: BoxDecoration(
+                          color: c.accent,
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
               Icon(
                 selected ? data.activeIcon : data.icon,
                 size: 28,

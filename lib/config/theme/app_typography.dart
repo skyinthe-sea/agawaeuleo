@@ -11,7 +11,8 @@ class AppFontFamily {
   static const String mono = 'JetBrainsMono';
 }
 
-/// §9.2 타입 스케일(색상 비의존). 색은 ThemeData/텍스트가 주입.
+/// §9.2 타입 스케일(색상 비의존, DESIGN v2 §3.3 개정 — displayL/overline/dataL 신규 +
+/// 자간 도입). 색은 ThemeData/텍스트가 주입.
 /// 명조 계열은 정적 Bold 서브셋을 쓰므로 fontWeight(w700)만으로 충분하다.
 /// fontVariations(wght 700)는 정적 폰트에서 무해하게 무시되며 호환성을 위해 유지한다.
 class AppTypography {
@@ -20,12 +21,23 @@ class AppTypography {
   // 정적 Bold 서브셋에는 가변 축이 없어 실효는 없으나(무해), 명시성을 위해 유지.
   static const List<FontVariation> _serifBold = [FontVariation('wght', 700)];
 
+  /// DESIGN v2 §3.3 신규 — 온보딩 제목, 히어로 모먼트.
+  static const TextStyle displayL = TextStyle(
+    fontFamily: AppFontFamily.serif,
+    fontVariations: _serifBold,
+    fontWeight: FontWeight.w700,
+    fontSize: 34,
+    height: 1.25,
+    letterSpacing: -0.5,
+  );
+
   static const TextStyle display = TextStyle(
     fontFamily: AppFontFamily.serif,
     fontVariations: _serifBold,
     fontWeight: FontWeight.w700,
     fontSize: 28,
     height: 1.30,
+    letterSpacing: -0.5,
   );
 
   static const TextStyle title = TextStyle(
@@ -34,6 +46,7 @@ class AppTypography {
     fontWeight: FontWeight.w700,
     fontSize: 22,
     height: 1.35,
+    letterSpacing: -0.3,
   );
 
   static const TextStyle heading = TextStyle(
@@ -41,6 +54,7 @@ class AppTypography {
     fontWeight: FontWeight.w600,
     fontSize: 18,
     height: 1.40,
+    letterSpacing: -0.2,
   );
 
   static const TextStyle bodyL = TextStyle(
@@ -62,6 +76,7 @@ class AppTypography {
     fontWeight: FontWeight.w600,
     fontSize: 15,
     height: 1.20,
+    letterSpacing: 0.2,
   );
 
   static const TextStyle caption = TextStyle(
@@ -69,6 +84,16 @@ class AppTypography {
     fontWeight: FontWeight.w500,
     fontSize: 12,
     height: 1.50,
+    letterSpacing: 0.4,
+  );
+
+  /// DESIGN v2 §3.3 신규 — 섹션 오버라인, 날짜 라벨(`ink500` 소비처 책임).
+  static const TextStyle overline = TextStyle(
+    fontFamily: AppFontFamily.sans,
+    fontWeight: FontWeight.w600,
+    fontSize: 11,
+    height: 1.30,
+    letterSpacing: 1.2,
   );
 
   static const TextStyle data = TextStyle(
@@ -77,12 +102,21 @@ class AppTypography {
     fontSize: 16,
     height: 1.20,
   );
+
+  /// DESIGN v2 §3.3 신규 — 트래킹 히어로 수치(경과시간 등).
+  static const TextStyle dataL = TextStyle(
+    fontFamily: AppFontFamily.mono,
+    fontWeight: FontWeight.w500,
+    fontSize: 28,
+    height: 1.15,
+  );
 }
 
 /// context.texts 로 접근하는 인스턴스 뷰. 단일 소스는 [AppTypography] 정적 토큰.
 class AppTextStyles {
   const AppTextStyles();
 
+  TextStyle get displayL => AppTypography.displayL;
   TextStyle get display => AppTypography.display;
   TextStyle get title => AppTypography.title;
   TextStyle get heading => AppTypography.heading;
@@ -90,5 +124,7 @@ class AppTextStyles {
   TextStyle get body => AppTypography.body;
   TextStyle get label => AppTypography.label;
   TextStyle get caption => AppTypography.caption;
+  TextStyle get overline => AppTypography.overline;
   TextStyle get data => AppTypography.data;
+  TextStyle get dataL => AppTypography.dataL;
 }

@@ -7,6 +7,7 @@ import '../../../application/notification_providers.dart';
 import '../../../config/theme/theme.dart';
 import '../../../core/notifications/notifications.dart';
 import '../../widgets/animated/shake.dart';
+import '../../widgets/brand/ink_halo_icon.dart';
 import '../../widgets/buttons/ghost_button.dart';
 import '../../widgets/buttons/primary_button.dart';
 
@@ -103,18 +104,12 @@ class _PermissionPrimingScreenState
               Center(
                 child: Shake(
                   trigger: _bellShake,
-                  child: Container(
-                    width: 120,
-                    height: 120,
-                    decoration: BoxDecoration(
-                      color: colors.accentWash,
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(
-                      Icons.notifications_active_rounded,
-                      size: 56,
-                      color: colors.accent,
-                    ),
+                  // DESIGN v2 §7.6.7 — 권한 프라이밍 원을 InkHaloIcon(120, animate)으로 교체.
+                  child: const InkHaloIcon(
+                    size: 120,
+                    icon: Icons.notifications_active_rounded,
+                    iconSize: 56,
+                    animate: true,
                   ),
                 ),
               ),

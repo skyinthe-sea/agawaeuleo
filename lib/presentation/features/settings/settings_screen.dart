@@ -10,12 +10,13 @@ import '../../../core/notifications/notifications.dart';
 import '../../router/routes.dart';
 import '../../widgets/animated/shimmer_skeleton.dart';
 import '../../widgets/navigation/app_app_bar.dart';
+import '../../widgets/segments/sliding_segment.dart';
+import '../../widgets/surfaces/paper_background.dart';
 import 'providers/settings_providers.dart';
 import 'terms_doc.dart';
 import 'widgets/app_switch.dart';
 import 'widgets/connect_account_banner.dart';
 import 'widgets/notification_permission_hint.dart';
-import 'widgets/segmented_control.dart';
 import 'widgets/settings_group.dart';
 
 /// §11.16 설정 — 그룹형 리스트(화면 / 알림 / 계정 / 정보).
@@ -43,24 +44,28 @@ class SettingsScreen extends ConsumerWidget {
     return Scaffold(
       backgroundColor: colors.paperBg,
       appBar: const AppAppBar(title: '설정'),
-      body: ListView(
-        padding: const EdgeInsets.all(AppSpacing.screenPadding),
-        children: [
-          // §11.16 "연결 유도 시점: 설정 화면 상단 배너" — 게스트일 때 화면 최상단.
-          if (isGuest) ...[
-            ConnectAccountBanner(onTap: () => context.pushNamed(Routes.login)),
+      body: PaperBackground(
+        child: ListView(
+          padding: const EdgeInsets.all(AppSpacing.screenPadding),
+          children: [
+            // §11.16 "연결 유도 시점: 설정 화면 상단 배너" — 게스트일 때 화면 최상단.
+            if (isGuest) ...[
+              ConnectAccountBanner(
+                onTap: () => context.pushNamed(Routes.login),
+              ),
+              const SizedBox(height: AppSpacing.sectionGap),
+            ],
+            _buildScreenGroup(context, ref, themeMode),
             const SizedBox(height: AppSpacing.sectionGap),
-          ],
-          _buildScreenGroup(context, ref, themeMode),
-          const SizedBox(height: AppSpacing.sectionGap),
-          _buildNotificationGroup(context, ref, notifications),
-          if (!isGuest) ...[
+            _buildNotificationGroup(context, ref, notifications),
+            if (!isGuest) ...[
+              const SizedBox(height: AppSpacing.sectionGap),
+              _buildAccountGroup(context),
+            ],
             const SizedBox(height: AppSpacing.sectionGap),
-            _buildAccountGroup(context),
+            _buildInfoGroup(context, appVersion),
           ],
-          const SizedBox(height: AppSpacing.sectionGap),
-          _buildInfoGroup(context, appVersion),
-        ],
+        ),
       ),
     );
   }
@@ -79,13 +84,16 @@ class SettingsScreen extends ConsumerWidget {
           icon: Icons.contrast_rounded,
           trailing: SizedBox(
             width: 176,
-            child: SegmentedControl<ThemeMode>(
-              segments: const [
-                SegmentedControlItem(value: ThemeMode.light, label: '라이트'),
-                SegmentedControlItem(value: ThemeMode.dark, label: '다크'),
-                SegmentedControlItem(value: ThemeMode.system, label: '시스템'),
-              ],
-              value: themeMode,
+            // DESIGN v2 §4.7/§7.7 — 사설 `SegmentedControl` 중복 구현을 공용
+            // `SlidingSegment`로 교체.
+            child: SlidingSegment<ThemeMode>(
+              items: const [ThemeMode.light, ThemeMode.dark, ThemeMode.system],
+              selected: themeMode,
+              labelOf: (mode) => switch (mode) {
+                ThemeMode.light => '라이트',
+                ThemeMode.dark => '다크',
+                ThemeMode.system => '시스템',
+              },
               // §11.16: 탭 즉시 전체 테마 크로스페이드(300ms, main.dart MaterialApp에
               // themeAnimationDuration으로 배선됨) + 선택 저장.
               onChanged: (mode) =>

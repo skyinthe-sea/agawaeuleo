@@ -269,7 +269,8 @@ class AppTheme {
       onSecondaryContainer: c.sage,
       tertiary: c.amber,
       onTertiary: c.paperRaised,
-      tertiaryContainer: c.paperCard,
+      // DESIGN v2 §3.1 — amberWash가 "정보/배지 옅은 배경" 역할이므로 배선.
+      tertiaryContainer: c.amberWash,
       onTertiaryContainer: c.amber,
       error: c.coral,
       onError: c.paperRaised,

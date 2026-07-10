@@ -8,8 +8,11 @@ import '../../../config/theme/theme.dart';
 import '../../../core/error/app_exception.dart';
 import '../../../core/haptics/app_haptics.dart';
 import '../../router/routes.dart';
+import '../../widgets/brand/ink_halo_icon.dart';
 import '../../widgets/buttons/primary_button.dart';
+import '../../widgets/cards/app_card.dart';
 import '../../widgets/inputs/app_text_field.dart';
+import '../onboarding/widgets/ink_drop_logo.dart';
 
 /// §11.3 로그인 / 계정 연결.
 ///
@@ -144,55 +147,67 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 style: texts.body.copyWith(color: colors.ink500),
               ),
               const SizedBox(height: AppSpacing.x24),
-              AppTextField(
-                controller: _emailController,
-                hintText: '이메일',
-                errorText: _emailError,
-                keyboardType: TextInputType.emailAddress,
-                textInputAction: TextInputAction.next,
-                enabled: !_busy,
-                prefixIcon: Icon(
-                  Icons.mail_outline_rounded,
-                  size: 20,
-                  color: colors.ink500,
+              // DESIGN v2 §7.6.3 폼 카드화 — 이메일/비밀번호 필드 그룹을 raised 카드로.
+              AppCard(
+                emphasis: AppCardEmphasis.raised,
+                padding: const EdgeInsets.all(AppSpacing.x20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    AppTextField(
+                      controller: _emailController,
+                      hintText: '이메일',
+                      errorText: _emailError,
+                      keyboardType: TextInputType.emailAddress,
+                      textInputAction: TextInputAction.next,
+                      enabled: !_busy,
+                      prefixIcon: Icon(
+                        Icons.mail_outline_rounded,
+                        size: 20,
+                        color: colors.ink500,
+                      ),
+                      onSubmitted: (_) => _passwordFocus.requestFocus(),
+                      onChanged: (_) {
+                        if (_emailError != null) {
+                          setState(() => _emailError = null);
+                        }
+                      },
+                    ),
+                    const SizedBox(height: AppSpacing.x12),
+                    AppTextField(
+                      controller: _passwordController,
+                      focusNode: _passwordFocus,
+                      hintText: '비밀번호',
+                      errorText: _passwordError,
+                      obscure: true,
+                      enabled: !_busy,
+                      textInputAction: TextInputAction.done,
+                      prefixIcon: Icon(
+                        Icons.lock_outline_rounded,
+                        size: 20,
+                        color: colors.ink500,
+                      ),
+                      onSubmitted: (_) => _submitEmail(),
+                      onChanged: (_) {
+                        if (_passwordError != null) {
+                          setState(() => _passwordError = null);
+                        }
+                      },
+                    ),
+                    const SizedBox(height: AppSpacing.x8),
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: AuthLinkText(
+                        label: '비밀번호 찾기',
+                        onTap: _busy
+                            ? null
+                            : () => context.pushNamed(Routes.resetPassword),
+                      ),
+                    ),
+                  ],
                 ),
-                onSubmitted: (_) => _passwordFocus.requestFocus(),
-                onChanged: (_) {
-                  if (_emailError != null) setState(() => _emailError = null);
-                },
               ),
-              const SizedBox(height: AppSpacing.x12),
-              AppTextField(
-                controller: _passwordController,
-                focusNode: _passwordFocus,
-                hintText: '비밀번호',
-                errorText: _passwordError,
-                obscure: true,
-                enabled: !_busy,
-                textInputAction: TextInputAction.done,
-                prefixIcon: Icon(
-                  Icons.lock_outline_rounded,
-                  size: 20,
-                  color: colors.ink500,
-                ),
-                onSubmitted: (_) => _submitEmail(),
-                onChanged: (_) {
-                  if (_passwordError != null) {
-                    setState(() => _passwordError = null);
-                  }
-                },
-              ),
-              const SizedBox(height: AppSpacing.x8),
-              Align(
-                alignment: Alignment.centerRight,
-                child: AuthLinkText(
-                  label: '비밀번호 찾기',
-                  onTap: _busy
-                      ? null
-                      : () => context.pushNamed(Routes.resetPassword),
-                ),
-              ),
-              const SizedBox(height: AppSpacing.x16),
+              const SizedBox(height: AppSpacing.x24),
               PrimaryButton(
                 label: '로그인',
                 loading: _pending == _Pending.email,
@@ -210,7 +225,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               const SizedBox(height: AppSpacing.x12),
               SocialButton(
                 label: 'Google로 계속하기',
-                leading: const GoogleGlyph(size: 20),
+                leading: const GoogleGlyph(),
                 loading: _pending == _Pending.google,
                 onPressed: _busy ? null : _linkGoogle,
               ),
@@ -314,7 +329,8 @@ class AuthStagger extends StatelessWidget {
   }
 }
 
-/// §11.3 상단 로고(작게). 수묵 물방울 모티프를 accent.wash 원 안에 담는다.
+/// §11.3 상단 로고(작게). DESIGN v2 §7.6.2 — 스플래시와 동일한 [InkDropLogo] 브랜드
+/// 마크를 [InkHaloIcon] 안에 담아 로고를 통일한다.
 class AuthLogo extends StatelessWidget {
   const AuthLogo({required this.size, super.key});
 
@@ -322,19 +338,9 @@ class AuthLogo extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = context.colors;
-    return Container(
-      width: size,
-      height: size,
-      decoration: BoxDecoration(
-        color: colors.accentWash,
-        shape: BoxShape.circle,
-      ),
-      child: Icon(
-        Icons.water_drop_outlined,
-        size: size * 0.5,
-        color: colors.accent,
-      ),
+    return InkHaloIcon(
+      size: size,
+      child: InkDropLogo(size: size * 0.6),
     );
   }
 }
@@ -478,27 +484,34 @@ class SocialButton extends StatelessWidget {
   }
 }
 
-/// Google "G" 글리프. 외부 애셋/네트워크 없이 페이퍼잉크 톤으로 렌더(단색 ink).
+/// Google "G" 글리프. DESIGN v2 §7.6.4 — 원형 배지(28, `paperRaised` + `line` 보더)
+/// 안에 "G"로 정돈(실제 구글 로고 에셋 도입 금지 — 라이선스, 단색 ink 톤 유지).
 class GoogleGlyph extends StatelessWidget {
-  const GoogleGlyph({required this.size, super.key});
+  const GoogleGlyph({super.key, this.size = 28});
 
+  /// 원형 배지의 지름(dp). 기본 28(§7.6.4).
   final double size;
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
+    final colors = context.colors;
+    return Container(
       width: size,
       height: size,
-      child: Center(
-        child: Text(
-          'G',
-          style: TextStyle(
-            fontFamily: AppFontFamily.serif,
-            fontWeight: FontWeight.w700,
-            fontSize: size,
-            height: 1,
-            color: context.colors.ink900,
-          ),
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        color: colors.paperRaised,
+        shape: BoxShape.circle,
+        border: Border.all(color: colors.line),
+      ),
+      child: Text(
+        'G',
+        style: TextStyle(
+          fontFamily: AppFontFamily.serif,
+          fontWeight: FontWeight.w700,
+          fontSize: size * 0.5,
+          height: 1,
+          color: colors.ink900,
         ),
       ),
     );

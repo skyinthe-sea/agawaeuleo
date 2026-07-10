@@ -78,10 +78,29 @@ class _InfoAccordionState extends State<_InfoAccordion> {
     setState(() => _expanded = !_expanded);
   }
 
+  /// DESIGN v2 §7.3-3 — 섹션 성격별 라인 아이콘(20dp). 픽스처 3종 제목
+  /// ("원인"·"주의점"·"집에서 돌보기")에 매핑하고, 그 외 제목은 일반 라인
+  /// 아이콘으로 폴백한다.
+  IconData get _sectionIcon {
+    final title = widget.section.title;
+    if (title.contains('원인')) return Icons.help_outline;
+    if (title.contains('주의') || title.contains('병원')) {
+      return Icons.error_outline;
+    }
+    if (title.contains('돌보기') || title.contains('관리')) {
+      return Icons.spa_outlined;
+    }
+    return Icons.article_outlined;
+  }
+
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
     final texts = context.texts;
+    // §7.3-3: 펼침 시 아이콘·제목 색 ink700→accent 트윈(fast).
+    final tweenColor = _expanded ? colors.accent : colors.ink700;
+    final duration = AppMotion.resolve(context, AppMotion.fast);
+    final curve = AppMotion.resolveCurve(context, AppMotion.standard);
 
     return AppCard(
       child: Column(
@@ -92,10 +111,20 @@ class _InfoAccordionState extends State<_InfoAccordion> {
             onTap: _toggle,
             child: Row(
               children: [
+                TweenAnimationBuilder<Color?>(
+                  tween: ColorTween(begin: colors.ink700, end: tweenColor),
+                  duration: duration,
+                  curve: curve,
+                  builder: (context, color, _) =>
+                      Icon(_sectionIcon, size: 20, color: color),
+                ),
+                const SizedBox(width: AppSpacing.iconTextGap),
                 Expanded(
-                  child: Text(
-                    widget.section.title,
-                    style: texts.heading.copyWith(color: colors.ink900),
+                  child: AnimatedDefaultTextStyle(
+                    duration: duration,
+                    curve: curve,
+                    style: texts.heading.copyWith(color: tweenColor),
+                    child: Text(widget.section.title),
                   ),
                 ),
                 AnimatedRotation(

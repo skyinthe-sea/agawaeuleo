@@ -10,6 +10,7 @@ import 'package:agawaeuleo/presentation/features/home/widgets/symptom_card.dart'
 import 'package:agawaeuleo/presentation/router/routes.dart';
 import 'package:agawaeuleo/presentation/widgets/skeletons/skeleton_blocks.dart';
 import 'package:agawaeuleo/presentation/widgets/states/error_state.dart';
+import 'package:agawaeuleo/presentation/widgets/surfaces/paper_background.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
@@ -44,51 +45,54 @@ class HomeScreen extends ConsumerWidget {
 
     return Scaffold(
       backgroundColor: colors.paperBg,
-      body: SafeArea(
-        bottom: false,
-        child: CustomScrollView(
-          slivers: [
-            CupertinoSliverRefreshControl(
-              onRefresh: () => ref.refresh(homeSymptomsProvider.future),
-              builder:
-                  (
-                    context,
-                    refreshState,
-                    pulledExtent,
-                    triggerDistance,
-                    indicatorExtent,
-                  ) => InkDropRefreshIndicator(
-                    mode: refreshState,
-                    pulledExtent: pulledExtent,
-                    triggerDistance: triggerDistance,
-                  ),
-            ),
-            SliverToBoxAdapter(
-              child: HomeGreetingBar(
-                greeting: _greetingFor(baby),
-                onBellTap: () => _onBellTap(context),
+      // DESIGN v2 §7.1-5 — 그레인 표면.
+      body: PaperBackground(
+        child: SafeArea(
+          bottom: false,
+          child: CustomScrollView(
+            slivers: [
+              CupertinoSliverRefreshControl(
+                onRefresh: () => ref.refresh(homeSymptomsProvider.future),
+                builder:
+                    (
+                      context,
+                      refreshState,
+                      pulledExtent,
+                      triggerDistance,
+                      indicatorExtent,
+                    ) => InkDropRefreshIndicator(
+                      mode: refreshState,
+                      pulledExtent: pulledExtent,
+                      triggerDistance: triggerDistance,
+                    ),
               ),
-            ),
-            SliverPersistentHeader(
-              pinned: true,
-              delegate: _SearchBarHeaderDelegate(
-                background: colors.paperBg,
-                onTap: () => context.pushNamed(Routes.search),
-              ),
-            ),
-            ...symptomsAsync.when(
-              loading: () => _buildLoadingSlivers(context),
-              error: (error, _) => [
-                SliverFillRemaining(
-                  hasScrollBody: false,
-                  child: ErrorState(
-                    onRetry: () => ref.invalidate(homeSymptomsProvider),
-                  ),
+              SliverToBoxAdapter(
+                child: HomeGreetingBar(
+                  greeting: _greetingFor(baby),
+                  onBellTap: () => _onBellTap(context),
                 ),
-              ],
-              data: (symptoms) => _buildDataSlivers(context, ref, symptoms),
-            ),
-          ],
+              ),
+              SliverPersistentHeader(
+                pinned: true,
+                delegate: _SearchBarHeaderDelegate(
+                  background: colors.paperBg,
+                  onTap: () => context.pushNamed(Routes.search),
+                ),
+              ),
+              ...symptomsAsync.when(
+                loading: () => _buildLoadingSlivers(context),
+                error: (error, _) => [
+                  SliverFillRemaining(
+                    hasScrollBody: false,
+                    child: ErrorState(
+                      onRetry: () => ref.invalidate(homeSymptomsProvider),
+                    ),
+                  ),
+                ],
+                data: (symptoms) => _buildDataSlivers(context, ref, symptoms),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -199,6 +203,10 @@ class HomeScreen extends ConsumerWidget {
 
 /// 고정(sticky) 검색 바용 퍼시스턴트 헤더. 상단 인사 스크롤아웃 후에도 검색 바를 남긴다.
 /// 배경(`paper.bg`)을 채워 아래 콘텐츠가 헤더를 통과해 비치지 않게 한다.
+///
+/// DESIGN v2 §7.1-2 — `overlapsContent`(콘텐츠가 헤더 아래로 스크롤되어 겹치기
+/// 시작함, 즉 인사 바가 스크롤아웃된 상태)로 스크롤 여부를 감지해 `AppAppBar`와
+/// 같은 2단 표면 문법(e2 + 하단 헤어라인)을 표출한다.
 class _SearchBarHeaderDelegate extends SliverPersistentHeaderDelegate {
   const _SearchBarHeaderDelegate({
     required this.background,
@@ -224,15 +232,24 @@ class _SearchBarHeaderDelegate extends SliverPersistentHeaderDelegate {
     double shrinkOffset,
     bool overlapsContent,
   ) {
-    return Container(
-      color: background,
-      padding: const EdgeInsets.fromLTRB(
-        AppSpacing.screenPadding,
-        _top,
-        AppSpacing.screenPadding,
-        _bottom,
+    final colors = context.colors;
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: background,
+        border: overlapsContent
+            ? Border(bottom: BorderSide(color: colors.line))
+            : null,
+        boxShadow: overlapsContent ? context.shadows.e2 : null,
       ),
-      child: HomeSearchBar(onTap: onTap),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(
+          AppSpacing.screenPadding,
+          _top,
+          AppSpacing.screenPadding,
+          _bottom,
+        ),
+        child: HomeSearchBar(onTap: onTap),
+      ),
     );
   }
 

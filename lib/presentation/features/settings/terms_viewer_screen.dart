@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../../../config/theme/theme.dart';
+import '../../widgets/brand/ink_seal.dart';
+import '../../widgets/dividers/brush_divider.dart';
 import '../../widgets/navigation/app_app_bar.dart';
 import 'terms_doc.dart';
 
@@ -11,10 +13,16 @@ import 'terms_doc.dart';
 /// §12.1-9에 따라 실제 법률 문구의 작성·최종 검수 책임은 발주자에게 있다 — 아래
 /// `_sectionsFor`의 TODO 지점을 확정 텍스트로 교체해야 스토어 제출이 가능하다
 /// (§13.4 "개인정보처리방침·이용약관 링크").
+///
+/// DESIGN v2 §7.7 — amber 하드코딩 배경을 `amberWash` 토큰으로, 섹션 제목 앞에
+/// 번호 배지(20dp 원, accentWash/accent, data체)를 붙이고, 문서 말미에
+/// `InkSeal`(watermark) + 시행일로 마무리한다.
 class TermsViewerScreen extends StatelessWidget {
   const TermsViewerScreen({required this.doc, super.key});
 
   final String doc;
+
+  static const String _effectiveDateNotice = '시행일: TODO(발주자) — 최종 확정 후 표기';
 
   @override
   Widget build(BuildContext context) {
@@ -34,14 +42,14 @@ class TermsViewerScreen extends StatelessWidget {
             Text(title, style: texts.title.copyWith(color: colors.ink900)),
             const SizedBox(height: AppSpacing.x4),
             Text(
-              '시행일: TODO(발주자) — 최종 확정 후 표기',
+              _effectiveDateNotice,
               style: texts.caption.copyWith(color: colors.ink500),
             ),
             const SizedBox(height: AppSpacing.x16),
             Container(
               padding: const EdgeInsets.all(AppSpacing.cardPadding),
               decoration: BoxDecoration(
-                color: colors.amber.withValues(alpha: 0.12),
+                color: colors.amberWash,
                 borderRadius: AppRadius.brMd,
                 border: Border.all(color: colors.amber.withValues(alpha: 0.4)),
               ),
@@ -52,18 +60,41 @@ class TermsViewerScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(height: AppSpacing.x24),
-            for (final section in sections) ...[
-              Text(
-                section.heading,
-                style: texts.heading.copyWith(color: colors.ink900),
+            for (var i = 0; i < sections.length; i++) ...[
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  _SectionNumberBadge(number: i + 1),
+                  const SizedBox(width: AppSpacing.iconTextGap),
+                  Expanded(
+                    child: Text(
+                      _stripLeadingNumber(sections[i].heading),
+                      style: texts.heading.copyWith(color: colors.ink900),
+                    ),
+                  ),
+                ],
               ),
               const SizedBox(height: AppSpacing.x8),
               Text(
-                section.body,
+                sections[i].body,
                 style: texts.body.copyWith(color: colors.ink700),
               ),
               const SizedBox(height: AppSpacing.x24),
             ],
+            const BrushDivider.center(),
+            const SizedBox(height: AppSpacing.x24),
+            Center(
+              child: Column(
+                children: [
+                  const InkSeal.md(watermark: true),
+                  const SizedBox(height: AppSpacing.x8),
+                  Text(
+                    _effectiveDateNotice,
+                    style: texts.caption.copyWith(color: colors.ink500),
+                  ),
+                ],
+              ),
+            ),
           ],
         ),
       ),
@@ -128,6 +159,37 @@ class TermsViewerScreen extends StatelessWidget {
     ],
     _ => const [_TermsSection('문서를 찾을 수 없어요', '요청하신 약관 문서가 존재하지 않습니다.')],
   };
+}
+
+/// 섹션 heading의 "N. " 접두를 제거한다 — 번호는 [_SectionNumberBadge]가 대신 보여준다.
+final RegExp _leadingNumberPattern = RegExp(r'^\d+\.\s*');
+
+String _stripLeadingNumber(String heading) =>
+    heading.replaceFirst(_leadingNumberPattern, '');
+
+/// DESIGN v2 §7.7 섹션 제목 앞 번호 배지 — 20dp 원, accentWash/accent, data체.
+class _SectionNumberBadge extends StatelessWidget {
+  const _SectionNumberBadge({required this.number});
+
+  final int number;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.colors;
+    return Container(
+      width: 20,
+      height: 20,
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        color: colors.accentWash,
+        shape: BoxShape.circle,
+      ),
+      child: Text(
+        '$number',
+        style: context.texts.data.copyWith(color: colors.accent),
+      ),
+    );
+  }
 }
 
 class _TermsSection {

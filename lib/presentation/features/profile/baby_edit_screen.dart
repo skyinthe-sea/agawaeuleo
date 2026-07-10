@@ -7,10 +7,11 @@ import '../../../core/haptics/app_haptics.dart';
 import '../../../domain/entities/baby.dart';
 import '../../widgets/buttons/ghost_button.dart';
 import '../../widgets/buttons/primary_button.dart';
+import '../../widgets/dialogs/app_dialog_shell.dart';
 import '../../widgets/inputs/app_text_field.dart';
 import '../../widgets/navigation/app_app_bar.dart';
+import '../../widgets/segments/sliding_segment.dart';
 import 'baby_format.dart';
-import 'widgets/baby_gender_segment.dart';
 
 /// §11.14 아기 프로필 편집 화면(신규 추가/기존 편집 겸용).
 ///
@@ -105,28 +106,20 @@ class _BabyEditScreenState extends ConsumerState<BabyEditScreen> {
     final baby = widget.baby;
     if (baby == null) return;
     final colors = context.colors;
+    // DESIGN v2 §4.6/§7.7 — 스톡 AlertDialog → AppDialogShell(destructive) 교체.
+    // 팝은 반드시 dialogContext로(§showLogoutConfirmDialog 문서의 중첩 Navigator 주의 동일 적용).
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (dialogContext) => AlertDialog(
-        backgroundColor: colors.paperRaised,
-        title: Text(
-          '${baby.name} 프로필을 삭제할까요?',
-          style: context.texts.heading.copyWith(color: colors.ink900),
-        ),
-        content: Text(
-          '이 아기의 수유·수면·기저귀 기록도 함께 삭제되고 되돌릴 수 없어요.',
-          style: context.texts.body.copyWith(color: colors.ink500),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(dialogContext).pop(false),
-            child: const Text('취소'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(dialogContext).pop(true),
-            child: Text('삭제', style: TextStyle(color: colors.coral)),
-          ),
-        ],
+      barrierColor: colors.ink900.withValues(alpha: 0.32),
+      builder: (dialogContext) => AppDialogShell(
+        title: '${baby.name} 프로필을 삭제할까요?',
+        message: '이 아기의 수유·수면·기저귀 기록도 함께 삭제되고 되돌릴 수 없어요.',
+        icon: Icons.child_care_outlined,
+        destructive: true,
+        primaryLabel: '삭제',
+        onPrimary: () => Navigator.of(dialogContext).pop(true),
+        secondaryLabel: '취소',
+        onSecondary: () => Navigator.of(dialogContext).pop(false),
       ),
     );
     if (confirmed != true || !mounted) return;
@@ -177,8 +170,20 @@ class _BabyEditScreenState extends ConsumerState<BabyEditScreen> {
               const SizedBox(height: AppSpacing.x20),
               Text('성별', style: texts.caption.copyWith(color: colors.ink500)),
               const SizedBox(height: AppSpacing.x8),
-              BabyGenderSegment(
-                value: _gender,
+              // DESIGN v2 §4.7 — 사설 BabyGenderSegment 중복 구현을 공용
+              // SlidingSegment로 교체.
+              SlidingSegment<BabyGender>(
+                items: const [
+                  BabyGender.male,
+                  BabyGender.female,
+                  BabyGender.na,
+                ],
+                selected: _gender,
+                labelOf: (gender) => switch (gender) {
+                  BabyGender.male => '남아',
+                  BabyGender.female => '여아',
+                  BabyGender.na => '미입력',
+                },
                 onChanged: (g) => setState(() => _gender = g),
               ),
               const SizedBox(height: AppSpacing.sectionGap),

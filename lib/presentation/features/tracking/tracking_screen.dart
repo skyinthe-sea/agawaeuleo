@@ -11,8 +11,11 @@ import '../../../domain/entities/tracking_log.dart';
 import '../../router/routes.dart';
 import '../../widgets/animated/number_ticker.dart';
 import '../../widgets/animated/tap_spring.dart';
+import '../../widgets/cards/app_card.dart';
 import '../../widgets/skeletons/skeleton_blocks.dart';
+import '../../widgets/states/empty_state.dart';
 import '../../widgets/states/error_state.dart';
+import '../../widgets/surfaces/paper_background.dart';
 import 'tracking_elapsed_ticker.dart';
 import 'tracking_entry_sheet.dart';
 import 'tracking_format.dart';
@@ -137,53 +140,59 @@ class _TrackingScreenState extends ConsumerState<TrackingScreen> {
           _openEntry(babyId: babyId);
         },
       ),
-      body: dayAsync.when(
-        loading: () => const _HomeSkeleton(),
-        error: (_, _) => ErrorState(
-          onRetry: () => ref.invalidate(trackingDayProvider(scope)),
-        ),
-        data: (logs) => ListView(
-          controller: _scroll,
-          padding: const EdgeInsets.fromLTRB(
-            AppSpacing.screenPadding,
-            AppSpacing.x16,
-            AppSpacing.screenPadding,
-            AppSpacing.x64 + AppSpacing.x40,
+      body: PaperBackground(
+        child: dayAsync.when(
+          loading: () => const _HomeSkeleton(),
+          error: (_, _) => ErrorState(
+            onRetry: () => ref.invalidate(trackingDayProvider(scope)),
           ),
-          children: [
-            _SummaryBand(totals: TodayTotals.of(logs)),
-            if (inProgress.isNotEmpty) ...[
-              const SizedBox(height: AppSpacing.x12),
-              for (final log in inProgress)
-                Padding(
-                  padding: const EdgeInsets.only(bottom: AppSpacing.x8),
-                  child: _InProgressBadge(
-                    log: log,
-                    onTap: () => _openStop(log),
+          data: (logs) => ListView(
+            controller: _scroll,
+            padding: const EdgeInsets.fromLTRB(
+              AppSpacing.screenPadding,
+              AppSpacing.x16,
+              AppSpacing.screenPadding,
+              AppSpacing.x64 + AppSpacing.x40,
+            ),
+            children: [
+              _SummaryBand(totals: TodayTotals.of(logs)),
+              if (inProgress.isNotEmpty) ...[
+                const SizedBox(height: AppSpacing.x12),
+                for (final log in inProgress)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: AppSpacing.x8),
+                    child: _InProgressBadge(
+                      log: log,
+                      onTap: () => _openStop(log),
+                    ),
                   ),
-                ),
+              ],
+              const SizedBox(height: AppSpacing.x20),
+              _QuickRow(
+                onTap: (type) => _openEntry(presetType: type, babyId: babyId),
+              ),
+              const SizedBox(height: AppSpacing.sectionGap),
+              Text(
+                '오늘',
+                style: context.texts.heading.copyWith(color: colors.ink900),
+              ),
+              const SizedBox(height: AppSpacing.x12),
+              if (logs.isEmpty)
+                const EmptyState(
+                  title: '아직 오늘 기록이 없어요',
+                  message: '아래 + 로 첫 기록을 남겨보세요',
+                  icon: Icons.edit_note_rounded,
+                )
+              else
+                for (final log in logs)
+                  _TimelineTile(
+                    key: ValueKey(log.id),
+                    log: log,
+                    onTap: () => _editLog(log),
+                    onDelete: () => _deleteWithUndo(log),
+                  ),
             ],
-            const SizedBox(height: AppSpacing.x20),
-            _QuickRow(
-              onTap: (type) => _openEntry(presetType: type, babyId: babyId),
-            ),
-            const SizedBox(height: AppSpacing.sectionGap),
-            Text(
-              '오늘',
-              style: context.texts.heading.copyWith(color: colors.ink900),
-            ),
-            const SizedBox(height: AppSpacing.x12),
-            if (logs.isEmpty)
-              const _TimelineEmpty()
-            else
-              for (final log in logs)
-                _TimelineTile(
-                  key: ValueKey(log.id),
-                  log: log,
-                  onTap: () => _editLog(log),
-                  onDelete: () => _deleteWithUndo(log),
-                ),
-          ],
+          ),
         ),
       ),
     );
@@ -298,49 +307,72 @@ class _SummaryBand extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final reduce = context.reduceMotion;
+    final cards = [
+      _SummaryCard(
+        type: TrackingType.feed,
+        label: '수유',
+        child: NumberTicker(
+          value: totals.feedCount,
+          suffix: '회',
+          style: _valueStyle(context),
+        ),
+      ),
+      _SummaryCard(
+        type: TrackingType.sleep,
+        label: '수면',
+        child: NumberTicker(
+          value: totals.sleepMinutes,
+          formatter: formatSleepBand,
+          style: _valueStyle(context),
+        ),
+      ),
+      _SummaryCard(
+        type: TrackingType.diaper,
+        label: '기저귀',
+        child: NumberTicker(
+          value: totals.diaperCount,
+          suffix: '회',
+          style: _valueStyle(context),
+        ),
+      ),
+    ];
+
     return Row(
       children: [
-        Expanded(
-          child: _SummaryCard(
-            type: TrackingType.feed,
-            label: '수유',
-            child: NumberTicker(
-              value: totals.feedCount,
-              suffix: '회',
-              style: _valueStyle(context),
-            ),
+        for (var i = 0; i < cards.length; i++) ...[
+          if (i > 0) const SizedBox(width: AppSpacing.x12),
+          Expanded(
+            child: _staggerIn(cards[i], index: i, reduce: reduce),
           ),
-        ),
-        const SizedBox(width: AppSpacing.x12),
-        Expanded(
-          child: _SummaryCard(
-            type: TrackingType.sleep,
-            label: '수면',
-            child: NumberTicker(
-              value: totals.sleepMinutes,
-              formatter: formatSleepBand,
-              style: _valueStyle(context),
-            ),
-          ),
-        ),
-        const SizedBox(width: AppSpacing.x12),
-        Expanded(
-          child: _SummaryCard(
-            type: TrackingType.diaper,
-            label: '기저귀',
-            child: NumberTicker(
-              value: totals.diaperCount,
-              suffix: '회',
-              style: _valueStyle(context),
-            ),
-          ),
-        ),
+        ],
       ],
     );
   }
 
   TextStyle _valueStyle(BuildContext context) =>
       context.texts.data.copyWith(color: context.colors.ink900, fontSize: 16);
+
+  /// DESIGN v2 §7.5.3 요약 카드 진입 stagger — 홈 그리드(§10.2)와 동일 문법
+  /// (fadeIn 260ms + slideY .08, 40ms 간격). reduce-motion 시 즉시 표시.
+  Widget _staggerIn(Widget card, {required int index, required bool reduce}) {
+    if (reduce) {
+      return KeyedSubtree(key: ValueKey('summary-card-$index'), child: card);
+    }
+    return card
+        .animate(key: ValueKey('summary-card-anim-$index'))
+        .fadeIn(
+          duration: AppMotion.base,
+          curve: AppMotion.enter,
+          delay: Duration(milliseconds: 40 * index),
+        )
+        .slideY(
+          begin: 0.08,
+          curve: AppMotion.enter,
+          duration: AppMotion.base,
+          delay: Duration(milliseconds: 40 * index),
+        );
+  }
 }
 
 class _SummaryCard extends StatelessWidget {
@@ -358,14 +390,10 @@ class _SummaryCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = context.colors;
     final style = trackingTypeStyle(context, type);
-    return Container(
+    // DESIGN v2 §5.1/§7.5.1 — 수제 Container 데코를 공용 AppCard(raised)로.
+    return AppCard(
+      emphasis: AppCardEmphasis.raised,
       padding: const EdgeInsets.all(AppSpacing.x12),
-      decoration: BoxDecoration(
-        color: colors.paperCard,
-        borderRadius: AppRadius.brMd,
-        boxShadow: context.shadows.e1,
-        border: Border.all(color: colors.line),
-      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -408,10 +436,12 @@ class _InProgressBadge extends StatelessWidget {
             Icon(style.icon, size: 20, color: style.color),
             const SizedBox(width: AppSpacing.x8),
             Expanded(
+              // DESIGN v2 §7.5.2 경과 시간 히어로 — 수치만 dataL(28 모노)로 승격.
               child: ElapsedTicker(
                 start: log.startedAt,
                 prefix: '${style.label} 진행 중 · ',
                 style: context.texts.label.copyWith(color: style.color),
+                valueStyle: context.texts.dataL.copyWith(color: style.color),
               ),
             ),
             Icon(Icons.chevron_right_rounded, size: 20, color: style.color),
@@ -517,54 +547,49 @@ class _TimelineTile extends StatelessWidget {
         ),
         child: Icon(Icons.delete_outline_rounded, color: colors.coral),
       ),
+      // DESIGN v2 §5.1/§7.5.1 — 수제 Container 데코를 공용 AppCard(flat)로.
+      // AppCard(onTap:)가 탭 스프링·press 오목·잉크 워시 리플을 대신하므로
+      // 기존 TapSpring 래퍼는 제거한다(이 영역에 리플이 처음 생김).
       child: Padding(
         padding: const EdgeInsets.only(bottom: AppSpacing.x8),
-        child: TapSpring(
+        child: AppCard(
           onTap: onTap,
-          child: Container(
-            padding: const EdgeInsets.all(AppSpacing.x12),
-            decoration: BoxDecoration(
-              color: colors.paperCard,
-              borderRadius: AppRadius.brMd,
-              boxShadow: context.shadows.e1,
-              border: Border.all(color: colors.line),
-            ),
-            child: Row(
-              children: [
-                SizedBox(
-                  width: 44,
-                  child: Text(
-                    formatClock(log.startedAt),
-                    style: texts.data.copyWith(color: colors.ink500),
-                  ),
+          padding: const EdgeInsets.all(AppSpacing.x12),
+          child: Row(
+            children: [
+              SizedBox(
+                width: 44,
+                child: Text(
+                  formatClock(log.startedAt),
+                  style: texts.data.copyWith(color: colors.ink500),
                 ),
-                const SizedBox(width: AppSpacing.x8),
-                Container(
-                  width: 36,
-                  height: 36,
-                  alignment: Alignment.center,
-                  decoration: BoxDecoration(
-                    color: style.wash,
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(style.icon, size: 20, color: style.color),
+              ),
+              const SizedBox(width: AppSpacing.x8),
+              Container(
+                width: 36,
+                height: 36,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: style.wash,
+                  shape: BoxShape.circle,
                 ),
-                const SizedBox(width: AppSpacing.x12),
-                Expanded(
-                  child: log.isInProgress
-                      ? ElapsedTicker(
-                          start: log.startedAt,
-                          prefix: '${style.label} · 진행 중 ',
-                          style: texts.bodyL.copyWith(color: style.color),
-                        )
-                      : Text(
-                          trackingLogSummary(log),
-                          style: texts.bodyL.copyWith(color: colors.ink900),
-                        ),
-                ),
-                Icon(Icons.more_horiz_rounded, size: 20, color: colors.ink300),
-              ],
-            ),
+                child: Icon(style.icon, size: 20, color: style.color),
+              ),
+              const SizedBox(width: AppSpacing.x12),
+              Expanded(
+                child: log.isInProgress
+                    ? ElapsedTicker(
+                        start: log.startedAt,
+                        prefix: '${style.label} · 진행 중 ',
+                        style: texts.bodyL.copyWith(color: style.color),
+                      )
+                    : Text(
+                        trackingLogSummary(log),
+                        style: texts.bodyL.copyWith(color: colors.ink900),
+                      ),
+              ),
+              Icon(Icons.more_horiz_rounded, size: 20, color: colors.ink300),
+            ],
           ),
         ),
       ),
@@ -577,45 +602,6 @@ class _TimelineTile extends StatelessWidget {
           .slideY(begin: -0.12, end: 0, curve: AppMotion.enter);
     }
     return tile;
-  }
-}
-
-class _TimelineEmpty extends StatelessWidget {
-  const _TimelineEmpty();
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = context.colors;
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: AppSpacing.x32),
-      child: Column(
-        children: [
-          Container(
-            width: 72,
-            height: 72,
-            decoration: BoxDecoration(
-              color: colors.accentWash,
-              shape: BoxShape.circle,
-            ),
-            child: Icon(
-              Icons.edit_note_rounded,
-              size: 36,
-              color: colors.accent,
-            ),
-          ),
-          const SizedBox(height: AppSpacing.x16),
-          Text(
-            '아직 오늘 기록이 없어요',
-            style: context.texts.bodyL.copyWith(color: colors.ink900),
-          ),
-          const SizedBox(height: AppSpacing.x4),
-          Text(
-            '아래 + 로 첫 기록을 남겨보세요',
-            style: context.texts.body.copyWith(color: colors.ink500),
-          ),
-        ],
-      ),
-    );
   }
 }
 

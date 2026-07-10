@@ -101,6 +101,12 @@ class _Avatar extends StatelessWidget {
       decoration: BoxDecoration(
         color: colors.accentWash,
         shape: BoxShape.circle,
+        // DESIGN v2 §7.7 프로필 헤더 히어로화 — e2 + accent 25% 1.5px 링.
+        border: Border.all(
+          color: colors.accent.withValues(alpha: 0.25),
+          width: 1.5,
+        ),
+        boxShadow: context.shadows.e2,
       ),
       child: Icon(
         isGuest ? Icons.person_outline_rounded : Icons.person_rounded,

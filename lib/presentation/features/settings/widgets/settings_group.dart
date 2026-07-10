@@ -4,9 +4,13 @@ import '../../../../config/theme/theme.dart';
 import '../../../../core/haptics/app_haptics.dart';
 import '../../../widgets/animated/ink_wash_splash.dart';
 import '../../../widgets/cards/app_card.dart';
+import '../../../widgets/headers/section_header.dart';
 
-/// §11.16 그룹형 리스트의 한 그룹. 캡션 헤더(선택) + 카드 안에 [children]을 쌓고
+/// §11.16 그룹형 리스트의 한 그룹. 헤더(선택) + 카드 안에 [children]을 쌓고
 /// 항목 사이에 헤어라인(`line`)을 자동으로 끼운다.
+///
+/// DESIGN v2 §7.7 — 캡션 한 줄 헤더를 [SectionHeader](overline 없이)로,
+/// 카드 위계를 `AppCard.raised`로 승격했다(§6.1 강조 표면).
 class SettingsGroup extends StatelessWidget {
   const SettingsGroup({required this.children, super.key, this.header});
 
@@ -24,16 +28,14 @@ class SettingsGroup extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.only(
               left: AppSpacing.x4,
-              bottom: AppSpacing.x8,
+              bottom: AppSpacing.x12,
             ),
-            child: Text(
-              header!,
-              style: context.texts.caption.copyWith(color: colors.ink500),
-            ),
+            child: SectionHeader(title: header!),
           ),
         ],
         AppCard(
           padding: EdgeInsets.zero,
+          emphasis: AppCardEmphasis.raised,
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [

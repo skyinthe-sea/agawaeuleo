@@ -9,6 +9,7 @@ import '../../../core/haptics/app_haptics.dart';
 import '../../router/routes.dart';
 import '../../widgets/animated/check_draw.dart';
 import '../../widgets/buttons/primary_button.dart';
+import '../../widgets/cards/app_card.dart';
 import '../../widgets/inputs/app_text_field.dart';
 import '../settings/terms_doc.dart';
 import 'login_screen.dart';
@@ -43,6 +44,19 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
   int _strength = 0;
 
   bool get _requiredAgreed => _agreeTerms && _agreePrivacy;
+
+  /// DESIGN v2 §7.6.5 "전체 동의" 마스터 체크 상태 — 선택 항목까지 3개 모두 체크됐을 때.
+  bool get _allAgreed => _agreeTerms && _agreePrivacy && _agreeMarketing;
+
+  /// 마스터 체크 토글 — 하위 3개(필수 2 + 선택 1)를 일괄 반전한다.
+  void _toggleAll() {
+    final next = !_allAgreed;
+    setState(() {
+      _agreeTerms = next;
+      _agreePrivacy = next;
+      _agreeMarketing = next;
+    });
+  }
 
   @override
   void dispose() {
@@ -145,90 +159,114 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                 style: texts.body.copyWith(color: colors.ink500),
               ),
               const SizedBox(height: AppSpacing.x24),
-              AppTextField(
-                controller: _emailController,
-                hintText: '이메일',
-                errorText: _emailError,
-                keyboardType: TextInputType.emailAddress,
-                textInputAction: TextInputAction.next,
-                enabled: !_loading,
-                prefixIcon: Icon(
-                  Icons.mail_outline_rounded,
-                  size: 20,
-                  color: colors.ink500,
+              // DESIGN v2 §7.6.3 폼 카드화 — 이메일/비밀번호/확인 필드 그룹을 raised 카드로.
+              AppCard(
+                emphasis: AppCardEmphasis.raised,
+                padding: const EdgeInsets.all(AppSpacing.x20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    AppTextField(
+                      controller: _emailController,
+                      hintText: '이메일',
+                      errorText: _emailError,
+                      keyboardType: TextInputType.emailAddress,
+                      textInputAction: TextInputAction.next,
+                      enabled: !_loading,
+                      prefixIcon: Icon(
+                        Icons.mail_outline_rounded,
+                        size: 20,
+                        color: colors.ink500,
+                      ),
+                      onSubmitted: (_) => _passwordFocus.requestFocus(),
+                      onChanged: (_) {
+                        if (_emailError != null) {
+                          setState(() => _emailError = null);
+                        }
+                      },
+                    ),
+                    const SizedBox(height: AppSpacing.x12),
+                    AppTextField(
+                      controller: _passwordController,
+                      focusNode: _passwordFocus,
+                      hintText: '비밀번호 (8자 이상)',
+                      errorText: _passwordError,
+                      obscure: true,
+                      enabled: !_loading,
+                      textInputAction: TextInputAction.next,
+                      prefixIcon: Icon(
+                        Icons.lock_outline_rounded,
+                        size: 20,
+                        color: colors.ink500,
+                      ),
+                      onChanged: _onPasswordChanged,
+                      onSubmitted: (_) => _confirmFocus.requestFocus(),
+                    ),
+                    const SizedBox(height: AppSpacing.x8),
+                    _StrengthBar(strength: _strength),
+                    const SizedBox(height: AppSpacing.x12),
+                    AppTextField(
+                      controller: _confirmController,
+                      focusNode: _confirmFocus,
+                      hintText: '비밀번호 확인',
+                      errorText: _confirmError,
+                      obscure: true,
+                      enabled: !_loading,
+                      textInputAction: TextInputAction.done,
+                      prefixIcon: Icon(
+                        Icons.lock_outline_rounded,
+                        size: 20,
+                        color: colors.ink500,
+                      ),
+                      onSubmitted: (_) => _submit(),
+                      onChanged: (_) {
+                        if (_confirmError != null) {
+                          setState(() => _confirmError = null);
+                        }
+                      },
+                    ),
+                  ],
                 ),
-                onSubmitted: (_) => _passwordFocus.requestFocus(),
-                onChanged: (_) {
-                  if (_emailError != null) setState(() => _emailError = null);
-                },
-              ),
-              const SizedBox(height: AppSpacing.x12),
-              AppTextField(
-                controller: _passwordController,
-                focusNode: _passwordFocus,
-                hintText: '비밀번호 (8자 이상)',
-                errorText: _passwordError,
-                obscure: true,
-                enabled: !_loading,
-                textInputAction: TextInputAction.next,
-                prefixIcon: Icon(
-                  Icons.lock_outline_rounded,
-                  size: 20,
-                  color: colors.ink500,
-                ),
-                onChanged: _onPasswordChanged,
-                onSubmitted: (_) => _confirmFocus.requestFocus(),
-              ),
-              const SizedBox(height: AppSpacing.x8),
-              _StrengthBar(strength: _strength),
-              const SizedBox(height: AppSpacing.x12),
-              AppTextField(
-                controller: _confirmController,
-                focusNode: _confirmFocus,
-                hintText: '비밀번호 확인',
-                errorText: _confirmError,
-                obscure: true,
-                enabled: !_loading,
-                textInputAction: TextInputAction.done,
-                prefixIcon: Icon(
-                  Icons.lock_outline_rounded,
-                  size: 20,
-                  color: colors.ink500,
-                ),
-                onSubmitted: (_) => _submit(),
-                onChanged: (_) {
-                  if (_confirmError != null) {
-                    setState(() => _confirmError = null);
-                  }
-                },
               ),
               const SizedBox(height: AppSpacing.x24),
-              _AgreeRow(
-                checked: _agreeTerms,
-                required_: true,
-                onToggle: () => setState(() => _agreeTerms = !_agreeTerms),
-                label: '이용약관 동의',
-                onLink: () => context.pushNamed(
-                  Routes.terms,
-                  pathParameters: {RouteParams.doc: TermsDoc.terms},
-                ),
-              ),
-              _AgreeRow(
-                checked: _agreePrivacy,
-                required_: true,
-                onToggle: () => setState(() => _agreePrivacy = !_agreePrivacy),
-                label: '개인정보처리방침 동의',
-                onLink: () => context.pushNamed(
-                  Routes.terms,
-                  pathParameters: {RouteParams.doc: TermsDoc.privacy},
-                ),
-              ),
-              _AgreeRow(
-                checked: _agreeMarketing,
-                required_: false,
-                onToggle: () =>
-                    setState(() => _agreeMarketing = !_agreeMarketing),
-                label: '마케팅 정보 수신 동의',
+              // DESIGN v2 §7.6.5 약관 동의 — "전체 동의" 마스터 행 + 마스터/개별 사이·
+              // 개별 행 사이 헤어라인 + 필수/선택 미니 칩.
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  _AgreeAllRow(checked: _allAgreed, onToggle: _toggleAll),
+                  Divider(height: 1, thickness: 1, color: colors.line),
+                  _AgreeRow(
+                    checked: _agreeTerms,
+                    required_: true,
+                    onToggle: () => setState(() => _agreeTerms = !_agreeTerms),
+                    label: '이용약관 동의',
+                    onLink: () => context.pushNamed(
+                      Routes.terms,
+                      pathParameters: {RouteParams.doc: TermsDoc.terms},
+                    ),
+                  ),
+                  Divider(height: 1, thickness: 1, color: colors.line),
+                  _AgreeRow(
+                    checked: _agreePrivacy,
+                    required_: true,
+                    onToggle: () =>
+                        setState(() => _agreePrivacy = !_agreePrivacy),
+                    label: '개인정보처리방침 동의',
+                    onLink: () => context.pushNamed(
+                      Routes.terms,
+                      pathParameters: {RouteParams.doc: TermsDoc.privacy},
+                    ),
+                  ),
+                  Divider(height: 1, thickness: 1, color: colors.line),
+                  _AgreeRow(
+                    checked: _agreeMarketing,
+                    required_: false,
+                    onToggle: () =>
+                        setState(() => _agreeMarketing = !_agreeMarketing),
+                    label: '마케팅 정보 수신 동의',
+                  ),
+                ],
               ),
               const SizedBox(height: AppSpacing.x24),
               PrimaryButton(
@@ -311,7 +349,105 @@ class _StrengthBar extends StatelessWidget {
   }
 }
 
-/// §11.4 약관 동의 한 줄. 체크 시 CheckDraw 애니메이션, 라벨 탭 시 약관 뷰어로.
+/// §11.4/DESIGN v2 §7.6.5 약관 동의 24×24 체크박스. 체크 시 accent 배경 + CheckDraw
+/// 애니메이션. "전체 동의" 마스터 행과 개별 행이 공용한다.
+class _AgreeCheckbox extends StatelessWidget {
+  const _AgreeCheckbox({required this.checked, required this.onToggle});
+
+  final bool checked;
+  final VoidCallback onToggle;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.colors;
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: () {
+        AppHaptics.toggle();
+        onToggle();
+      },
+      child: AnimatedContainer(
+        duration: AppMotion.fast,
+        width: 24,
+        height: 24,
+        decoration: BoxDecoration(
+          color: checked ? colors.accent : Colors.transparent,
+          borderRadius: AppRadius.brXs,
+          border: Border.all(
+            color: checked ? colors.accent : colors.lineStrong,
+            width: 1.5,
+          ),
+        ),
+        child: checked
+            ? CheckDraw(size: 20, color: colors.paperRaised, trigger: checked)
+            : null,
+      ),
+    );
+  }
+}
+
+/// DESIGN v2 §7.6.5 필수/선택 미니 칩(caption, `line` 보더) — 기존 인라인 "(필수) "/
+/// "(선택) " 문구를 대체한다.
+class _AgreeBadge extends StatelessWidget {
+  const _AgreeBadge({required this.required_});
+
+  final bool required_;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.colors;
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.x8,
+        vertical: AppSpacing.x2,
+      ),
+      decoration: BoxDecoration(
+        border: Border.all(color: colors.line),
+        borderRadius: AppRadius.brFull,
+      ),
+      child: Text(
+        required_ ? '필수' : '선택',
+        style: context.texts.caption.copyWith(
+          color: required_ ? colors.accent : colors.ink500,
+          height: 1,
+        ),
+      ),
+    );
+  }
+}
+
+/// DESIGN v2 §7.6.5 "전체 동의" 마스터 행 — 체크 시 하위 3개(필수 2 + 선택 1)를 일괄
+/// 토글한다. 개별 행과 달리 배지·링크가 없다.
+class _AgreeAllRow extends StatelessWidget {
+  const _AgreeAllRow({required this.checked, required this.onToggle});
+
+  final bool checked;
+  final VoidCallback onToggle;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.colors;
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: AppSpacing.x12),
+      child: Row(
+        children: [
+          _AgreeCheckbox(checked: checked, onToggle: onToggle),
+          const SizedBox(width: AppSpacing.x12),
+          Text(
+            '전체 동의',
+            style: context.texts.body.copyWith(
+              color: colors.ink900,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// §11.4 약관 동의 개별 행. 체크 시 CheckDraw 애니메이션, 라벨 탭 시 약관 뷰어로.
+/// 필수/선택은 DESIGN v2 §7.6.5 미니 칩([_AgreeBadge])으로 표시한다.
 class _AgreeRow extends StatelessWidget {
   const _AgreeRow({
     required this.checked,
@@ -333,44 +469,13 @@ class _AgreeRow extends StatelessWidget {
     final texts = context.texts;
 
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: AppSpacing.x4),
+      padding: const EdgeInsets.symmetric(vertical: AppSpacing.x12),
       child: Row(
         children: [
-          GestureDetector(
-            behavior: HitTestBehavior.opaque,
-            onTap: () {
-              AppHaptics.toggle();
-              onToggle();
-            },
-            child: AnimatedContainer(
-              duration: AppMotion.fast,
-              width: 24,
-              height: 24,
-              decoration: BoxDecoration(
-                color: checked ? colors.accent : Colors.transparent,
-                borderRadius: AppRadius.brXs,
-                border: Border.all(
-                  color: checked ? colors.accent : colors.lineStrong,
-                  width: 1.5,
-                ),
-              ),
-              child: checked
-                  ? CheckDraw(
-                      size: 20,
-                      color: colors.paperRaised,
-                      trigger: checked,
-                    )
-                  : null,
-            ),
-          ),
+          _AgreeCheckbox(checked: checked, onToggle: onToggle),
           const SizedBox(width: AppSpacing.x12),
-          Text(
-            required_ ? '(필수) ' : '(선택) ',
-            style: texts.body.copyWith(
-              color: required_ ? colors.accent : colors.ink500,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
+          _AgreeBadge(required_: required_),
+          const SizedBox(width: AppSpacing.x8),
           Expanded(
             child: GestureDetector(
               behavior: HitTestBehavior.opaque,

@@ -2,10 +2,13 @@ import 'package:agawaeuleo/application/providers.dart';
 import 'package:agawaeuleo/config/theme/theme.dart';
 import 'package:agawaeuleo/core/haptics/app_haptics.dart';
 import 'package:agawaeuleo/presentation/widgets/animated/ink_wash_splash.dart';
+import 'package:agawaeuleo/presentation/widgets/headers/section_header.dart';
+import 'package:agawaeuleo/presentation/widgets/states/empty_state.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../search_providers.dart';
+import 'search_result_tile.dart';
 
 /// §11.8 최근 검색어 — 입력이 비었을 때 노출. 좌스와이프로 개별 삭제, 탭 시 재검색.
 class RecentSearchesView extends ConsumerWidget {
@@ -18,37 +21,58 @@ class RecentSearchesView extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final async = ref.watch(recentSearchesProvider);
     return async.maybeWhen(
-      data: (items) =>
-          items.isEmpty ? const _EmptyHint() : _list(context, ref, items),
+      // DESIGN v2 §7.2-4 — 수제 `_EmptyHint` → 공용 `EmptyState`로 교체.
+      data: (items) => items.isEmpty
+          ? const EmptyState(
+              icon: Icons.history_rounded,
+              title: '아직 검색 기록이 없어요',
+              message: '증상 이름이나 초성으로 검색해 보세요',
+            )
+          : _list(context, ref, items),
       orElse: () => const SizedBox.shrink(),
     );
   }
 
   Widget _list(BuildContext context, WidgetRef ref, List<String> items) {
-    return ListView(
+    final colors = context.colors;
+    // DESIGN v2 §7.2-2 — 행 사이 inset 헤어라인(좌 72dp, 결과 행과 동일 리듬).
+    // 헤더와 첫 행 사이에는 넣지 않는다("행 사이"에만 적용).
+    return ListView.separated(
       padding: const EdgeInsets.only(bottom: AppSpacing.x24),
-      children: [
-        _Header(
-          onClearAll: () {
-            AppHaptics.toggle();
-            ref.read(recentSearchRepositoryProvider).clear();
-          },
-        ),
-        for (final query in items)
-          _RecentRow(
-            key: ValueKey(query),
-            query: query,
-            onTap: () => onSelect(query),
-            onDelete: () {
+      itemCount: items.length + 1,
+      separatorBuilder: (context, index) => index == 0
+          ? const SizedBox.shrink()
+          : Divider(
+              height: 1,
+              thickness: 1,
+              indent: SearchResultTile.dividerIndent,
+              color: colors.line,
+            ),
+      itemBuilder: (context, index) {
+        if (index == 0) {
+          return _Header(
+            onClearAll: () {
               AppHaptics.toggle();
-              ref.read(recentSearchRepositoryProvider).delete(query);
+              ref.read(recentSearchRepositoryProvider).clear();
             },
-          ),
-      ],
+          );
+        }
+        final query = items[index - 1];
+        return _RecentRow(
+          key: ValueKey(query),
+          query: query,
+          onTap: () => onSelect(query),
+          onDelete: () {
+            AppHaptics.toggle();
+            ref.read(recentSearchRepositoryProvider).delete(query);
+          },
+        );
+      },
     );
   }
 }
 
+/// DESIGN v2 §7.2-3 — `SectionHeader`(trailing="전체 삭제" 텍스트 버튼)로 교체.
 class _Header extends StatelessWidget {
   const _Header({required this.onClearAll});
 
@@ -61,32 +85,25 @@ class _Header extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(
         AppSpacing.screenPadding,
         AppSpacing.x16,
-        AppSpacing.x12,
+        AppSpacing.screenPadding,
         AppSpacing.x8,
       ),
-      child: Row(
-        children: [
-          Expanded(
+      child: SectionHeader(
+        title: '최근 검색어',
+        trailing: GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: onClearAll,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.x8,
+              vertical: AppSpacing.x4,
+            ),
             child: Text(
-              '최근 검색어',
-              style: context.texts.label.copyWith(color: colors.ink500),
+              '전체 삭제',
+              style: context.texts.caption.copyWith(color: colors.accent),
             ),
           ),
-          GestureDetector(
-            behavior: HitTestBehavior.opaque,
-            onTap: onClearAll,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: AppSpacing.x8,
-                vertical: AppSpacing.x4,
-              ),
-              child: Text(
-                '전체 삭제',
-                style: context.texts.caption.copyWith(color: colors.accent),
-              ),
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }
@@ -160,32 +177,6 @@ class _RecentRow extends StatelessWidget {
               ],
             ),
           ),
-        ),
-      ),
-    );
-  }
-}
-
-class _EmptyHint extends StatelessWidget {
-  const _EmptyHint();
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = context.colors;
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.screenPadding),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(Icons.history_rounded, size: 40, color: colors.ink300),
-            const SizedBox(height: AppSpacing.x12),
-            Text(
-              '증상 이름이나 초성으로 검색해 보세요',
-              textAlign: TextAlign.center,
-              style: context.texts.body.copyWith(color: colors.ink500),
-            ),
-          ],
         ),
       ),
     );

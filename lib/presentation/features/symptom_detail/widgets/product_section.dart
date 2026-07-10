@@ -3,6 +3,7 @@ import 'package:agawaeuleo/domain/entities/entities.dart';
 import 'package:agawaeuleo/presentation/features/symptom_detail/symptom_detail_providers.dart';
 import 'package:agawaeuleo/presentation/features/symptom_detail/widgets/product_card.dart';
 import 'package:agawaeuleo/presentation/widgets/buttons/ghost_button.dart';
+import 'package:agawaeuleo/presentation/widgets/headers/section_header.dart';
 import 'package:agawaeuleo/presentation/widgets/skeletons/skeleton_blocks.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -45,9 +46,15 @@ class ProductSection extends ConsumerWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          '이럴 때 도움되는 용품',
-          style: texts.heading.copyWith(color: colors.ink900),
+        // DESIGN v2 §7.3-6 — 헤더를 SectionHeader로, trailing에 개수("N개").
+        SectionHeader(
+          title: '이럴 때 도움되는 용품',
+          trailing: products != null
+              ? Text(
+                  '${products.length}개',
+                  style: texts.data.copyWith(color: colors.ink500),
+                )
+              : null,
         ),
         const SizedBox(height: AppSpacing.x12),
         const _CompensationBadge(),
@@ -76,7 +83,8 @@ class _CompensationBadge extends StatelessWidget {
         vertical: AppSpacing.x8,
       ),
       decoration: BoxDecoration(
-        color: colors.amber.withValues(alpha: 0.16),
+        // DESIGN v2 §7.3-6 — 신규 amberWash 토큰(기존 amber.withValues 하드코딩 대체).
+        color: colors.amberWash,
         borderRadius: AppRadius.brSm,
         border: Border.all(color: colors.amber.withValues(alpha: 0.4)),
       ),
@@ -111,7 +119,8 @@ class _ProductList extends StatelessWidget {
             padding: EdgeInsets.only(
               bottom: index == products.length - 1 ? 0 : AppSpacing.listItemGap,
             ),
-            child: ProductCard(product: product),
+            // DESIGN v2 §7.3-6 — 1위 카드에만 순위 배지 + lineStrong 보더.
+            child: ProductCard(product: product, topRanked: index == 0),
           ),
       ],
     );

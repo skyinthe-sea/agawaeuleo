@@ -10,18 +10,26 @@ import 'package:flutter/material.dart';
 /// (말줄임) + 가격 data 16 `ink.900` + (있으면) 별점 caption. 우측 끝 외부링크
 /// 아이콘 16 `ink.300`. 탭 → 딥링크 외부 오픈 + 스프링/눌림 그림자 + 라이트 햅틱
 /// (AppCard가 처리).
+///
+/// [topRanked]가 true면 DESIGN v2 §7.3-6에 따라 `lineStrong` 보더로 승격하고
+/// 좌상단에 20dp 순위 배지("1", `amberWash`/`amber`)를 얹는다.
 class ProductCard extends StatelessWidget {
-  const ProductCard({required this.product, super.key});
+  const ProductCard({required this.product, super.key, this.topRanked = false});
 
   final Product product;
+
+  /// true면 1위 강조(순위 배지 + `lineStrong` 보더)를 적용한다.
+  final bool topRanked;
 
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
     final texts = context.texts;
 
-    return AppCard(
+    final card = AppCard(
       padding: const EdgeInsets.all(AppSpacing.x12),
+      // 1위는 아래 외곽 lineStrong 보더로 대체하므로 AppCard 자체 헤어라인은 끈다.
+      showBorder: !topRanked,
       onTap: () => ExternalLauncher.openDeeplink(product.deeplink),
       child: SizedBox(
         height: 72,
@@ -50,6 +58,39 @@ class ProductCard extends StatelessWidget {
           ],
         ),
       ),
+    );
+
+    if (!topRanked) return card;
+
+    // §7.3-6: 균일색 Border.all + radius이므로 app_card.dart:54-66의
+    // 비균일-보더 assert 위험이 없다(단일 색 전체 보더). `Container`(가
+    // `DecoratedBox`와 달리 border 두께만큼 child에 암묵적 padding을 더해줌)를
+    // 써야 보더가 내부의 불투명한 AppCard에 완전히 가려지지 않는다.
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        Container(
+          decoration: BoxDecoration(
+            borderRadius: AppRadius.brMd,
+            border: Border.all(color: colors.lineStrong),
+          ),
+          child: card,
+        ),
+        Positioned(
+          top: 6,
+          left: 6,
+          child: Container(
+            width: AppSpacing.x20,
+            height: AppSpacing.x20,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: colors.amberWash,
+              shape: BoxShape.circle,
+            ),
+            child: Text('1', style: texts.data.copyWith(color: colors.amber)),
+          ),
+        ),
+      ],
     );
   }
 }

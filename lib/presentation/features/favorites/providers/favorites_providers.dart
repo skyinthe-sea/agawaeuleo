@@ -72,9 +72,14 @@ final favoriteSymptomsProvider =
       return AsyncValue.data(list);
     });
 
-/// §11.15 "제품" 탭 — 즐겨찾기된 제품 목록(즐겨찾기 최신순 유지).
+/// DESIGN v2 §7.4-3 "제품" 탭 표시용 — 제품 + 즐겨찾기 추가일(`Favorite.createdAt`)
+/// 조인 결과. 도메인 엔티티([Product]/[Favorite])는 변경하지 않고 프레젠테이션
+/// 레이어에서만 결합한다.
+typedef FavoriteProductEntry = ({Product product, DateTime addedAt});
+
+/// §11.15 "제품" 탭 — 즐겨찾기된 제품 목록(즐겨찾기 최신순 유지) + 추가일 조인.
 final favoriteProductsProvider =
-    Provider.autoDispose<AsyncValue<List<Product>>>((ref) {
+    Provider.autoDispose<AsyncValue<List<FavoriteProductEntry>>>((ref) {
       final favoritesAsync = ref.watch(favoritesProvider);
       final catalogAsync = ref.watch(_productCatalogProvider);
 
@@ -93,11 +98,11 @@ final favoriteProductsProvider =
 
       final favorites = favoritesAsync.value ?? const <Favorite>[];
       final catalog = catalogAsync.value ?? const <String, Product>{};
-      final list = <Product>[
+      final list = <FavoriteProductEntry>[
         for (final f in favorites)
           if (f.targetType == FavoriteTargetType.product &&
               catalog[f.targetId] != null)
-            catalog[f.targetId]!,
+            (product: catalog[f.targetId]!, addedAt: f.createdAt),
       ];
       return AsyncValue.data(list);
     });

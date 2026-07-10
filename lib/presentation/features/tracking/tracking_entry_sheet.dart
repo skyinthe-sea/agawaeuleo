@@ -16,9 +16,12 @@ import '../../router/app_router.dart';
 import '../../router/routes.dart';
 import '../../widgets/animated/check_draw.dart';
 import '../../widgets/animated/number_ticker.dart';
+import '../../widgets/brand/ink_seal.dart';
 import '../../widgets/buttons/ghost_button.dart';
 import '../../widgets/buttons/primary_button.dart';
+import '../../widgets/segments/sliding_segment.dart';
 import '../../widgets/sheets/app_bottom_sheet.dart';
+import '../../widgets/sheets/app_sheet_shell.dart';
 import 'tracking_elapsed_ticker.dart';
 import 'tracking_format.dart';
 import 'widgets/backup_priming_sheet.dart';
@@ -319,28 +322,18 @@ class _TrackingEntrySheetState extends ConsumerState<_TrackingEntrySheet> {
 
   @override
   Widget build(BuildContext context) {
-    final colors = context.colors;
     final reduce = context.reduceMotion;
 
+    // DESIGN v2 §4.6/§7.5.7 — 수제 시트 chrome(라운드/그림자 중복 구현)을
+    // 공용 AppSheetShell로 대체(그래버·표면·e3·그레인은 셸이 담당).
     return AnimatedPadding(
       duration: AppMotion.fast,
       padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(context).bottom),
-      child: Container(
-        decoration: BoxDecoration(
-          color: colors.paperRaised,
-          borderRadius: const BorderRadius.vertical(
-            top: Radius.circular(AppRadius.lg),
-          ),
-          boxShadow: context.shadows.e3,
-        ),
-        clipBehavior: Clip.antiAlias,
-        child: SafeArea(
-          top: false,
-          child: AnimatedSwitcher(
-            duration: reduce ? Duration.zero : AppMotion.base,
-            switchInCurve: AppMotion.enter,
-            child: _completed ? _completionView(context) : _formView(context),
-          ),
+      child: AppSheetShell(
+        child: AnimatedSwitcher(
+          duration: reduce ? Duration.zero : AppMotion.base,
+          switchInCurve: AppMotion.enter,
+          child: _completed ? _completionView(context) : _formView(context),
         ),
       ),
     );
@@ -353,10 +346,21 @@ class _TrackingEntrySheetState extends ConsumerState<_TrackingEntrySheet> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          CheckDraw(
-            size: 48,
-            color: context.colors.accent,
-            trigger: _completed,
+          // DESIGN v2 §4.1/§7.5.6 저장 성공 모먼트 — CheckDraw 옆에 낙관 도장
+          // stamp-in("기록이 도장 찍혔다"). haptic은 이미 AppHaptics.complete()가
+          // 울렸으므로 InkSeal 자체 haptic은 중복을 피해 끈다(기본값).
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              CheckDraw(
+                size: 48,
+                color: context.colors.accent,
+                trigger: _completed,
+              ),
+              const SizedBox(width: AppSpacing.x12),
+              InkSeal.sm(animate: true),
+            ],
           ),
           const SizedBox(height: AppSpacing.x12),
           Text(
@@ -369,27 +373,24 @@ class _TrackingEntrySheetState extends ConsumerState<_TrackingEntrySheet> {
   }
 
   Widget _formView(BuildContext context) {
+    // DESIGN v2 §4.6/§7.5.7 — 그래버·좌우/상하 여백은 이제 AppSheetShell이
+    // 담당하므로(fromLTRB(screenPadding,0,screenPadding,screenPadding) + 그래버
+    // 8+4+16) 여기서는 자체 padding·_GrabBar를 두지 않는다.
     return SingleChildScrollView(
       key: const ValueKey('form'),
-      padding: const EdgeInsets.fromLTRB(
-        AppSpacing.screenPadding,
-        AppSpacing.x8,
-        AppSpacing.screenPadding,
-        AppSpacing.x20,
-      ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const _GrabBar(),
-          const SizedBox(height: AppSpacing.x16),
           if (_mode == _EntryMode.stop)
             _stopBody(context)
           else ...[
             if (_mode == _EntryMode.create)
-              _TypeSegment(
-                value: _type,
+              SlidingSegment<TrackingType>(
+                items: TrackingType.values,
+                selected: _type,
                 onChanged: (t) => setState(() => _type = t),
+                labelOf: trackingTypeLabel,
               ),
             SizedBox(height: _mode == _EntryMode.create ? AppSpacing.x20 : 0),
             AnimatedSwitcher(
@@ -562,9 +563,10 @@ class _TrackingEntrySheetState extends ConsumerState<_TrackingEntrySheet> {
                       style: context.texts.label.copyWith(color: colors.ink900),
                     ),
                     const SizedBox(height: AppSpacing.x2),
+                    // DESIGN v2 §7.5.2 경과 시간 히어로 — dataL(28 모노)로 승격.
                     ElapsedTicker(
                       start: log.startedAt,
-                      style: context.texts.data.copyWith(color: style.color),
+                      style: context.texts.dataL.copyWith(color: style.color),
                     ),
                   ],
                 ),
@@ -674,24 +676,6 @@ class _TrackingEntrySheetState extends ConsumerState<_TrackingEntrySheet> {
 
 // ── 하위 위젯 ────────────────────────────────────────────────────────────
 
-class _GrabBar extends StatelessWidget {
-  const _GrabBar();
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Container(
-        width: 32,
-        height: 4,
-        decoration: BoxDecoration(
-          color: context.colors.line,
-          borderRadius: AppRadius.brFull,
-        ),
-      ),
-    );
-  }
-}
-
 class _FieldLabel extends StatelessWidget {
   const _FieldLabel(this.text);
 
@@ -705,80 +689,6 @@ class _FieldLabel extends StatelessWidget {
         text,
         style: context.texts.caption.copyWith(color: context.colors.ink500),
       ),
-    );
-  }
-}
-
-/// §11.11 타입 세그먼트(수유/수면/기저귀) — 슬라이딩 인디케이터 + selectionClick.
-class _TypeSegment extends StatelessWidget {
-  const _TypeSegment({required this.value, required this.onChanged});
-
-  final TrackingType value;
-  final ValueChanged<TrackingType> onChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = context.colors;
-    const options = TrackingType.values;
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final w = constraints.maxWidth / options.length;
-        final index = options.indexOf(value);
-        return Container(
-          height: 44,
-          padding: const EdgeInsets.all(AppSpacing.x4),
-          decoration: BoxDecoration(
-            color: colors.accentWash,
-            borderRadius: AppRadius.brSm,
-          ),
-          child: Stack(
-            children: [
-              AnimatedAlign(
-                duration: context.reduceMotion ? Duration.zero : AppMotion.base,
-                curve: AppMotion.spring,
-                alignment: Alignment(
-                  -1 + (index / (options.length - 1)) * 2,
-                  0,
-                ),
-                child: Container(
-                  width: w - AppSpacing.x8,
-                  height: double.infinity,
-                  decoration: BoxDecoration(
-                    color: colors.accent,
-                    borderRadius: AppRadius.brXs,
-                    boxShadow: context.shadows.e1,
-                  ),
-                ),
-              ),
-              Row(
-                children: [
-                  for (final t in options)
-                    Expanded(
-                      child: GestureDetector(
-                        behavior: HitTestBehavior.opaque,
-                        onTap: () {
-                          if (t == value) return;
-                          AppHaptics.toggle();
-                          onChanged(t);
-                        },
-                        child: Center(
-                          child: Text(
-                            trackingTypeLabel(t),
-                            style: context.texts.label.copyWith(
-                              color: t == value
-                                  ? colors.paperRaised
-                                  : colors.ink700,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                ],
-              ),
-            ],
-          ),
-        );
-      },
     );
   }
 }

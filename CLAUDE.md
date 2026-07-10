@@ -1,12 +1,13 @@
 # CLAUDE.md — 아가왜울어 개발 가이드
 
 아기 증상 검색 → 의학 참고정보 + 쿠팡 파트너스 제품 추천 + 육아 트래커 Flutter 앱.
-**단일 소스(SSOT): `agawaeuleo_spec.md` (v1.1)** — 모든 수치·문구·동작의 계약. 구현과 스펙이 어긋나면 스펙을 먼저 확인하고, 스펙 내부 모순이면 §3.3(게스트 우선) 원칙이 우선.
+**단일 소스(SSOT): `agawaeuleo_spec.md` (v1.2)** — 모든 수치·문구·동작의 계약. 단, **시각·디자인 레이어는 `agawaeuleo_design_premium.md`(DESIGN v2)가 우선**(스펙 §16.4 v1.2 참조). 구현과 스펙이 어긋나면 스펙을 먼저 확인하고, 스펙 내부 모순이면 §3.3(게스트 우선) 원칙이 우선.
 
-## 현재 상태 (2026-07-09 기준)
+## 현재 상태 (2026-07-11 기준)
 
-- **M1~M6 + Fable 최종 검토 완료.** `git log --oneline`이 마일스톤 기록 그 자체 (M1 파운데이션 → M2a 백엔드 → M2b 데이터 → M3+M4 화면 → M5 기본기능 → M6 빌드 → 검토 수정 18/20).
-- 검증 그린: `flutter analyze` 0 이슈, 테스트 13파일 전체 통과, `flutter build apk --debug` ✓, `flutter build ios --debug --no-codesign` ✓.
+- **M1~M6 + Fable 최종 검토 + 디자인 v2("묵직한 페이퍼잉크") 완료.** `git log --oneline`이 마일스톤 기록 그 자체 (M1 파운데이션 → M2a 백엔드 → M2b 데이터 → M3+M4 화면 → M5 기본기능 → M6 빌드 → 검토 수정 18/20 → 디자인 v2).
+- 디자인 v2 시그니처(전부 `lib/presentation/widgets/`): 낙관 `InkSeal`·`InkHaloIcon`·`BrushDivider`·`SectionHeader`·그레인 `PaperBackground`·`AppSheetShell`/`AppDialogShell`·`SlidingSegment`, `AppCard` emphasis 3단(flat/raised/hero), 증상 카테고리 톤 `SymptomTone`. 새 UI는 이 컴포넌트들을 우선 재사용할 것.
+- 검증 그린: `flutter analyze` 0 이슈, 테스트 26파일 전체 통과, `flutter build apk --debug` ✓, `flutter build ios --debug --no-codesign` ✓.
 - Supabase 미구성 상태로 개발됨 → 앱은 **픽스처 데모 모드**(증상 16종)로 완전 동작. `.env` 값이 채워지면 실데이터 모드.
 - 남은 것: 발주자 M0 작업(README.md 체크리스트), v1.1 로드맵(스펙 §3.4 — 홈 위젯·Live Activities·울음 분석·프리미엄).
 - 검토 잔존 2건: SnackBar 200ms(프레임워크 미지원 — 스펙 개정됨), `.env`/`.env.example`(시크릿 가드로 세션 내 생성 불가 — 발주자 수동).
@@ -20,7 +21,7 @@
 
 ## 코드 규칙
 
-- 색/크기/모션 하드코딩 금지 — `lib/config/theme/` 토큰만 (§9 값 변경 금지). reduce-motion은 AppMotion 리졸버 경유.
+- 색/크기/모션 하드코딩 금지 — `lib/config/theme/` 토큰만 (토큰 값의 계약은 DESIGN v2 §3 — 임의 변경 금지). reduce-motion은 AppMotion 리졸버 경유.
 - 레이어: presentation → application → domain → data (§5.2). 증상/제품 데이터 앱 하드코딩 금지.
 - Riverpod: `lib/application/`은 riverpod_annotation 코드젠, `lib/presentation/features/`는 수동 Riverpod(의도적 — 코드젠 의존 없이 자기 검증 가능).
 - 개인 기록은 로컬(Drift) 우선 쓰기 → pending_ops 큐 → 원격 동기화. 인증은 익명 세션이 기본, `linkIdentity`로 승격(user_id 유지).
@@ -44,6 +45,7 @@ flutter build ios --debug --no-codesign  # iOS 검증
 ## 주요 문서
 
 - `agawaeuleo_spec.md` — SSOT 설계서 (§16.4 변경 이력 포함)
+- `agawaeuleo_design_premium.md` — DESIGN v2 시각 레이어 계약 (토큰·시그니처 컴포넌트·운용 매트릭스·화면별 지시)
 - `README.md` — 발주자용: 실행법 + M0 체크리스트
 - `supabase/README.md` — 마이그레이션·Edge Function 배포 절차 (명령 순서 포함)
 - `supabase/CONTENT_REVIEW.md` — 의학 콘텐츠 검수 체크리스트 (**검수 전 프로덕션 시드 금지**)

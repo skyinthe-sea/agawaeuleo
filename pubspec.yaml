@@ -98,6 +98,10 @@ flutter:
   # gen-l10n: `flutter pub get` 시 l10n.yaml + lib/l10n/*.arb 로 AppLocalizations 생성.
   generate: true
 
+  # DESIGN v2 §3.4/§8 — 종이 그레인 텍스처 타일(assets/textures/paper_grain.png).
+  assets:
+    - assets/textures/
+
   fonts:
     - family: Pretendard
       fonts:

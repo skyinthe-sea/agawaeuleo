@@ -25,7 +25,7 @@ class OnboardingPageView extends StatelessWidget {
     final texts = context.texts;
     final reduce = context.reduceMotion;
 
-    Widget illustration = OnboardingIllustration(icon: data.icon);
+    Widget illustration = OnboardingIllustration(icon: data.icon, index: index);
     if (!reduce) {
       illustration = AnimatedBuilder(
         animation: pageController,
@@ -49,7 +49,8 @@ class OnboardingPageView extends StatelessWidget {
         Text(
           data.title,
           textAlign: TextAlign.center,
-          style: texts.display.copyWith(color: colors.ink900),
+          // DESIGN v2 §6.3/§7.6.6 — 온보딩 제목 display → displayL 승격.
+          style: texts.displayL.copyWith(color: colors.ink900),
         ),
         const SizedBox(height: AppSpacing.x12),
         Text(

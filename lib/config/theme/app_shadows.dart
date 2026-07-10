@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-/// §9.5 음영. 회색 금지 — Light는 따뜻한 먹빛 rgba(74,66,50,α).
-/// Dark는 근검정 드롭 + 상단 1px 하이라이트.
+/// §9.5 음영(DESIGN v2 §3.2 개정 — "보일 듯 말 듯"에서 "종이가 실제로 겹친" 수준으로 상향).
+/// 회색 금지 — Light는 따뜻한 먹빛 rgba(74,66,50,α). Dark는 근검정 드롭 + 상단 1px 하이라이트.
 ///
 /// [press](오목) 인셋과 다크 상단 하이라이트는 `BlurStyle.inner` 로는 불투명 fill
 /// 뒤에 그려져 가려진다(무효과). 따라서 [press] 는 소비처(app_card)에서
@@ -37,45 +37,45 @@ class AppShadows extends ThemeExtension<AppShadows> {
   static const AppShadows light = AppShadows(
     e1: [
       BoxShadow(
-        color: Color.fromRGBO(74, 66, 50, 0.06),
+        color: Color.fromRGBO(74, 66, 50, 0.10),
         offset: Offset(0, 1),
         blurRadius: 2,
       ),
       BoxShadow(
-        color: Color.fromRGBO(74, 66, 50, 0.04),
-        offset: Offset(0, 1),
-        blurRadius: 1,
+        color: Color.fromRGBO(74, 66, 50, 0.05),
+        offset: Offset(0, 2),
+        blurRadius: 6,
       ),
     ],
     e2: [
       BoxShadow(
-        color: Color.fromRGBO(74, 66, 50, 0.08),
+        color: Color.fromRGBO(74, 66, 50, 0.12),
         offset: Offset(0, 2),
         blurRadius: 8,
       ),
       BoxShadow(
-        color: Color.fromRGBO(74, 66, 50, 0.05),
+        color: Color.fromRGBO(74, 66, 50, 0.06),
         offset: Offset(0, 1),
         blurRadius: 3,
       ),
     ],
     e3: [
       BoxShadow(
-        color: Color.fromRGBO(74, 66, 50, 0.10),
-        offset: Offset(0, 8),
-        blurRadius: 24,
+        color: Color.fromRGBO(74, 66, 50, 0.14),
+        offset: Offset(0, 10),
+        blurRadius: 28,
       ),
       BoxShadow(
-        color: Color.fromRGBO(74, 66, 50, 0.06),
+        color: Color.fromRGBO(74, 66, 50, 0.07),
         offset: Offset(0, 2),
-        blurRadius: 6,
+        blurRadius: 8,
       ),
     ],
     e4: [
       BoxShadow(
-        color: Color.fromRGBO(74, 66, 50, 0.14),
+        color: Color.fromRGBO(74, 66, 50, 0.16),
         offset: Offset(0, 6),
-        blurRadius: 16,
+        blurRadius: 18,
       ),
     ],
     press: [
@@ -90,33 +90,33 @@ class AppShadows extends ThemeExtension<AppShadows> {
 
   static const AppShadows dark = AppShadows(
     // 상단 하이라이트는 [topHighlight] 보더로 렌더한다(인셋 그림자는 fill에 가려 무효과).
-    topHighlight: Color.fromRGBO(255, 255, 255, 0.04),
+    topHighlight: Color.fromRGBO(255, 255, 255, 0.06),
     e1: [
       BoxShadow(
-        color: Color.fromRGBO(0, 0, 0, 0.4),
+        color: Color.fromRGBO(0, 0, 0, 0.45),
         offset: Offset(0, 1),
-        blurRadius: 2,
+        blurRadius: 3,
       ),
     ],
     e2: [
       BoxShadow(
-        color: Color.fromRGBO(0, 0, 0, 0.5),
+        color: Color.fromRGBO(0, 0, 0, 0.55),
         offset: Offset(0, 2),
         blurRadius: 10,
       ),
     ],
     e3: [
       BoxShadow(
-        color: Color.fromRGBO(0, 0, 0, 0.6),
-        offset: Offset(0, 10),
-        blurRadius: 30,
+        color: Color.fromRGBO(0, 0, 0, 0.65),
+        offset: Offset(0, 12),
+        blurRadius: 32,
       ),
     ],
     e4: [
       BoxShadow(
-        color: Color.fromRGBO(0, 0, 0, 0.55),
+        color: Color.fromRGBO(0, 0, 0, 0.60),
         offset: Offset(0, 8),
-        blurRadius: 20,
+        blurRadius: 22,
       ),
     ],
     press: [

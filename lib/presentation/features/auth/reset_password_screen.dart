@@ -6,6 +6,7 @@ import '../../../config/theme/theme.dart';
 import '../../../core/error/app_exception.dart';
 import '../../../core/haptics/app_haptics.dart';
 import '../../widgets/animated/check_draw.dart';
+import '../../widgets/brand/ink_halo_icon.dart';
 import '../../widgets/buttons/primary_button.dart';
 import '../../widgets/inputs/app_text_field.dart';
 import 'login_screen.dart';
@@ -143,14 +144,12 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         const SizedBox(height: AppSpacing.x48),
-        Container(
-          width: 96,
-          height: 96,
-          decoration: BoxDecoration(
-            color: colors.sageWash,
-            shape: BoxShape.circle,
-          ),
-          alignment: Alignment.center,
+        // DESIGN v2 §7.6.7 — 재설정 성공 원을 InkHaloIcon(96, animate)으로 교체.
+        InkHaloIcon(
+          size: 96,
+          animate: true,
+          washColor: colors.sageWash,
+          fgColor: colors.sage,
           child: CheckDraw(size: 48, color: colors.sage, trigger: _sent),
         ),
         const SizedBox(height: AppSpacing.x24),

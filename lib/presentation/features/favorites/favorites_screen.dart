@@ -9,14 +9,26 @@ import '../../../config/theme/theme.dart';
 import '../../../core/haptics/app_haptics.dart';
 import '../../../domain/entities/entities.dart';
 import '../../router/routes.dart';
+import '../../widgets/headers/section_header.dart';
 import '../../widgets/navigation/app_app_bar.dart';
+import '../../widgets/segments/sliding_segment.dart';
 import '../../widgets/skeletons/skeleton_blocks.dart';
 import '../../widgets/states/empty_state.dart';
 import '../../widgets/states/error_state.dart';
 import 'providers/favorites_providers.dart';
 import 'widgets/favorite_product_tile.dart';
-import 'widgets/favorite_segment_tabs.dart';
 import 'widgets/favorite_symptom_card.dart';
+
+/// §11.15 즐겨찾기 세그먼트(증상/제품). DESIGN v2 §4.7에 따라 표시는 공용
+/// [SlidingSegment]가 담당한다(이 열거형은 화면 상태 + 라벨만 보유).
+enum FavoriteTab {
+  symptom('증상'),
+  product('제품');
+
+  const FavoriteTab(this.label);
+
+  final String label;
+}
 
 /// §11.15 즐겨찾기.
 ///
@@ -87,6 +99,11 @@ class _FavoritesScreenState extends ConsumerState<FavoritesScreen> {
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
+    final texts = context.texts;
+    // DESIGN v2 §7.4-1 trailing "N개" — 현재 탭 기준 개수(로딩/에러 중엔 숨김).
+    final count = _tab == FavoriteTab.symptom
+        ? ref.watch(favoriteSymptomsProvider).value?.length
+        : ref.watch(favoriteProductsProvider).value?.length;
 
     return Scaffold(
       backgroundColor: colors.paperBg,
@@ -102,9 +119,28 @@ class _FavoritesScreenState extends ConsumerState<FavoritesScreen> {
                 AppSpacing.screenPadding,
                 AppSpacing.x8,
               ),
-              child: FavoriteSegmentTabs(
-                value: _tab,
-                onChanged: (t) => setState(() => _tab = t),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  SectionHeader(
+                    overline: '모아보기',
+                    title: '즐겨찾기',
+                    trailing: count != null
+                        ? Text(
+                            '$count개',
+                            style: texts.data.copyWith(color: colors.ink500),
+                          )
+                        : null,
+                  ),
+                  const SizedBox(height: AppSpacing.x16),
+                  // DESIGN v2 §4.7/§7.4-2 — 공용 SlidingSegment로 교체.
+                  SlidingSegment<FavoriteTab>(
+                    items: FavoriteTab.values,
+                    selected: _tab,
+                    onChanged: (t) => setState(() => _tab = t),
+                    labelOf: (t) => t.label,
+                  ),
+                ],
               ),
             ),
             Expanded(
@@ -237,13 +273,15 @@ class _ProductList extends ConsumerWidget {
           padding: const EdgeInsets.all(AppSpacing.screenPadding),
           itemCount: products.length,
           itemBuilder: (context, index) {
-            final product = products[index];
+            final entry = products[index];
+            final product = entry.product;
             final collapsing = collapsingIds.contains(product.id);
             return Column(
               key: ValueKey(product.id),
               children: [
                 FavoriteProductTile(
                   product: product,
+                  addedAt: entry.addedAt,
                   collapsing: collapsing,
                   onUnfavorite: () => onUnfavorite(product.id, product.title),
                 ),

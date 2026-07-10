@@ -6,6 +6,7 @@ import '../../../../config/theme/theme.dart';
 import '../../../router/routes.dart';
 import '../../../widgets/buttons/ghost_button.dart';
 import '../../../widgets/buttons/primary_button.dart';
+import '../../../widgets/sheets/app_sheet_shell.dart';
 
 /// §3.3 기록 n건 도달 시 1회 노출하는 "백업 유도" 시트의 노출 조건 헬퍼.
 ///
@@ -71,78 +72,49 @@ class _BackupPrimingSheet extends StatelessWidget {
     final colors = context.colors;
     final texts = context.texts;
 
-    return Container(
-      decoration: BoxDecoration(
-        color: colors.paperRaised,
-        borderRadius: const BorderRadius.vertical(
-          top: Radius.circular(AppRadius.lg),
-        ),
-        boxShadow: context.shadows.e3,
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: SafeArea(
-        top: false,
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(
-            AppSpacing.screenPadding,
-            AppSpacing.x8,
-            AppSpacing.screenPadding,
-            AppSpacing.x20,
+    // DESIGN v2 §4.6/§7.5.7 — 수제 시트 chrome을 공용 AppSheetShell로 대체.
+    return AppSheetShell(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Center(
+            child: Container(
+              width: 88,
+              height: 88,
+              decoration: BoxDecoration(
+                color: colors.accentWash,
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                Icons.cloud_upload_outlined,
+                size: 40,
+                color: colors.accent,
+              ),
+            ),
           ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Center(
-                child: Container(
-                  width: 32,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: colors.line,
-                    borderRadius: AppRadius.brFull,
-                  ),
-                ),
-              ),
-              const SizedBox(height: AppSpacing.x24),
-              Center(
-                child: Container(
-                  width: 88,
-                  height: 88,
-                  decoration: BoxDecoration(
-                    color: colors.accentWash,
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(
-                    Icons.cloud_upload_outlined,
-                    size: 40,
-                    color: colors.accent,
-                  ),
-                ),
-              ),
-              const SizedBox(height: AppSpacing.x20),
-              Text(
-                '기록을 안전하게 백업하세요',
-                textAlign: TextAlign.center,
-                style: texts.title.copyWith(color: colors.ink900),
-              ),
-              const SizedBox(height: AppSpacing.x12),
-              Text(
-                '지금까지 남긴 기록이 이 기기에만 저장돼 있어요. '
-                '계정을 연결하면 기기를 바꿔도 기록이 그대로 유지돼요.',
-                textAlign: TextAlign.center,
-                style: texts.body.copyWith(color: colors.ink500),
-              ),
-              const SizedBox(height: AppSpacing.x24),
-              PrimaryButton(
-                label: '계정 연결',
-                icon: Icons.link_rounded,
-                onPressed: onConnect,
-              ),
-              const SizedBox(height: AppSpacing.x12),
-              GhostButton(label: '나중에', onPressed: onLater),
-            ],
+          const SizedBox(height: AppSpacing.x20),
+          Text(
+            '기록을 안전하게 백업하세요',
+            textAlign: TextAlign.center,
+            style: texts.title.copyWith(color: colors.ink900),
           ),
-        ),
+          const SizedBox(height: AppSpacing.x12),
+          Text(
+            '지금까지 남긴 기록이 이 기기에만 저장돼 있어요. '
+            '계정을 연결하면 기기를 바꿔도 기록이 그대로 유지돼요.',
+            textAlign: TextAlign.center,
+            style: texts.body.copyWith(color: colors.ink500),
+          ),
+          const SizedBox(height: AppSpacing.x24),
+          PrimaryButton(
+            label: '계정 연결',
+            icon: Icons.link_rounded,
+            onPressed: onConnect,
+          ),
+          const SizedBox(height: AppSpacing.x12),
+          GhostButton(label: '나중에', onPressed: onLater),
+        ],
       ),
     );
   }

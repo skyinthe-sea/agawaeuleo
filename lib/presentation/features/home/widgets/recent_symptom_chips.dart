@@ -5,8 +5,9 @@ import 'package:flutter/material.dart';
 
 /// §11.7 (선택) 최근 본 증상 가로 스크롤 칩.
 ///
-/// 칩 높이 36 · r.full · 배경 `accent.wash` · 텍스트 `accent`. 탭 시 [onTap]으로
-/// 해당 증상 상세로 이동한다.
+/// 칩 높이 36 · r.full · 배경 `accent.wash` · 텍스트 `accent`. DESIGN v2
+/// §7.1-4 — `line` 1px 보더 + 좌측 `history` 아이콘(16, `ink500`)을 추가해
+/// "최근" 성격을 시각적으로 드러낸다. 탭 시 [onTap]으로 해당 증상 상세로 이동한다.
 class RecentSymptomChips extends StatelessWidget {
   const RecentSymptomChips({
     required this.symptoms,
@@ -38,16 +39,27 @@ class RecentSymptomChips extends StatelessWidget {
             onTap: () => onTap(symptom),
             child: Container(
               alignment: Alignment.center,
-              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.x16),
+              padding: const EdgeInsets.only(
+                left: AppSpacing.x12,
+                right: AppSpacing.x16,
+              ),
               decoration: BoxDecoration(
                 color: colors.accentWash,
                 borderRadius: AppRadius.brFull,
+                border: Border.all(color: colors.line),
               ),
-              child: Text(
-                symptom.name,
-                style: context.texts.caption.copyWith(color: colors.accent),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.history_rounded, size: 16, color: colors.ink500),
+                  const SizedBox(width: AppSpacing.iconTextGap),
+                  Text(
+                    symptom.name,
+                    style: context.texts.caption.copyWith(color: colors.accent),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
               ),
             ),
           );

@@ -42,6 +42,11 @@ class HomeScreen extends ConsumerWidget {
     final colors = context.colors;
     final symptomsAsync = ref.watch(homeSymptomsProvider);
     final baby = ref.watch(selectedBabyProvider);
+    // 오늘의 응원(3일 주기 회전, 전원 동일). 목록은 1회 조회·세션 캐시(호출 최소화),
+    // 오늘 1건은 캐시에서 날짜로 계산하므로 추가 서버 호출이 없다.
+    final dailyMessage = currentEncouragementMessage(
+      ref.watch(dailyEncouragementsProvider).value,
+    );
 
     return Scaffold(
       backgroundColor: colors.paperBg,
@@ -69,6 +74,7 @@ class HomeScreen extends ConsumerWidget {
               SliverToBoxAdapter(
                 child: HomeGreetingBar(
                   greeting: _greetingFor(baby),
+                  dailyMessage: dailyMessage,
                   onBellTap: () => _onBellTap(context),
                 ),
               ),

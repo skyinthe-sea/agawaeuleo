@@ -8,6 +8,7 @@ library;
 export 'app_config_remote_data_source.dart';
 export 'auth_data_source.dart';
 export 'baby_remote_data_source.dart';
+export 'daily_encouragement_remote_data_source.dart';
 export 'favorite_remote_data_source.dart';
 export 'product_remote_data_source.dart';
 export 'row_mappers.dart';

@@ -4,6 +4,7 @@ library;
 export 'app_config_repository.dart';
 export 'auth_repository.dart';
 export 'baby_repository.dart';
+export 'daily_encouragement_repository.dart';
 export 'favorite_repository.dart';
 export 'product_repository.dart';
 export 'symptom_info_repository.dart';

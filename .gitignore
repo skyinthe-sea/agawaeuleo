@@ -48,6 +48,10 @@ app.*.map.json
 .env
 lib/config/env.g.dart
 
+# Supabase CLI local artifacts (link state, version cache — machine-local)
+supabase/.temp/
+supabase/.branches/
+
 # Claude Code session state (machine-local)
 .claude/state/
 .claude/sessions/

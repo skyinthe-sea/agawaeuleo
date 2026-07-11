@@ -2,6 +2,7 @@
 library;
 
 export 'baby.dart';
+export 'daily_encouragement.dart';
 export 'favorite.dart';
 export 'product.dart';
 export 'remote_app_config.dart';

@@ -3,14 +3,16 @@ import 'package:flutter/material.dart';
 
 /// §11.7 홈 상단 인사 영역(스크롤 시 스크롤아웃).
 ///
-/// DESIGN v2 §7.1-1 에디토리얼 2단: 위에 `overline`(ink500)으로 오늘 날짜,
-/// 아래 명조 인사(title, 현행 유지). 우측: 알림 벨 아이콘(24) + 안읽음 배지
-/// dot(`coral`). 배경은 페이지 배경과 동일하게 두어 스크롤아웃될 때 자연스럽게
-/// 사라진다.
+/// DESIGN v2 §7.1-1 에디토리얼 2단(날짜 `overline` + 명조 인사 `title`)에 발주자 요청으로
+/// **세 번째 단 "오늘의 응원"([dailyMessage])**을 덧댄다: 인사 아래 한 줄 body(ink700).
+/// 3일마다 회전하는 짧은 위로 문구로, 값이 없으면(로딩/미제공) 렌더하지 않아 기존 2단
+/// 레이아웃으로 자연스럽게 폴백한다. 우측: 알림 벨 아이콘(24) + 안읽음 배지 dot(`coral`).
+/// 배경은 페이지 배경과 동일해 스크롤아웃될 때 자연스럽게 사라진다.
 class HomeGreetingBar extends StatelessWidget {
   const HomeGreetingBar({
     required this.greeting,
     required this.onBellTap,
+    this.dailyMessage,
     this.hasUnread = true,
     super.key,
   });
@@ -18,6 +20,9 @@ class HomeGreetingBar extends StatelessWidget {
   /// 표시할 인사 문구(아기 이름이 있으면 이름, 없으면 기본 인사).
   final String greeting;
   final VoidCallback onBellTap;
+
+  /// 오늘의 응원 문구(3일마다 회전). null/공백이면 표시하지 않는다.
+  final String? dailyMessage;
 
   /// 벨 배지 dot 표시 여부.
   final bool hasUnread;
@@ -69,6 +74,19 @@ class HomeGreetingBar extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
+                if (dailyMessage != null &&
+                    dailyMessage!.trim().isNotEmpty) ...[
+                  const SizedBox(height: AppSpacing.x4),
+                  Text(
+                    dailyMessage!,
+                    style: texts.body.copyWith(
+                      color: colors.ink700,
+                      height: 1.35,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
               ],
             ),
           ),

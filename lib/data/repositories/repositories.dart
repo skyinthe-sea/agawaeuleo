@@ -8,6 +8,7 @@ library;
 export 'app_config_repository_impl.dart';
 export 'auth_repository_impl.dart';
 export 'baby_repository_impl.dart';
+export 'daily_encouragement_repository_impl.dart';
 export 'favorite_repository_impl.dart';
 export 'product_repository_impl.dart';
 export 'recent_search_repository.dart';

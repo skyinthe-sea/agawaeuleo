@@ -60,3 +60,6 @@ supabase/.branches/
 # Xcode SwiftPM workspace state (Flutter 3.44 SPM integration)
 ios/Runner.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/
 tool/illustrations/preview/
+
+# 조리원 원자료 — 개인정보 포함(산모·아기 실명/체중/시설 정보), 커밋 금지
+care_guide.md

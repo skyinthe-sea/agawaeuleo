@@ -8,6 +8,7 @@ import 'package:agawaeuleo/presentation/features/home/widgets/ink_drop_refresh_i
 import 'package:agawaeuleo/presentation/features/home/widgets/recent_symptom_chips.dart';
 import 'package:agawaeuleo/presentation/features/home/widgets/symptom_card.dart';
 import 'package:agawaeuleo/presentation/router/routes.dart';
+import 'package:agawaeuleo/presentation/widgets/headers/section_header.dart';
 import 'package:agawaeuleo/presentation/widgets/skeletons/skeleton_blocks.dart';
 import 'package:agawaeuleo/presentation/widgets/states/error_state.dart';
 import 'package:agawaeuleo/presentation/widgets/surfaces/paper_background.dart';
@@ -163,54 +164,144 @@ class HomeScreen extends ConsumerWidget {
       );
     }
 
-    return [
-      if (recent.isNotEmpty)
-        SliverToBoxAdapter(
-          child: Padding(
-            padding: const EdgeInsets.only(
-              top: AppSpacing.x12,
-              bottom: AppSpacing.x4,
+    // §11.7 개정 — mom(산모) 카드가 하나라도 있으면 '아기 돌봄'/'엄마 돌봄'
+    // 2그룹(SectionHeader + 각각 2열 그리드, order_index 순)으로 나눈다.
+    // mom 카드가 없으면 기존과 픽셀 동일(헤더 없는 단일 그리드).
+    final momSymptoms = <Symptom>[
+      for (final s in symptoms)
+        if (s.audience == SymptomAudience.mom) s,
+    ];
+    final babySymptoms = <Symptom>[
+      for (final s in symptoms)
+        if (s.audience != SymptomAudience.mom) s,
+    ];
+
+    final recentSliver = recent.isNotEmpty
+        ? SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.only(
+                top: AppSpacing.x12,
+                bottom: AppSpacing.x4,
+              ),
+              child: RecentSymptomChips(symptoms: recent, onTap: onTap),
             ),
-            child: RecentSymptomChips(symptoms: recent, onTap: onTap),
+          )
+        : null;
+
+    if (momSymptoms.isEmpty) {
+      return [
+        ?recentSliver,
+        _cardGridSliver(
+          symptoms: symptoms,
+          indexOffset: 0,
+          reduce: reduce,
+          introPlayed: introPlayed,
+          onTap: onTap,
+          padding: const EdgeInsets.fromLTRB(
+            AppSpacing.screenPadding,
+            AppSpacing.x12,
+            AppSpacing.screenPadding,
+            AppSpacing.x20,
           ),
         ),
-      SliverPadding(
+      ];
+    }
+
+    return [
+      ?recentSliver,
+      // baby 카드가 없는 구성(운영에서 mom만 활성)에서는 카드 0개짜리 고아
+      // 헤더를 남기지 않는다 — 위 momSymptoms.isEmpty 조기 반환과 대칭.
+      if (babySymptoms.isNotEmpty) ...[
+        _groupHeaderSliver('아기 돌봄'),
+        _cardGridSliver(
+          symptoms: babySymptoms,
+          indexOffset: 0,
+          reduce: reduce,
+          introPlayed: introPlayed,
+          onTap: onTap,
+          padding: const EdgeInsets.fromLTRB(
+            AppSpacing.screenPadding,
+            AppSpacing.x12,
+            AppSpacing.screenPadding,
+            AppSpacing.x12,
+          ),
+        ),
+      ],
+      _groupHeaderSliver('엄마 돌봄'),
+      _cardGridSliver(
+        symptoms: momSymptoms,
+        // §10.2 첫 로드 stagger 1회 계약 — 두 그룹에 걸쳐 **연속 인덱스**
+        // (40ms×전체 인덱스)를 유지해 markPlayed 타이밍(40ms×전체 개수)과
+        // 어긋나지 않게 한다.
+        indexOffset: babySymptoms.length,
+        reduce: reduce,
+        introPlayed: introPlayed,
+        onTap: onTap,
         padding: const EdgeInsets.fromLTRB(
           AppSpacing.screenPadding,
           AppSpacing.x12,
           AppSpacing.screenPadding,
           AppSpacing.x20,
         ),
-        sliver: SliverGrid(
-          gridDelegate: _gridDelegate,
-          delegate: SliverChildBuilderDelegate((context, index) {
-            final symptom = symptoms[index];
-            final card = SymptomCard(
-              symptom: symptom,
-              onTap: () => onTap(symptom),
-            );
-            if (reduce || introPlayed) {
-              return KeyedSubtree(key: ValueKey(symptom.id), child: card);
-            }
-            // §10.2 첫 로드 stagger: fadeIn 260ms + slideY .08, 40ms 간격.
-            // 키로 Animate 상태를 고정해 새로고침 시 재생되지 않게 한다.
-            return card
-                .animate(key: ValueKey('anim-${symptom.id}'))
-                .fadeIn(
-                  duration: AppMotion.base,
-                  curve: AppMotion.enter,
-                  delay: Duration(milliseconds: 40 * index),
-                )
-                .slideY(
-                  begin: 0.08,
-                  curve: AppMotion.enter,
-                  duration: AppMotion.base,
-                  delay: Duration(milliseconds: 40 * index),
-                );
-          }, childCount: symptoms.length),
-        ),
       ),
     ];
+  }
+
+  /// 그룹 제목 슬리버 — 기존 [SectionHeader] 문법(잉크 틱 + heading) 재사용.
+  Widget _groupHeaderSliver(String title) => SliverPadding(
+    padding: const EdgeInsets.fromLTRB(
+      AppSpacing.screenPadding,
+      AppSpacing.x12,
+      AppSpacing.screenPadding,
+      0,
+    ),
+    sliver: SliverToBoxAdapter(child: SectionHeader(title: title)),
+  );
+
+  /// 증상 카드 2열 그리드 슬리버 1개.
+  ///
+  /// [indexOffset] — §10.2 첫 로드 stagger의 카드 지연(40ms×전체 인덱스)이
+  /// 그룹 분할 후에도 홈 전체에서 연속되도록 하는 시작 인덱스.
+  Widget _cardGridSliver({
+    required List<Symptom> symptoms,
+    required int indexOffset,
+    required bool reduce,
+    required bool introPlayed,
+    required void Function(Symptom) onTap,
+    required EdgeInsets padding,
+  }) {
+    return SliverPadding(
+      padding: padding,
+      sliver: SliverGrid(
+        gridDelegate: _gridDelegate,
+        delegate: SliverChildBuilderDelegate((context, index) {
+          final symptom = symptoms[index];
+          final card = SymptomCard(
+            symptom: symptom,
+            onTap: () => onTap(symptom),
+          );
+          if (reduce || introPlayed) {
+            return KeyedSubtree(key: ValueKey(symptom.id), child: card);
+          }
+          // §10.2 첫 로드 stagger: fadeIn 260ms + slideY .08, 40ms 간격.
+          // 키로 Animate 상태를 고정해 새로고침 시 재생되지 않게 한다.
+          final staggerIndex = indexOffset + index;
+          return card
+              .animate(key: ValueKey('anim-${symptom.id}'))
+              .fadeIn(
+                duration: AppMotion.base,
+                curve: AppMotion.enter,
+                delay: Duration(milliseconds: 40 * staggerIndex),
+              )
+              .slideY(
+                begin: 0.08,
+                curve: AppMotion.enter,
+                duration: AppMotion.base,
+                delay: Duration(milliseconds: 40 * staggerIndex),
+              );
+        }, childCount: symptoms.length),
+      ),
+    );
   }
 
   /// 최근 본 증상 slug → 현재 로드된 [symptoms] 매핑(최신순, 누락 slug 제외).

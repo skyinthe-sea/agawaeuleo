@@ -6,7 +6,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import '_widget_harness.dart';
 
-/// 홈 증상 카드 일러스트 레이아웃(§11.7 개정 — 시드 16종 전부) 스모크.
+/// 홈 증상 카드 일러스트 레이아웃(§11.7 개정 — 시드 32종 전부) 스모크.
 ///
 /// - 등록 증상: 제목 + 한 줄 설명([Symptom.tagline], 개행 없음) + 우측 절반
 ///   일러스트. 일러스트가 아이콘 히어로(`symptom-icon-<id>`)로 비행한다.
@@ -43,10 +43,10 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('시드 16종 전원이 일러스트·태그라인을 갖고 라이트/다크에서 렌더된다', (tester) async {
-    expect(fixtureSymptoms, hasLength(16));
+  testWidgets('시드 32종 전원이 일러스트·태그라인을 갖고 라이트/다크에서 렌더된다', (tester) async {
+    expect(fixtureSymptoms, hasLength(32));
     for (final symptom in fixtureSymptoms) {
-      // 16종 확산 가드 — 새 시드 증상이 일러스트/태그라인 없이 추가되면 실패.
+      // 32종 확산 가드 — 새 시드 증상이 일러스트/태그라인 없이 추가되면 실패.
       expect(
         SymptomIllustrations.has(symptom.emojiOrIcon),
         isTrue,

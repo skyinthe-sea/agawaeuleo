@@ -62,6 +62,25 @@ class SearchResultTile extends StatelessWidget {
                   ),
                 ),
               ),
+              // §11.8 개정 — 검색은 audience 무관 전체 대상. mom(산모) 카드는
+              // 작은 '엄마' 배지(accentWash 알약 + caption accent)로만 구분한다.
+              if (symptom.audience == SymptomAudience.mom) ...[
+                const SizedBox(width: AppSpacing.x8),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.x8,
+                    vertical: AppSpacing.x2,
+                  ),
+                  decoration: BoxDecoration(
+                    color: colors.accentWash,
+                    borderRadius: AppRadius.brFull,
+                  ),
+                  child: Text(
+                    '엄마',
+                    style: context.texts.caption.copyWith(color: colors.accent),
+                  ),
+                ),
+              ],
               const SizedBox(width: AppSpacing.x8),
               Icon(Icons.chevron_right_rounded, size: 20, color: colors.ink300),
             ],

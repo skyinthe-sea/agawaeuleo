@@ -1,23 +1,30 @@
 // 개발용 데모 모드 픽스처 — Supabase 미구성(AppConfig.isConfigured == false) 시
 // 화면이 빈 상태로 보이지 않도록 하는 로컬 대체 데이터입니다.
 //
-// 근거: supabase/migrations/0004_seed.sql (§3.1 C1 증상 목록, §7.1 스키마,
-// §13.3 의료/건강 정보 규칙)의 시드 16종 증상 + 참고정보를 문자열 그대로
-// 미러링했습니다(요약/의역 없음). 시드 SQL이 갱신되면 이 파일도 함께
-// 갱신해야 합니다.
+// 근거: supabase/migrations/0009_care_seed.sql (증상 32종 마스터 + 참고정보,
+// §7.1 스키마, §13.3 의료/건강 정보 규칙)의 시드를 문자열 그대로 미러링했습니다
+// (요약/의역 없음). 시드 SQL과 이 픽스처는 동일 소스(content_final.json)에서
+// 결정적으로 생성되므로 자동 일치합니다. 생성기를 거치지 않은 직접 편집 금지.
 //
 // ⚠️ 의학 정보 고지(원본 시드 파일과 동일): 아래 summary/sections/emergency의
-//    문구는 개발 단계의 '초안'이며, 배포 전 반드시 소아청소년과 전문의 등
-//    의료 전문가의 검수를 거쳐야 합니다(검수 체크리스트:
-//    supabase/CONTENT_REVIEW.md). 진단 단정 표현 금지, 특정 약물/제품을
-//    치료로 권하는 표현 금지, 응급신호는 병원 안내로 분리, 참고용 톤 유지.
+//    문구는 배포 전 반드시 소아청소년과 전문의 등 의료 전문가의 검수를 거쳐야
+//    합니다(검수 체크리스트: supabase/CONTENT_REVIEW.md). 진단 단정 표현 금지,
+//    특정 약물/제품을 치료로 권하는 표현 금지, 응급신호는 병원 안내로 분리,
+//    참고용 톤 유지.
 //
 // **프로덕션 빌드에서는 사용되지 않습니다.** Supabase가 정상 구성되면
 // data 레이어의 리포지토리 구현체가 실제 원격 데이터로 대체합니다. 이
 // 파일은 순수 도메인 객체 리스트만 제공하며 Supabase/Drift 등 어떤
 // 데이터 소스에도 의존하지 않습니다.
+//
+// 참고정보(SymptomInfo)는 파일 크기 때문에 audience별로 분리했습니다:
+//   - fixture_symptom_infos_baby.dart (아기 돌봄)
+//   - fixture_symptom_infos_mom.dart  (엄마 돌봄)
+// 공개 API([fixtureSymptomInfos])는 이 파일에서 그대로 노출합니다(임포트 호환).
 library;
 
+import 'package:agawaeuleo/data/fixtures/fixture_symptom_infos_baby.dart';
+import 'package:agawaeuleo/data/fixtures/fixture_symptom_infos_mom.dart';
 import 'package:agawaeuleo/domain/entities/entities.dart';
 
 /// 모든 픽스처 레코드에 공통으로 쓰는 고정 타임스탬프.
@@ -28,16 +35,14 @@ final DateTime fixtureGeneratedAt = DateTime.utc(2026);
 
 /// `slug` → 픽스처 `Symptom.id` 매핑 규칙.
 ///
-/// [fixtureSymptoms]와 [fixtureSymptomInfos], 그리고
-/// `fixture_products.dart`가 동일한 규칙으로 symptomId를 참조하기 위한
-/// 공용 헬퍼입니다.
+/// [fixtureSymptoms]와 참고정보 픽스처, 그리고 `fixture_products.dart`가
+/// 동일한 규칙으로 symptomId를 참조하기 위한 공용 헬퍼입니다.
 String fixtureSymptomId(String slug) => 'fixture-symptom-$slug';
 
-String _infoId(String slug) => 'fixture-symptom-info-$slug';
-
-/// 시드(0004_seed.sql)와 동일한 16종 증상 마스터 데이터.
+/// 시드(0009_care_seed.sql)와 동일한 32종 증상 마스터 데이터.
 ///
 /// `order_index` 오름차순(시드 파일 순서)과 동일하게 정렬되어 있습니다.
+/// 아기 돌봄 25종(order 1~25) + 엄마 돌봄 7종(order 26~32).
 final List<Symptom> fixtureSymptoms = <Symptom>[
   Symptom(
     id: fixtureSymptomId('colic'),
@@ -68,10 +73,10 @@ final List<Symptom> fixtureSymptoms = <Symptom>[
     slug: 'newborn_heat_rash',
     name: '태열',
     chosung: 'ㅌㅇ',
-    aliases: const ['얼굴 붉어짐', '열꽃', '신생아 발진'],
+    aliases: const ['얼굴 붉어짐', '열꽃', '신생아 발진', '신생아 여드름', '좁쌀 여드름'],
     tagline: '발그레한 얼굴',
     emojiOrIcon: 'newborn_rash',
-    productKeywords: const ['신생아 로션', '태열 크림', '신생아 순한 스킨케어'],
+    productKeywords: const ['신생아 로션', '태열 크림', '신생아 순한 스킨케어', '저자극 보습제'],
     orderIndex: 3,
     createdAt: fixtureGeneratedAt,
   ),
@@ -80,10 +85,21 @@ final List<Symptom> fixtureSymptoms = <Symptom>[
     slug: 'stool_color_abnormal',
     name: '변 색깔 이상',
     chosung: 'ㅂ ㅅㄲ ㅇㅅ',
-    aliases: const ['대변색 변화', '초록변', '흰변'],
+    aliases: const [
+      '대변색 변화',
+      '초록변',
+      '흰변',
+      '녹변',
+      '혈변',
+      '흰색 변',
+      '회색 변',
+      '전유후유 불균형',
+      '모유변',
+      '분유변',
+    ],
     tagline: '달라진 변 색깔',
     emojiOrIcon: 'stool_color',
-    productKeywords: const ['아기 유산균', '신생아 배 마사지오일'],
+    productKeywords: const ['아기 유산균', '신생아 배 마사지오일', '신생아 기저귀'],
     orderIndex: 4,
     createdAt: fixtureGeneratedAt,
   ),
@@ -92,10 +108,10 @@ final List<Symptom> fixtureSymptoms = <Symptom>[
     slug: 'burping_trouble',
     name: '트림 안 나옴',
     chosung: 'ㅌㄹ ㅇ ㄴㅇ',
-    aliases: const ['트림 어려움', '가스참'],
+    aliases: const ['트림 어려움', '가스참', '트림 자세', '트림 시키는 법', '속트림'],
     tagline: '트림이 힘들 때',
     emojiOrIcon: 'burp',
-    productKeywords: const ['트림 방석', '역류방지 쿠션', '유아 가스배출 마사지오일'],
+    productKeywords: const ['트림 방석', '역류방지 쿠션', '유아 가스배출 마사지오일', '가제손수건'],
     orderIndex: 5,
     createdAt: fixtureGeneratedAt,
   ),
@@ -104,10 +120,10 @@ final List<Symptom> fixtureSymptoms = <Symptom>[
     slug: 'spit_up_reflux',
     name: '게워냄',
     chosung: 'ㄱㅇㄴ',
-    aliases: const ['역류', '토함', '분유 토함'],
+    aliases: const ['역류', '토함', '분유 토함', '게움', '분수토', '용트림'],
     tagline: '주르륵 게워냄',
     emojiOrIcon: 'spit_up',
-    productKeywords: const ['역류방지 쿠션', '역류방지 젖병', '트림 방석'],
+    productKeywords: const ['역류방지 쿠션', '역류방지 젖병', '트림 방석', '가제손수건', '아기 턱받이'],
     orderIndex: 6,
     createdAt: fixtureGeneratedAt,
   ),
@@ -116,7 +132,7 @@ final List<Symptom> fixtureSymptoms = <Symptom>[
     slug: 'runny_stuffy_nose',
     name: '콧물·코막힘',
     chosung: 'ㅋㅁ·ㅋㅁㅎ',
-    aliases: const ['비염', '코막힘', '콧물감기'],
+    aliases: const ['비염', '코막힘', '콧물감기', '모세기관지염'],
     tagline: '훌쩍이는 코',
     emojiOrIcon: 'runny_nose',
     productKeywords: const ['아기 콧물흡입기', '생리식염수 스프레이', '유아용 가습기'],
@@ -128,7 +144,7 @@ final List<Symptom> fixtureSymptoms = <Symptom>[
     slug: 'fever',
     name: '열',
     chosung: 'ㅇ',
-    aliases: const ['발열', '고열', '미열'],
+    aliases: const ['발열', '고열', '미열', '열성경련'],
     tagline: '뜨끈한 이마',
     emojiOrIcon: 'fever',
     productKeywords: const ['유아 체온계', '해열패치', '아기 쿨매트'],
@@ -140,10 +156,10 @@ final List<Symptom> fixtureSymptoms = <Symptom>[
     slug: 'rash',
     name: '발진',
     chosung: 'ㅂㅈ',
-    aliases: const ['피부트러블', '두드러기', '뾰루지'],
+    aliases: const ['피부트러블', '두드러기', '뾰루지', '기저귀 발진', '접촉성 피부염'],
     tagline: '오돌토돌 피부',
     emojiOrIcon: 'rash',
-    productKeywords: const ['아기 저자극 로션', '유아 순한 크림', '베이비 파우더'],
+    productKeywords: const ['아기 저자극 로션', '유아 순한 크림', '베이비 파우더', '기저귀 발진크림'],
     orderIndex: 9,
     createdAt: fixtureGeneratedAt,
   ),
@@ -164,10 +180,10 @@ final List<Symptom> fixtureSymptoms = <Symptom>[
     slug: 'constipation',
     name: '변비',
     chosung: 'ㅂㅂ',
-    aliases: const ['배변곤란', '변 딱딱함'],
+    aliases: const ['배변곤란', '변 딱딱함', '토끼똥', '영아 배변곤란', '신생아 변비', '끙끙'],
     tagline: '며칠째 끙끙',
     emojiOrIcon: 'constipation',
-    productKeywords: const ['아기 배 마사지오일', '아기 유산균'],
+    productKeywords: const ['아기 배 마사지오일', '아기 유산균', '유아 변비 유산균'],
     orderIndex: 11,
     createdAt: fixtureGeneratedAt,
   ),
@@ -176,10 +192,10 @@ final List<Symptom> fixtureSymptoms = <Symptom>[
     slug: 'diarrhea',
     name: '설사',
     chosung: 'ㅅㅅ',
-    aliases: const ['묽은변', '물설사'],
+    aliases: const ['묽은변', '물설사', '장염', '로타바이러스', '급성 위장관염', '아기 탈수'],
     tagline: '자꾸 묽은 변',
     emojiOrIcon: 'diarrhea',
-    productKeywords: const ['기저귀 발진크림', '유아 전해질음료', '순한 물티슈'],
+    productKeywords: const ['기저귀 발진크림', '유아 전해질음료', '순한 물티슈', '유아 경구수액'],
     orderIndex: 12,
     createdAt: fixtureGeneratedAt,
   ),
@@ -188,10 +204,10 @@ final List<Symptom> fixtureSymptoms = <Symptom>[
     slug: 'hiccups',
     name: '딸꾹질',
     chosung: 'ㄸㄲㅈ',
-    aliases: const ['딸꾹거림', '횡경막경련'],
+    aliases: const ['딸꾹거림', '횡경막경련', '신생아 딸꾹질', '딸꾹질 멈추는 법'],
     tagline: '깜짝깜짝 딸꾹',
     emojiOrIcon: 'hiccup',
-    productKeywords: const ['공갈젖꼭지', '수유쿠션'],
+    productKeywords: const ['공갈젖꼭지', '수유쿠션', '신생아 모자', '속싸개'],
     orderIndex: 13,
     createdAt: fixtureGeneratedAt,
   ),
@@ -200,10 +216,10 @@ final List<Symptom> fixtureSymptoms = <Symptom>[
     slug: 'prickly_heat',
     name: '땀띠',
     chosung: 'ㄸㄸ',
-    aliases: const ['땀샘막힘', '더위발진'],
+    aliases: const ['땀샘막힘', '더위발진', '땀떼', '한진'],
     tagline: '송골송골 좁쌀',
     emojiOrIcon: 'prickly_heat',
-    productKeywords: const ['땀띠 파우더', '아기 쿨매트', '유아 저자극 바디워시'],
+    productKeywords: const ['땀띠 파우더', '아기 쿨매트', '유아 저자극 바디워시', '아기 순면 배냇저고리'],
     orderIndex: 14,
     createdAt: fixtureGeneratedAt,
   ),
@@ -212,7 +228,7 @@ final List<Symptom> fixtureSymptoms = <Symptom>[
     slug: 'jaundice',
     name: '황달',
     chosung: 'ㅎㄷ',
-    aliases: const ['신생아황달', '눈흰자노랑'],
+    aliases: const ['신생아황달', '눈흰자노랑', '모유황달'],
     tagline: '노르스름 피부',
     emojiOrIcon: 'jaundice',
     productKeywords: const ['신생아 황달관리 매트', '신생아 바디수트'],
@@ -224,510 +240,275 @@ final List<Symptom> fixtureSymptoms = <Symptom>[
     slug: 'eye_discharge_tearing',
     name: '눈곱·눈물',
     chosung: 'ㄴㄱ·ㄴㅁ',
-    aliases: const ['눈물많음', '눈곱낌', '눈물자국'],
+    aliases: const ['눈물많음', '눈곱낌', '눈물자국', '코눈물관 폐쇄', '비루관 막힘'],
     tagline: '눈곱 낀 아침',
     emojiOrIcon: 'eye_care',
     productKeywords: const ['아기 눈물눈곱 티슈', '신생아 아이케어 티슈'],
     orderIndex: 16,
     createdAt: fixtureGeneratedAt,
   ),
+  Symptom(
+    id: fixtureSymptomId('thrush'),
+    slug: 'thrush',
+    name: '아구창',
+    chosung: 'ㅇㄱㅊ',
+    aliases: const ['구강 칸디다', '백태', '입안 백태', '칸디다증'],
+    tagline: '입안 하얀 반점',
+    emojiOrIcon: 'thrush',
+    productKeywords: const ['젖병 열탕소독기', '신생아 구강청결 거즈손수건', '실리콘 공갈젖꼭지'],
+    orderIndex: 17,
+    createdAt: fixtureGeneratedAt,
+  ),
+  Symptom(
+    id: fixtureSymptomId('umbilical_cord'),
+    slug: 'umbilical_cord',
+    name: '배꼽·제대',
+    chosung: 'ㅂㄲ·ㅈㄷ',
+    aliases: const ['제대탈락', '배꼽 진물', '육아종', '탯줄'],
+    tagline: '탯줄 떨어진 뒤',
+    emojiOrIcon: 'umbilical',
+    productKeywords: const ['신생아 소독 거즈', '유아 면봉', '아기 목욕 스펀지'],
+    orderIndex: 18,
+    createdAt: fixtureGeneratedAt,
+  ),
+  Symptom(
+    id: fixtureSymptomId('newborn_marks'),
+    slug: 'newborn_marks',
+    name: '반점·각질',
+    chosung: 'ㅂㅈ·ㄱㅈ',
+    aliases: const [
+      '연어반',
+      '황새반점',
+      '몽고반점',
+      '각질',
+      '태지',
+      '천사의 키스',
+      '혈관종',
+      '신생아 각질',
+    ],
+    tagline: '희미한 붉은 점',
+    emojiOrIcon: 'birthmark',
+    productKeywords: const ['신생아 보습 로션', '베이비 오일', '신생아 순한 크림', '저자극 보습제'],
+    orderIndex: 19,
+    createdAt: fixtureGeneratedAt,
+  ),
+  Symptom(
+    id: fixtureSymptomId('newborn_hormonal'),
+    slug: 'newborn_hormonal',
+    name: '가성생리·멍울',
+    chosung: 'ㄱㅅㅅㄹ·ㅁㅇ',
+    aliases: const ['가성 생리', '가슴 멍울', '유즙', '신생아 질출혈', '마유', '신생아 유방비대'],
+    tagline: '일시적 호르몬',
+    emojiOrIcon: 'hormonal',
+    productKeywords: const ['신생아 물티슈', '신생아 순한 세정제', '신생아 거즈 손수건', '신생아 순면 속옷'],
+    orderIndex: 20,
+    createdAt: fixtureGeneratedAt,
+  ),
+  Symptom(
+    id: fixtureSymptomId('dimple'),
+    slug: 'dimple',
+    name: '엉덩이 딤플',
+    chosung: 'ㅇㄷㅇ ㄷㅍ',
+    aliases: const ['미추함몰', '엉덩이 보조개', '천골 딤플', '신생아 딤플'],
+    tagline: '꼬리뼈 보조개',
+    emojiOrIcon: 'dimple',
+    productKeywords: const ['순한 아기 물티슈', '기저귀 발진크림', '아기 목욕타월'],
+    orderIndex: 21,
+    createdAt: fixtureGeneratedAt,
+  ),
+  Symptom(
+    id: fixtureSymptomId('tongue_tie'),
+    slug: 'tongue_tie',
+    name: '설소대',
+    chosung: 'ㅅㅅㄷ',
+    aliases: const ['설소대 단축증', '혀 짧음', '설유착', '설소대 수술'],
+    tagline: '혀 밑 띠 확인',
+    emojiOrIcon: 'tongue_tie',
+    productKeywords: const ['수유쿠션', '유두보호크림', '젖병 젖꼭지'],
+    orderIndex: 22,
+    createdAt: fixtureGeneratedAt,
+  ),
+  Symptom(
+    id: fixtureSymptomId('vaccination'),
+    slug: 'vaccination',
+    name: '예방접종',
+    chosung: 'ㅇㅂㅈㅈ',
+    aliases: const ['백신', '예방주사', 'BCG', '접종 후 열', '표준예방접종일정'],
+    tagline: '맞기 전후 준비',
+    emojiOrIcon: 'vaccine',
+    productKeywords: const ['유아 체온계', '예방접종 기록수첩', '아기 해열시트'],
+    orderIndex: 23,
+    createdAt: fixtureGeneratedAt,
+  ),
+  Symptom(
+    id: fixtureSymptomId('formula_prep'),
+    slug: 'formula_prep',
+    name: '분유 타기',
+    chosung: 'ㅂㅇ ㅌㄱ',
+    aliases: const ['분유 조유', '젖병 소독', '분유 물온도', '조유법', '분유 타는 법'],
+    tagline: '물 온도가 핵심',
+    emojiOrIcon: 'formula',
+    productKeywords: const ['젖병 소독기', '분유 포트', '젖병 세척솔'],
+    orderIndex: 24,
+    createdAt: fixtureGeneratedAt,
+  ),
+  Symptom(
+    id: fixtureSymptomId('breastmilk_storage'),
+    slug: 'breastmilk_storage',
+    name: '모유 보관',
+    chosung: 'ㅁㅇ ㅂㄱ',
+    aliases: const ['모유 저장', '모유 해동', '유축 보관', '모유 냉동', '모유 보관 기간'],
+    tagline: '냉장 72시간',
+    emojiOrIcon: 'milk_storage',
+    productKeywords: const ['모유 저장팩', '모유 보관 용기', '유축기 세척솔'],
+    orderIndex: 25,
+    createdAt: fixtureGeneratedAt,
+  ),
+  Symptom(
+    id: fixtureSymptomId('lochia'),
+    slug: 'lochia',
+    name: '오로',
+    chosung: 'ㅇㄹ',
+    aliases: const ['산후 출혈', '오로 배출', '산후 분비물', '오로 기간', '오로 색깔', '산후 핏덩어리'],
+    tagline: '점점 옅어져요',
+    emojiOrIcon: 'lochia',
+    productKeywords: const ['산모패드', '산모용 오버나이트 패드', '산모 방수시트'],
+    orderIndex: 26,
+    audience: SymptomAudience.mom,
+    createdAt: fixtureGeneratedAt,
+  ),
+  Symptom(
+    id: fixtureSymptomId('baby_blues'),
+    slug: 'baby_blues',
+    name: '산후 우울감',
+    chosung: 'ㅅㅎ ㅇㅇㄱ',
+    aliases: const [
+      '베이비블루스',
+      '산후우울증',
+      '산후 눈물',
+      '산후 우울',
+      '산후 감정기복',
+      '호르몬 변화',
+      'D-MER',
+    ],
+    tagline: '혼자가 아니에요',
+    emojiOrIcon: 'baby_blues',
+    productKeywords: const ['산모 선물세트', '산모 수면안대', '카페인없는 차'],
+    orderIndex: 27,
+    audience: SymptomAudience.mom,
+    createdAt: fixtureGeneratedAt,
+  ),
+  Symptom(
+    id: fixtureSymptomId('engorgement'),
+    slug: 'engorgement',
+    name: '젖몸살·유선염',
+    chosung: 'ㅈㅁㅅ·ㅇㅅㅇ',
+    aliases: const ['유방울혈', '유선염', '가슴 통증', '젖몸살', '유방염', '가슴 몽우리 통증', '젖 뭉침'],
+    tagline: '띵띵 붓고 아픈',
+    emojiOrIcon: 'engorgement',
+    productKeywords: const ['수유 냉온 찜질팩', '모유 수유패드', '와이어 없는 수유 브라'],
+    orderIndex: 28,
+    audience: SymptomAudience.mom,
+    createdAt: fixtureGeneratedAt,
+  ),
+  Symptom(
+    id: fixtureSymptomId('nipple_care'),
+    slug: 'nipple_care',
+    name: '유두 통증',
+    chosung: 'ㅇㄷ ㅌㅈ',
+    aliases: const [
+      '유두 열상',
+      '유두 상처',
+      '함몰유두',
+      '유두백반',
+      '유두 수포',
+      '유두 갈라짐',
+      '편평유두',
+      '유두 통증',
+      '젖 물집',
+    ],
+    tagline: '수유가 아플 때',
+    emojiOrIcon: 'nipple_care',
+    productKeywords: const ['정제 라놀린 크림', '수유 유두 보호기', '냉·온 수유패드'],
+    orderIndex: 29,
+    audience: SymptomAudience.mom,
+    createdAt: fixtureGeneratedAt,
+  ),
+  Symptom(
+    id: fixtureSymptomId('breastfeeding_start'),
+    slug: 'breastfeeding_start',
+    name: '모유수유 시작',
+    chosung: 'ㅁㅇㅅㅇ ㅅㅈ',
+    aliases: const [
+      '직수',
+      '젖물리기',
+      '수유 자세',
+      '완모',
+      '젖물림',
+      '라치',
+      '수유텀',
+      '모유수유 방법',
+      '첫 수유',
+    ],
+    tagline: '첫 젖물림부터',
+    emojiOrIcon: 'breastfeeding',
+    productKeywords: const ['수유쿠션', '수유패드', '수유등'],
+    orderIndex: 30,
+    audience: SymptomAudience.mom,
+    createdAt: fixtureGeneratedAt,
+  ),
+  Symptom(
+    id: fixtureSymptomId('milk_supply'),
+    slug: 'milk_supply',
+    name: '모유량 고민',
+    chosung: 'ㅁㅇㄹ ㄱㅁ',
+    aliases: const [
+      '모유 부족',
+      '모유량 늘리기',
+      '유축량',
+      '완모량',
+      '젖양',
+      '모유 늘리는 법',
+      '성장 급등기',
+      '클러스터 수유',
+    ],
+    tagline: '모자라지 않을까',
+    emojiOrIcon: 'milk_supply',
+    productKeywords: const ['유축기', '모유저장팩', '수유쿠션'],
+    orderIndex: 31,
+    audience: SymptomAudience.mom,
+    createdAt: fixtureGeneratedAt,
+  ),
+  Symptom(
+    id: fixtureSymptomId('postpartum_recovery'),
+    slug: 'postpartum_recovery',
+    name: '산후 회복',
+    chosung: 'ㅅㅎ ㅎㅂ',
+    aliases: const [
+      '산욕기',
+      '좌욕',
+      '산후 관리',
+      '산후 소양증',
+      '산후 가려움',
+      '산후 땀',
+      '산모 열',
+      '산후검진',
+      '산후 운동',
+    ],
+    tagline: '내 몸 돌보기',
+    emojiOrIcon: 'recovery',
+    productKeywords: const ['좌욕기', '산모 좌욕대야', '산모 손목보호대'],
+    orderIndex: 32,
+    audience: SymptomAudience.mom,
+    createdAt: fixtureGeneratedAt,
+  ),
 ];
 
-/// 시드(0004_seed.sql)와 동일한 16종 증상별 참고정보(요약·섹션·응급신호).
+/// 시드(0009_care_seed.sql)와 동일한 32종 증상별 참고정보(요약·섹션·응급신호·출처).
 ///
+/// audience별 분리 파일을 order_index 순서(baby → mom)로 이어붙인 것입니다.
 /// 문구는 원본 시드 SQL의 문자열을 그대로 복사했습니다(요약/의역 없음).
 final List<SymptomInfo> fixtureSymptomInfos = <SymptomInfo>[
-  SymptomInfo(
-    id: _infoId('colic'),
-    symptomId: fixtureSymptomId('colic'),
-    summary:
-        '생후 몇 주에서 몇 개월 사이 아기가 특별한 이유 없이 오래, 심하게 우는 경우를 흔히 배앓이(영아산통)라고 불러요. '
-        '보통 저녁 시간대에 반복되고, 대개 생후 3~4개월을 지나며 저절로 줄어드는 경우가 많아요. 원인은 아직 명확히 '
-        '밝혀지지 않았으며, 아래 내용은 참고용 정보예요.',
-    sections: const [
-      InfoSection(
-        title: '원인',
-        body:
-            '정확한 원인은 아직 명확하지 않지만, 소화기관이 미숙해 가스가 차거나 장운동이 예민한 것, 수유 중 삼킨 공기, '
-            '일시적인 신경계 발달 과정 등이 관련 있을 것으로 보고 있어요.',
-      ),
-      InfoSection(
-        title: '집에서 돌보기',
-        body:
-            '수유 중간중간 트림을 자주 시켜주고, 배를 시계 방향으로 부드럽게 마사지해 주면 도움이 될 수 있어요. 아기를 '
-            '세워 안거나 백색소음, 규칙적인 흔들림도 진정에 도움이 되는 경우가 많아요.',
-      ),
-      InfoSection(
-        title: '주의점',
-        body:
-            '우는 시간이 하루 3시간, 주 3일 이상 지속되거나 평소와 다르게 축 처지고 수유량이 급격히 줄면 다른 원인일 '
-            '수 있으니 소아과 상담을 받아보는 게 좋아요.',
-      ),
-    ],
-    emergency: const [
-      EmergencySign(
-        sign: '우는 도중 구토, 혈변, 축 처짐, 발열이 동반됨',
-        action: '바로 병원 진료를 받으세요 (응급실 방문 고려)',
-      ),
-    ],
-    updatedAt: fixtureGeneratedAt,
-  ),
-  SymptomInfo(
-    id: _infoId('teething'),
-    symptomId: fixtureSymptomId('teething'),
-    summary:
-        '이앓이는 유치가 나올 때 잇몸이 붓고 예민해지면서 아기가 보채고 침을 많이 흘리는 현상을 말해요. 보통 생후 '
-        '4~7개월경 시작되며 개인차가 커요. 대부분 특별한 처치 없이 지나가는 자연스러운 과정으로 알려져 있어요.',
-    sections: const [
-      InfoSection(
-        title: '원인',
-        body:
-            '잇몸을 뚫고 이가 올라오는 과정에서 잇몸 조직이 눌리고 자극을 받아 붓고 가려운 느낌이 생기는 것으로 알려져 있어요.',
-      ),
-      InfoSection(
-        title: '집에서 돌보기',
-        body:
-            '깨끗하고 차가운 치발기를 물려주거나 깨끗한 손가락으로 잇몸을 부드럽게 문질러 주면 편안해할 수 있어요. 침을 '
-            '많이 흘리면 턱 주변을 자주 닦아 피부 트러블을 예방해 주세요.',
-      ),
-      InfoSection(
-        title: '주의점',
-        body:
-            '이앓이 자체는 고열의 직접적인 원인은 아니라고 알려져 있어요. 미열 이상의 열이 동반되면 다른 원인을 확인해 보는 게 좋아요.',
-      ),
-    ],
-    emergency: const [
-      EmergencySign(
-        sign: '38.3°C 이상 고열, 설사, 구토가 함께 나타남',
-        action: '이앓이만으로 보기 어려우니 소아과 진료를 받으세요',
-      ),
-    ],
-    updatedAt: fixtureGeneratedAt,
-  ),
-  SymptomInfo(
-    id: _infoId('newborn_heat_rash'),
-    symptomId: fixtureSymptomId('newborn_heat_rash'),
-    summary:
-        '태열은 신생아 얼굴이나 몸통에 붉은 좁쌀 같은 발진이 올라오는 현상을 흔히 부르는 말로, 열꽃이라고도 해요. '
-        '대부분 생후 몇 주 안에 자연스럽게 옅어지며, 아기 피부가 외부 환경에 적응하는 과정으로 보는 경우가 많아요.',
-    sections: const [
-      InfoSection(
-        title: '원인',
-        body:
-            '신생아는 피지선과 땀샘 기능이 아직 미숙하고 호르몬 변화의 영향을 받아 피부에 일시적인 붉은 기와 좁쌀 같은 '
-            '발진이 나타날 수 있어요.',
-      ),
-      InfoSection(
-        title: '집에서 돌보기',
-        body:
-            '실내 온도를 서늘하게 유지하고, 옷을 너무 두껍게 입히지 않는 게 도움이 될 수 있어요. 순한 세정제로 미지근한 '
-            '물에 씻기고, 자극을 줄이기 위해 얼굴을 문지르지 않도록 해주세요.',
-      ),
-      InfoSection(
-        title: '주의점',
-        body: '긁어서 상처가 나거나 진물, 고름이 보이면 세균 감염의 신호일 수 있어요.',
-      ),
-    ],
-    emergency: const [
-      EmergencySign(
-        sign: '발진 부위에 진물·고름이 생기거나 발열이 동반됨',
-        action: '소아과 진료를 받아 감염 여부를 확인하세요',
-      ),
-    ],
-    updatedAt: fixtureGeneratedAt,
-  ),
-  SymptomInfo(
-    id: _infoId('stool_color_abnormal'),
-    symptomId: fixtureSymptomId('stool_color_abnormal'),
-    summary:
-        '아기 변 색깔은 수유 종류와 이유식 여부에 따라 노란색, 갈색, 초록빛 등 다양하게 나타날 수 있어요. 대부분은 '
-        '정상 범위지만, 특정 색깔은 건강 상태를 확인해봐야 하는 신호일 수 있어 참고해 두면 좋아요.',
-    sections: const [
-      InfoSection(
-        title: '원인',
-        body:
-            '모유·분유 수유, 이유식 시작, 철분제 복용 등에 따라 변 색이 자연스럽게 달라질 수 있어요. 장 내 담즙 배출 '
-            '상태에 따라서도 색이 변할 수 있어요.',
-      ),
-      InfoSection(
-        title: '집에서 돌보기',
-        body: '기저귀를 갈 때마다 색과 상태를 사진으로 남겨두면 변화 추이를 파악하기 좋고, 병원 진료 시에도 도움이 돼요.',
-      ),
-      InfoSection(
-        title: '주의점',
-        body: '하얀색이나 회색빛 변, 검은색(타르 같은) 변, 붉은 혈액이 섞인 변은 정상 범위를 벗어난 신호일 수 있어요.',
-      ),
-    ],
-    emergency: const [
-      EmergencySign(
-        sign: '하얀색·회색빛 변이 반복됨',
-        action: '담즙 배출 이상 가능성이 있어 소아과 진료가 필요해요',
-      ),
-      EmergencySign(sign: '검은색(타르 같은) 변 또는 선명한 혈변', action: '바로 병원 진료를 받으세요'),
-    ],
-    updatedAt: fixtureGeneratedAt,
-  ),
-  SymptomInfo(
-    id: _infoId('burping_trouble'),
-    symptomId: fixtureSymptomId('burping_trouble'),
-    summary:
-        '수유 후 트림이 잘 나오지 않아 아기가 답답해하거나 보채는 경우가 있어요. 삼킨 공기가 위에 남아 생기는 흔한 '
-        '현상으로, 대부분 자세와 방법을 조금 바꾸면 나아지는 경우가 많아요.',
-    sections: const [
-      InfoSection(
-        title: '원인',
-        body: '수유 중 함께 삼킨 공기가 위에 머무르면서 트림으로 잘 배출되지 않아 배가 빵빵해지고 불편해할 수 있어요.',
-      ),
-      InfoSection(
-        title: '집에서 돌보기',
-        body:
-            '수유 중간중간 자세를 바꿔가며 트림을 시도하고, 아기를 어깨에 기대어 세운 자세로 등을 아래에서 위로 부드럽게 '
-            '쓸어주면 도움이 될 수 있어요.',
-      ),
-      InfoSection(
-        title: '주의점',
-        body: '트림을 시켜도 계속 불편해하며 심하게 보채거나 게워냄이 반복되면 다른 원인이 있는지 확인이 필요해요.',
-      ),
-    ],
-    emergency: const [],
-    updatedAt: fixtureGeneratedAt,
-  ),
-  SymptomInfo(
-    id: _infoId('spit_up_reflux'),
-    symptomId: fixtureSymptomId('spit_up_reflux'),
-    summary:
-        '수유 후 소량씩 게워내는 것은 신생아 시기에 흔히 나타나는 생리적인 위식도 역류로, 위와 식도 사이 조임근이 아직 '
-        '미숙해서 생기는 경우가 많아요. 대부분 체중이 잘 늘고 컨디션이 좋다면 특별한 문제가 아닌 경우가 많아요.',
-    sections: const [
-      InfoSection(
-        title: '원인',
-        body: '위와 식도를 연결하는 괄약근이 아직 완전히 발달하지 않아 먹은 것이 쉽게 역류하는 것으로 알려져 있어요.',
-      ),
-      InfoSection(
-        title: '집에서 돌보기',
-        body:
-            '수유 후 20~30분 정도 세워 안아주고, 한 번에 먹는 양을 조금씩 줄여 수유 횟수를 늘려보는 것이 도움이 될 수 '
-            '있어요. 수유 후 바로 눕히기보다 약간 비스듬한 자세를 유지해 주세요.',
-      ),
-      InfoSection(
-        title: '주의점',
-        body:
-            '게워내는 양이 갑자기 많아지거나 분수처럼 뿜어져 나오는 경우, 체중이 잘 늘지 않는 경우는 주의 깊게 살펴봐야 해요.',
-      ),
-    ],
-    emergency: const [
-      EmergencySign(
-        sign: '분수처럼 뿜어져 나오는 구토, 초록빛(담즙색) 또는 혈액이 섞인 구토',
-        action: '바로 병원 진료를 받으세요',
-      ),
-      EmergencySign(
-        sign: '체중이 늘지 않거나 줄어듦, 탈수 징후(소변량 감소)',
-        action: '소아과 진료를 받으세요',
-      ),
-    ],
-    updatedAt: fixtureGeneratedAt,
-  ),
-  SymptomInfo(
-    id: _infoId('runny_stuffy_nose'),
-    symptomId: fixtureSymptomId('runny_stuffy_nose'),
-    summary:
-        '아기는 코 안 공간이 좁아 작은 자극에도 콧물이나 코막힘이 잘 생겨요. 신생아는 입으로 숨쉬는 것이 서툴러 코가 '
-        '막히면 수유나 수면에 더 불편을 느낄 수 있어요.',
-    sections: const [
-      InfoSection(
-        title: '원인',
-        body: '감기 등 바이러스 감염, 건조한 실내 공기, 온도 변화 등이 콧물·코막힘의 흔한 원인으로 알려져 있어요.',
-      ),
-      InfoSection(
-        title: '집에서 돌보기',
-        body:
-            '생리식염수로 콧속을 부드럽게 적셔준 뒤 콧물흡입기로 조심스럽게 제거해 주고, 실내 습도를 40~60%로 유지하면 '
-            '도움이 될 수 있어요.',
-      ),
-      InfoSection(
-        title: '주의점',
-        body: '코막힘으로 수유량이 줄거나 잠을 잘 못 자는 상태가 계속되면 확인이 필요해요.',
-      ),
-    ],
-    emergency: const [
-      EmergencySign(
-        sign: '코막힘으로 숨쉬기 힘들어하거나 입술색이 창백/푸르게 변함, 수유를 거부함',
-        action: '바로 병원 진료(응급실 고려)를 받으세요',
-      ),
-    ],
-    updatedAt: fixtureGeneratedAt,
-  ),
-  SymptomInfo(
-    id: _infoId('fever'),
-    symptomId: fixtureSymptomId('fever'),
-    summary:
-        '열은 우리 몸이 감염 등에 맞서 싸우고 있다는 신호 중 하나예요. 특히 어린 영아의 발열은 어른과 기준이 달라 '
-        '나이에 따라 병원 방문 시점을 다르게 봐야 해요. 아래 정보는 참고용이며, 실제 진단과 처치는 반드시 의료진과 '
-        '상의하세요.',
-    sections: const [
-      InfoSection(
-        title: '원인',
-        body: '감기 등 바이러스·세균 감염, 예방접종 후 반응, 실내외 온도 등 다양한 원인으로 체온이 오를 수 있어요.',
-      ),
-      InfoSection(
-        title: '집에서 돌보기',
-        body:
-            '옷을 얇게 입혀 열을 발산시키고, 실내 온도를 서늘하게 유지하며, 수유·수분 섭취를 자주 시도해 주세요. '
-            '해열제 사용 여부와 용량은 반드시 소아과 의사·약사와 상의해 결정하세요.',
-      ),
-      InfoSection(
-        title: '주의점',
-        body: '생후 개월 수가 어릴수록 발열 기준이 더 엄격하게 적용돼요. 정확한 체온 측정과 기록이 진료에 도움이 됩니다.',
-      ),
-    ],
-    emergency: const [
-      EmergencySign(
-        sign: '생후 3개월 미만, 체온 38.0°C 이상',
-        action: '즉시 병원(응급실)을 방문하세요',
-      ),
-      EmergencySign(
-        sign: '생후 3~6개월, 체온 38.5°C 이상이 지속되거나 컨디션이 처짐',
-        action: '당일 소아과 진료를 받으세요',
-      ),
-      EmergencySign(
-        sign: '경련, 축 처짐, 발진 동반, 수분 섭취 거부',
-        action: '즉시 병원(응급실)을 방문하세요',
-      ),
-    ],
-    updatedAt: fixtureGeneratedAt,
-  ),
-  SymptomInfo(
-    id: _infoId('rash'),
-    symptomId: fixtureSymptomId('rash'),
-    summary:
-        '발진은 감염, 접촉성 자극, 열, 알레르기 등 다양한 원인으로 나타날 수 있는 흔한 피부 증상이에요. 모양과 동반 '
-        '증상에 따라 원인이 크게 달라질 수 있어 관찰이 중요해요.',
-    sections: const [
-      InfoSection(
-        title: '원인',
-        body:
-            '옷·세제 등에 의한 접촉성 자극, 땀이나 침에 의한 자극, 바이러스 감염, 알레르기 반응 등이 흔한 원인으로 알려져 있어요.',
-      ),
-      InfoSection(
-        title: '집에서 돌보기',
-        body:
-            '순한 세정제로 씻기고 피부를 완전히 건조시킨 뒤 옷을 입혀 주세요. 새로 사용한 세제·로션·이유식 등이 있다면 '
-            '사용을 잠시 중단하고 경과를 지켜보는 것도 도움이 될 수 있어요.',
-      ),
-      InfoSection(
-        title: '주의점',
-        body: '발진 부위가 빠르게 번지거나 물집, 진물이 생기면 주의 깊게 살펴봐야 해요.',
-      ),
-    ],
-    emergency: const [
-      EmergencySign(
-        sign: '발열과 함께 눌러도 색이 사라지지 않는 자주색·보라색 반점, 빠르게 번지는 발진',
-        action: '즉시 병원(응급실)을 방문하세요',
-      ),
-    ],
-    updatedAt: fixtureGeneratedAt,
-  ),
-  SymptomInfo(
-    id: _infoId('sleep_regression'),
-    symptomId: fixtureSymptomId('sleep_regression'),
-    summary:
-        '수면퇴행은 잘 자던 아기가 갑자기 밤에 자주 깨거나 낮잠 패턴이 흐트러지는 시기를 말해요. 성장통·발달 도약(뒤집기, '
-        '걷기 연습 등) 시기에 흔히 나타나며, 대개 몇 주 안에 다시 안정을 찾는 경우가 많아요.',
-    sections: const [
-      InfoSection(
-        title: '원인',
-        body:
-            '신체 발달(뒤집기, 서기 등)과 인지 발달이 활발해지는 시기, 이앓이·분리불안 등이 겹치며 수면 패턴이 일시적으로 '
-            '흔들릴 수 있어요.',
-      ),
-      InfoSection(
-        title: '집에서 돌보기',
-        body:
-            '취침 시간과 낮잠 루틴을 최대한 일정하게 유지하고, 자기 전 조명을 낮추고 소음을 줄이는 등 편안한 환경을 만들어 주세요.',
-      ),
-      InfoSection(
-        title: '주의점',
-        body:
-            '수면퇴행은 대개 일시적이에요. 몇 주 이상 지속되며 컨디션 저하가 함께 나타나면 다른 원인을 확인해 보는 게 좋아요.',
-      ),
-    ],
-    emergency: const [],
-    updatedAt: fixtureGeneratedAt,
-  ),
-  SymptomInfo(
-    id: _infoId('constipation'),
-    symptomId: fixtureSymptomId('constipation'),
-    summary:
-        '변비는 아기가 변을 보는 횟수가 줄거나, 딱딱한 변을 힘들게 보는 상태를 말해요. 분유·이유식 전환 시기에 흔히 '
-        '나타나며, 수분과 식이 조절로 나아지는 경우가 많아요.',
-    sections: const [
-      InfoSection(
-        title: '원인',
-        body: '분유로의 전환, 이유식 시작, 수분 섭취 부족 등이 변비의 흔한 원인으로 알려져 있어요.',
-      ),
-      InfoSection(
-        title: '집에서 돌보기',
-        body:
-            '배를 시계 방향으로 부드럽게 마사지해 주거나 다리를 자전거 타듯 움직여 주는 동작이 도움이 될 수 있어요. '
-            '이유식을 시작한 아기라면 수분과 섬유질이 많은 식품을 조금씩 늘려보세요.',
-      ),
-      InfoSection(
-        title: '주의점',
-        body: '변에 피가 섞이거나 배가 심하게 부풀고 구토를 동반하면 다른 원인을 확인해야 해요.',
-      ),
-    ],
-    emergency: const [
-      EmergencySign(
-        sign: '변에 피가 섞임, 배가 딱딱하게 부풀어 오름, 구토 동반',
-        action: '소아과 진료를 받으세요',
-      ),
-    ],
-    updatedAt: fixtureGeneratedAt,
-  ),
-  SymptomInfo(
-    id: _infoId('diarrhea'),
-    symptomId: fixtureSymptomId('diarrhea'),
-    summary:
-        '설사는 평소보다 묽고 잦은 변을 보는 상태로, 장염 등 감염성 원인이 흔하지만 이유식 변화로도 생길 수 있어요. '
-        '영유아는 탈수로 이어지기 쉬워 수분 보충이 특히 중요해요.',
-    sections: const [
-      InfoSection(
-        title: '원인',
-        body: '바이러스성·세균성 장염, 새로운 음식에 대한 반응, 항생제 복용 등이 흔한 원인으로 알려져 있어요.',
-      ),
-      InfoSection(
-        title: '집에서 돌보기',
-        body:
-            '평소보다 자주 수유하거나 수분을 보충해 주고, 기저귀를 자주 갈아 피부 자극을 줄여 주세요. 증상이 나아질 '
-            '때까지 새로운 이유식 도입은 잠시 미루는 것이 도움이 될 수 있어요.',
-      ),
-      InfoSection(
-        title: '주의점',
-        body: '소변량이 눈에 띄게 줄거나 입술이 마르는 등 탈수 신호가 보이면 주의가 필요해요.',
-      ),
-    ],
-    emergency: const [
-      EmergencySign(
-        sign: '6시간 이상 소변이 없음, 입안이 마름, 눈물 없이 욺 등 탈수 신호',
-        action: '바로 병원 진료를 받으세요',
-      ),
-      EmergencySign(sign: '혈변, 고열, 축 처짐 동반', action: '즉시 병원(응급실)을 방문하세요'),
-    ],
-    updatedAt: fixtureGeneratedAt,
-  ),
-  SymptomInfo(
-    id: _infoId('hiccups'),
-    symptomId: fixtureSymptomId('hiccups'),
-    summary:
-        '딸꾹질은 횡경막이 일시적으로 수축하며 생기는 현상으로, 아기에게 매우 흔하고 대부분 저절로 멈춰요. 수유 중 '
-        '공기를 함께 삼키거나 갑작스러운 온도 변화로도 생길 수 있어요.',
-    sections: const [
-      InfoSection(
-        title: '원인',
-        body: '수유 중 삼킨 공기, 급하게 먹는 습관, 온도 변화 등이 횡경막을 자극해 딸꾹질을 유발할 수 있어요.',
-      ),
-      InfoSection(
-        title: '집에서 돌보기',
-        body:
-            '수유 속도를 조금 늦추고 중간중간 트림을 시켜 주세요. 이유식을 시작했다면 따뜻한 물을 소량 먹이거나 잠시 '
-            '안아 달래주는 것도 도움이 될 수 있어요.',
-      ),
-      InfoSection(
-        title: '주의점',
-        body: '딸꾹질 자체는 대부분 해롭지 않지만, 수유를 힘들어하거나 자주 게워내며 딸꾹질이 반복되면 살펴볼 필요가 있어요.',
-      ),
-    ],
-    emergency: const [],
-    updatedAt: fixtureGeneratedAt,
-  ),
-  SymptomInfo(
-    id: _infoId('prickly_heat'),
-    symptomId: fixtureSymptomId('prickly_heat'),
-    summary:
-        '땀띠는 땀샘이 막혀 땀이 피부 밖으로 배출되지 못하면서 생기는 좁쌀 같은 발진이에요. 목, 겨드랑이, 기저귀 '
-        '부위처럼 접히는 부위나 더운 환경에서 잘 나타나요.',
-    sections: const [
-      InfoSection(
-        title: '원인',
-        body: '높은 기온·습도, 두꺼운 옷차림, 땀이 잘 마르지 않는 환경 등이 땀샘을 막아 땀띠를 유발할 수 있어요.',
-      ),
-      InfoSection(
-        title: '집에서 돌보기',
-        body:
-            '실내 온도를 서늘하게 유지하고 통풍이 잘 되는 얇은 옷을 입혀 주세요. 땀을 흘린 뒤에는 미지근한 물로 씻기고 완전히 말려 주세요.',
-      ),
-      InfoSection(title: '주의점', body: '긁어서 상처가 나거나 진물·고름이 보이면 세균 감염 가능성이 있어요.'),
-    ],
-    emergency: const [
-      EmergencySign(
-        sign: '발진 부위에 진물·고름, 발열이 동반됨',
-        action: '소아과 진료를 받아 감염 여부를 확인하세요',
-      ),
-    ],
-    updatedAt: fixtureGeneratedAt,
-  ),
-  SymptomInfo(
-    id: _infoId('jaundice'),
-    symptomId: fixtureSymptomId('jaundice'),
-    summary:
-        '황달은 신생아 피부와 눈 흰자위가 노랗게 보이는 현상으로, 간 기능이 아직 미숙해 빌리루빈이 잘 배출되지 않아 '
-        '생기는 경우가 흔해요. 대부분 생후 며칠 내 자연스럽게 옅어지지만, 정도에 따라 검사와 관리가 필요할 수 있어요.',
-    sections: const [
-      InfoSection(
-        title: '원인',
-        body:
-            '신생아의 간 기능 미성숙으로 빌리루빈이 충분히 처리되지 못해 피부·눈에 색소가 쌓이며 생기는 경우가 많아요. '
-            '모유 수유와 관련된 경우도 있어요.',
-      ),
-      InfoSection(
-        title: '집에서 돌보기',
-        body:
-            '충분한 수유로 배변·배뇨를 자주 유도하면 빌리루빈 배출에 도움이 될 수 있어요. 자연광이 드는 밝은 곳에서 '
-            '아기 피부색을 자주 관찰해 보세요(직사광선 노출은 피하세요).',
-      ),
-      InfoSection(
-        title: '주의점',
-        body:
-            '황달은 정도와 진행 속도에 따라 병원에서의 확인이 필요한 경우가 있으니 색의 변화를 꾸준히 관찰하는 것이 중요해요.',
-      ),
-    ],
-    emergency: const [
-      EmergencySign(sign: '생후 24시간 이내 황달이 나타남', action: '즉시 병원 진료를 받으세요'),
-      EmergencySign(
-        sign: '노란빛이 팔다리·손발까지 번짐, 수유량 급감, 축 처짐, 소변색이 진해짐',
-        action: '바로 소아과 진료를 받으세요',
-      ),
-    ],
-    updatedAt: fixtureGeneratedAt,
-  ),
-  SymptomInfo(
-    id: _infoId('eye_discharge_tearing'),
-    symptomId: fixtureSymptomId('eye_discharge_tearing'),
-    summary:
-        '신생아는 눈물길이 아직 완전히 뚫리지 않아 눈물이 많거나 눈곱이 자주 끼는 경우가 흔해요. 대부분 생후 첫돌 '
-        '전후로 저절로 좋아지는 경우가 많아요.',
-    sections: const [
-      InfoSection(
-        title: '원인',
-        body: '코눈물관(비루관)이 아직 좁거나 막혀 있어 눈물이 배출되지 못하고 고이면서 눈곱과 눈물이 잦아질 수 있어요.',
-      ),
-      InfoSection(
-        title: '집에서 돌보기',
-        body:
-            '깨끗한 거즈나 솜을 미지근한 물에 적셔 눈 안쪽에서 바깥쪽으로 부드럽게 닦아 주세요. 눈물주머니 부위를 코 '
-            '방향으로 부드럽게 마사지해 주는 것도 도움이 될 수 있어요.',
-      ),
-      InfoSection(
-        title: '주의점',
-        body: '눈꺼풀이 붓거나 눈곱 색이 진해지고 양이 많아지면 결막염 등 다른 원인일 수 있어요.',
-      ),
-    ],
-    emergency: const [
-      EmergencySign(
-        sign: '눈 주위가 붉게 부어오르거나 발열 동반, 눈곱이 급격히 심해짐',
-        action: '소아과 또는 안과 진료를 받으세요',
-      ),
-    ],
-    updatedAt: fixtureGeneratedAt,
-  ),
+  ...fixtureSymptomInfosBaby,
+  ...fixtureSymptomInfosMom,
 ];

@@ -6,9 +6,10 @@ import 'package:flutter/material.dart';
 /// Hero morph가 아이콘 점프 없이 자연스럽다. (통합 단계에서 feature별 로컬
 /// 사본 3개를 이 공용 유틸 하나로 합쳤다.)
 ///
-/// 시드/픽스처(0004_seed.sql, fixture_symptoms.dart)의 16종 증상 아이콘 키를
-/// 수묵 라인 느낌의 outlined 아이콘으로 매핑한다. 미지 키/`null`은
-/// [_fallbackIcon]으로 폴백한다.
+/// 증상 32종(기존 16 + 신규 아기 9·산모 7)의 아이콘 키를 수묵 라인 느낌의
+/// outlined 아이콘으로 매핑한다. 미지 키/`null`은 [_fallbackIcon]으로
+/// 폴백한다. (일러스트가 등록된 키는 카드/헤더에서 일러스트가 우선이고,
+/// 이 매핑은 검색 결과 행 등 소형 맥락의 폴백이다.)
 class SymptomIcons {
   const SymptomIcons._();
 
@@ -33,6 +34,23 @@ class SymptomIcons {
     'prickly_heat': Icons.water_drop_outlined, // 땀띠
     'jaundice': Icons.wb_sunny_outlined, // 황달
     'eye_care': Icons.visibility_outlined, // 눈곱·눈물
+    // 신규 16종 (콘텐츠 계약 §1 — order_index 17~32)
+    'thrush': Icons.bubble_chart_outlined, // 아구창(입안 반점)
+    'umbilical': Icons.adjust, // 배꼽·제대(동심원)
+    'birthmark': Icons.blur_circular, // 반점·각질
+    'hormonal': Icons.waves, // 가성생리·멍울(호르몬 물결)
+    'dimple': Icons.trip_origin, // 엉덩이 딤플(오목 점)
+    'tongue_tie': Icons.record_voice_over_outlined, // 설소대
+    'vaccine': Icons.vaccines_outlined, // 예방접종
+    'formula': Icons.science_outlined, // 분유 타기(조유)
+    'milk_storage': Icons.kitchen_outlined, // 모유 보관(냉장)
+    'lochia': Icons.local_florist_outlined, // 오로(꽃잎)
+    'baby_blues': Icons.self_improvement, // 산후 우울감(돌봄·숨 고르기)
+    'engorgement': Icons.whatshot_outlined, // 젖몸살·유선염(열감)
+    'nipple_care': Icons.healing_outlined, // 유두 통증(연고·밴드)
+    'breastfeeding': Icons.volunteer_activism_outlined, // 모유수유 시작
+    'milk_supply': Icons.help_outline, // 모유량 고민(물음표)
+    'recovery': Icons.spa_outlined, // 산후 회복(새싹)
   };
 
   /// [key]에 해당하는 아이콘. 키가 `null`이거나 매핑에 없으면 폴백.

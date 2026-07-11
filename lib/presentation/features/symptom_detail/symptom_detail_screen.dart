@@ -105,7 +105,8 @@ class _DetailBody extends ConsumerWidget {
           const SizedBox(height: AppSpacing.sectionGap),
           // §11.9-5 / §13.3 의학 면책 — 정보 유무와 무관하게 항상 노출.
           // DESIGN v2 §7.3-5: 격은 낮게, 존재감만(line 1px 보더 박스 + 안내 아이콘).
-          // 문구는 원문 그대로(바이트 단위 불변) — 스타일만 개정.
+          // baby 문구는 원문 그대로(바이트 단위 불변). mom(산모 카드)은 상담
+          // 대상만 산부인과 의료진으로 분기(§13.3 개정).
           Container(
             width: double.infinity,
             padding: const EdgeInsets.all(AppSpacing.x12),
@@ -120,8 +121,11 @@ class _DetailBody extends ConsumerWidget {
                 const SizedBox(width: AppSpacing.iconTextGap),
                 Expanded(
                   child: Text(
-                    '본 정보는 의학적 진단이 아니며 참고용입니다. '
-                    '증상이 우려되면 소아과 전문의와 상담하세요.',
+                    symptom.audience == SymptomAudience.mom
+                        ? '본 정보는 의학적 진단이 아니며 참고용입니다. '
+                              '증상이 우려되면 산부인과 전문의 등 의료진과 상담하세요.'
+                        : '본 정보는 의학적 진단이 아니며 참고용입니다. '
+                              '증상이 우려되면 소아과 전문의와 상담하세요.',
                     style: texts.caption.copyWith(color: colors.ink500),
                   ),
                 ),
@@ -290,6 +294,56 @@ class _InfoBlock extends StatelessWidget {
           const SizedBox(height: AppSpacing.x16),
           InfoAccordionList(sections: data.sections),
         ],
+        // §11.9 개정 — 참고 자료(출처 label 불릿). 면책 박스 위, 탭 액션·URL
+        // 노출 없음. sources가 비면 블록 전체 생략.
+        if (data.sources.isNotEmpty) ...[
+          const SizedBox(height: AppSpacing.x16),
+          _SourcesBlock(sources: data.sources),
+        ],
+      ],
+    );
+  }
+}
+
+/// 참고 자료 블록 — "참고 자료" caption(ink500) + label 불릿 리스트(caption).
+///
+/// 출처는 신뢰 신호로만 노출한다(§13.3 — 링크·탭 액션 없음, org/url은
+/// 검수용 메타데이터라 표시하지 않는다).
+class _SourcesBlock extends StatelessWidget {
+  const _SourcesBlock({required this.sources});
+
+  final List<InfoSource> sources;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.colors;
+    final texts = context.texts;
+    final captionStyle = texts.caption.copyWith(color: colors.ink500);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('참고 자료', style: captionStyle),
+        const SizedBox(height: AppSpacing.x4),
+        for (final source in sources)
+          Padding(
+            padding: const EdgeInsets.only(top: AppSpacing.x2),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.only(top: 6),
+                  child: Icon(
+                    Icons.fiber_manual_record,
+                    size: 4,
+                    color: colors.ink500,
+                  ),
+                ),
+                const SizedBox(width: AppSpacing.iconTextGap),
+                Expanded(child: Text(source.label, style: captionStyle)),
+              ],
+            ),
+          ),
       ],
     );
   }

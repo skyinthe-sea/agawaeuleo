@@ -13,16 +13,18 @@
 | `migrations/0005_cleanup_cron.sql` | pg_cron 스케줄(주 1회 KST 일 04:00) → 유휴 익명 계정 정리 Edge Function 호출 | §3.3 |
 | `migrations/0006_encouragements.sql` | 홈 "오늘의 응원" 문구 테이블 + 100개 시드 (**콘텐츠 카피 — 검수 권장**) | §11.7 |
 | `migrations/0007_symptom_tagline.sql` | `symptoms.tagline` 컬럼(홈 카드 한 줄 설명) + 배앓이 값 (**의료 카피 검수 대상**) | §11.7·§13.3 |
+| `migrations/0008_care_columns.sql` | `symptoms.audience`('baby'/'mom') + `symptom_infos.sources` 컬럼 (v1.3) | §7.1·§16.4 |
+| `migrations/0009_care_seed.sql` | **카드 32종 + 참고정보 전면 증보 시드 — 0004 콘텐츠를 대체** (**의료 콘텐츠 초안 — 배포 전 검수 필수, 0008 선행**) | §3.1·§13.3·§16.4 |
 | `functions/refresh-products/` | 제품 갱신 Edge Function (별도 작업) | §7.3 |
 | `functions/delete-account/` | 계정 삭제 Edge Function (앱 내 회원 탈퇴, 스토어 필수) | §3.3·§11.16·§13.4 |
 | `functions/cleanup-anonymous/` | 유휴 익명 계정 정리 Edge Function (90일 초과 미사용 게스트 파기) | §3.3 |
 
-마이그레이션은 파일명 순서(0001 → … → 0007)대로 적용해야 한다. FK·RLS·cron 이 앞 단계 오브젝트에 의존한다.
+마이그레이션은 파일명 순서(0001 → … → 0009)대로 적용해야 한다. FK·RLS·cron·시드가 앞 단계 오브젝트에 의존한다(특히 **0009 는 0008 의 audience/sources 컬럼을 전제**로 하고, 앱의 원격 조회도 0008 컬럼을 select 하므로 **0008 적용과 앱 배포를 같은 릴리스로** 묶을 것).
 
-> ⚠️ **0004_seed.sql 는 검수 전 프로덕션 금지**: 시드의 의학 문구는 Claude 가 작성한 초안이며
-> 배포 전 의료 전문가 검수가 필요하다(체크리스트: `supabase/CONTENT_REVIEW.md`). `supabase db push`
-> 는 `migrations/*.sql` 을 **전부** 적용하므로 검수 완료 전에는 프로덕션에 push 하지 말 것.
-> (개발/스테이징 프로젝트에만 push 하거나, 검수 완료 시까지 0004 를 임시로 제외.)
+> ⚠️ **0004/0009 시드는 검수 전 프로덕션 금지**: 시드의 의학 문구는 Claude 가 작성한 초안이며
+> 배포 전 의료 전문가 검수가 필요하다(체크리스트: `supabase/CONTENT_REVIEW.md` — v1.3 부터 32종).
+> `supabase db push` 는 `migrations/*.sql` 을 **전부** 적용하므로 검수 완료 전에는 프로덕션에
+> push 하지 말 것. (개발/스테이징 프로젝트에만 push 하거나, 검수 완료 시까지 0004·0009 를 임시 제외.)
 
 ## 1. 사전 준비
 

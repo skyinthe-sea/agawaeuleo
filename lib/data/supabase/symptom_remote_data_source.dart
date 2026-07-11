@@ -15,6 +15,11 @@ class SymptomRemoteDataSource {
 
   static const _table = 'symptoms';
 
+  /// DATA_ACCESS.md §1 — 필요한 컬럼만 select(`*` 금지).
+  static const _columns =
+      'id, slug, name, chosung, aliases, tagline, emoji_or_icon, '
+      'product_keywords, order_index, audience, is_active, created_at';
+
   SupabaseQueryBuilder get _from => _client.from(_table);
 
   /// 활성 증상 전체를 `order_index` 순으로 관찰(홈 그리드 — §11.7).
@@ -35,7 +40,7 @@ class SymptomRemoteDataSource {
   Future<List<Symptom>> getAll() async {
     try {
       final rows = await _from
-          .select()
+          .select(_columns)
           .eq('is_active', true)
           .order('order_index', ascending: true);
       return rows.map(_fromRow).toList(growable: false);
@@ -52,7 +57,7 @@ class SymptomRemoteDataSource {
 
   Future<Symptom?> _single(String column, String value) async {
     try {
-      final row = await _from.select().eq(column, value).maybeSingle();
+      final row = await _from.select(_columns).eq(column, value).maybeSingle();
       return row == null ? null : _fromRow(row);
     } on Object catch (error, stackTrace) {
       throw mapSupabaseError(error, stackTrace);
@@ -69,6 +74,7 @@ class SymptomRemoteDataSource {
     emojiOrIcon: row['emoji_or_icon'] as String?,
     productKeywords: _stringList(row['product_keywords']),
     orderIndex: (row['order_index'] as num?)?.toInt() ?? 0,
+    audience: SymptomAudience.fromWire(row['audience'] as String?),
     isActive: row['is_active'] as bool? ?? true,
     createdAt: DateTime.parse(row['created_at'] as String),
   );

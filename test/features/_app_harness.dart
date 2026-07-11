@@ -4,6 +4,7 @@ import 'package:agawaeuleo/presentation/router/app_router.dart';
 import 'package:agawaeuleo/presentation/router/routes.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -15,13 +16,17 @@ import 'package:shared_preferences/shared_preferences.dart';
 ///   데이터는 픽스처가 자동 공급된다.
 /// - reduce-motion을 강제(`disableAnimations: true`)해 shimmer/stagger 등 무한/장시간
 ///   애니메이션으로 `pumpAndSettle`이 멈추지 않게 한다.
-ProviderScope _scoped({required Widget child}) => ProviderScope(
+ProviderScope _scoped({
+  required Widget child,
+  List<Override> overrides = const [],
+}) => ProviderScope(
   overrides: [
     appDatabaseProvider.overrideWith((ref) {
       final db = AppDatabase.inMemory();
       ref.onDispose(db.close);
       return db;
     }),
+    ...overrides,
   ],
   child: child,
 );
@@ -49,13 +54,22 @@ Future<void> disposeApp(WidgetTester tester) async {
 }
 
 /// 실제 go_router로 앱을 부팅해 홈까지 도달시킨다(홈/검색/상세 내비 이음새 검증용).
-Future<GoRouter> pumpBootedApp(WidgetTester tester) async {
+///
+/// [overrides]로 리포지토리 등 프로바이더를 테스트 더블로 교체할 수 있다
+/// (기본 오버라이드 뒤에 추가되므로 같은 프로바이더는 나중 값이 이긴다).
+Future<GoRouter> pumpBootedApp(
+  WidgetTester tester, {
+  List<Override> overrides = const [],
+}) async {
   SharedPreferences.setMockInitialValues(<String, Object>{});
   final router = createAppRouter();
   await tester.pumpWidget(
     withReduceMotion(
       tester,
-      _scoped(child: MaterialApp.router(routerConfig: router)),
+      _scoped(
+        overrides: overrides,
+        child: MaterialApp.router(routerConfig: router),
+      ),
     ),
   );
   // §11.1 스플래시는 최소 노출 600ms(Future.delayed) 후 목적지로 분기한다. 대기 중인

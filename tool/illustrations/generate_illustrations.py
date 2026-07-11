@@ -154,7 +154,7 @@ def ache_arc(cx, cy, flip=False, sw=2.0):
     return shape([("M", cx, cy - 7), ("C", cx + 5 * d, cy - 3.5, cx + 5 * d, cy + 3.5, cx, cy + 7)], sw=sw)
 
 
-# ───────────────────────── 16종 일러스트 ─────────────────────────
+# ───────────────────────── 기존 16종 일러스트 ─────────────────────────
 # 각 함수: list[shape]. 그리는 순서 = 레이어 순서.
 
 def il_tummy_pain():
@@ -485,6 +485,390 @@ def il_eye_care():
     ]
 
 
+# ─────────────────── 신규 16종 (아기 9 + 산모 7) ───────────────────
+# 산모 카드는 품위 있는 추상화 — 신체 직접 묘사 대신 곡선·상징 중심.
+
+
+def rot_cmds(pts, cx, cy, angle, scale=1.0):
+    """로컬 좌표 pts 를 angle(도) 회전·scale 후 (cx,cy)로 평행이동."""
+    a = math.radians(angle)
+    ca, sa = math.cos(a), math.sin(a)
+    out = []
+    for c in pts:
+        if c[0] == "Z":
+            out.append(("Z",))
+            continue
+        vals = list(c[1:])
+        t = [c[0]]
+        for i in range(0, len(vals), 2):
+            x, y = vals[i] * scale, vals[i + 1] * scale
+            t += [cx + x * ca - y * sa, cy + x * sa + y * ca]
+        out.append(tuple(t))
+    return out
+
+
+def il_thrush():
+    # 방긋 벌린 입 클로즈업 + 혀 위 얼룩(하프톤) + 입천장 쪽 하얀 반점
+    mouth = circle_cmds(62, 62, 30, ry=26)
+    tongue = [
+        ("M", 42, 68), ("C", 46, 60, 78, 60, 82, 68),
+        ("C", 82, 80, 74, 87, 62, 87), ("C", 50, 87, 42, 80, 42, 68), ("Z",),
+    ]
+    return [
+        plus_shape(18, 24, 5, 2.4), plus_shape(103, 20, 4, 2.2),
+        sq_shape(106, 88, 3.4, True),
+        shape(mouth, fill="paper", sw=3),
+        shape(tongue, fill="paper", dots=True, sw=2.2),
+        shape(circle_cmds(52, 50, 3.0), fill="paper", sw=1.8),
+        shape(circle_cmds(66, 47, 2.4), fill="paper", sw=1.6),
+        shape(circle_cmds(74, 54, 2.0), fill="paper", sw=1.6),
+    ]
+
+
+def il_umbilical():
+    # 아기 배 클로즈업 + 배꼽(이중 링) + 거즈 패치 + 반짝
+    belly = circle_cmds(58, 66, 30, ry=27)
+    return [
+        plus_shape(18, 24, 5, 2.4), sq_shape(14, 92, 3.4, True),
+        star_shape(105, 46, 3.4, sw=1.5),
+        shape(belly, fill="paper", dots=True, sw=3, dot_bounds=(28, 80, 88, 94)),
+        shape(circle_cmds(58, 64, 6.5), fill="paper", sw=2.4),
+        shape([("M", 55, 64), ("C", 56, 66.5, 60, 66.5, 61, 64)], sw=1.8),
+        # 거즈(격자 무늬)
+        shape(rrect_cmds(82, 14, 24, 18, 3), fill="paper", sw=2.2),
+        shape([("M", 90, 14), ("L", 90, 32)], sw=1.2),
+        shape([("M", 98, 14), ("L", 98, 32)], sw=1.2),
+        shape([("M", 82, 20), ("L", 106, 20)], sw=1.2),
+        shape([("M", 82, 26), ("L", 106, 26)], sw=1.2),
+        star_shape(32, 20, 5),
+    ]
+
+
+def il_birthmark():
+    # 아기 얼굴 + 이마·눈두덩 옅은 반점(하프톤 패치)
+    hair = [("M", 58, 37), ("C", 57, 32.5, 61.5, 30.5, 63.5, 34)]
+    return [
+        plus_shape(18, 22, 5, 2.4), plus_shape(102, 18, 4, 2.2),
+        sq_shape(106, 90, 3.4, True),
+        shape(circle_cmds(60, 64, 26), fill="paper", sw=3),
+        shape(hair, sw=2),
+        shape(circle_cmds(50, 49, 6.0, ry=5.0), fill="paper", dots=True, sw=1.8),
+        shape(circle_cmds(70, 54.5, 3.8, ry=3.0), fill="paper", dots=True, sw=1.6),
+        shape([("M", 46, 62), ("C", 48, 65, 52, 65, 54, 62)], sw=2.2),
+        shape([("M", 66, 62), ("C", 68, 65, 72, 65, 74, 62)], sw=2.2),
+        shape([("M", 57, 74), ("C", 59, 76, 61, 76, 63, 74)], sw=2),
+    ]
+
+
+def il_hormonal():
+    # 포대기 아기 상반신 + 가슴 작은 원 2개 + 물결(호르몬 흐름)
+    swaddle = capsule_cmds(60, 60, 60, 84, 18)
+    hair = [("M", 58, 23), ("C", 57, 18.5, 61.5, 16.5, 63.5, 20)]
+    return [
+        plus_shape(18, 24, 5, 2.4), sq_shape(16, 92, 3.4, True),
+        plus_shape(104, 22, 4, 2.2),
+        shape(swaddle, fill="paper", dots=True, sw=3, dot_bounds=(40, 82, 80, 104)),
+        # V자 포대기 여밈 + 가슴 작은 멍울 2개(여밈 아래)
+        shape([("M", 48, 54), ("L", 60, 64)], sw=1.8),
+        shape([("M", 72, 54), ("L", 60, 64)], sw=1.8),
+        shape(circle_cmds(53, 71, 2.8), fill="paper", sw=1.8),
+        shape(circle_cmds(67, 71, 2.8), fill="paper", sw=1.8),
+        shape(circle_cmds(60, 36, 15), fill="paper", sw=3),
+        shape(hair, sw=2),
+        shape([("M", 53, 34), ("C", 54.5, 36, 56.5, 36, 58, 34)], sw=2),
+        shape([("M", 62, 34), ("C", 63.5, 36, 65.5, 36, 67, 34)], sw=2),
+        shape([("M", 58, 42), ("C", 59.3, 43.5, 60.7, 43.5, 62, 42)], sw=1.8),
+        # 물결
+        shape([("M", 90, 52), ("C", 93, 48, 96, 56, 99, 52),
+               ("C", 102, 48, 105, 56, 108, 52)], sw=1.8),
+        shape([("M", 92, 61), ("C", 95, 57, 98, 65, 101, 61),
+               ("C", 104, 57, 107, 65, 110, 61)], sw=1.6),
+    ]
+
+
+def il_dimple():
+    # 엎드린 아기 뒷모습 — 엉덩이 위 꼬리뼈 보조개 점
+    hair = [("M", 60, 27), ("C", 59, 22.5, 63.5, 20.5, 65.5, 24)]
+    return [
+        plus_shape(18, 24, 5, 2.4), plus_shape(100, 18, 4, 2.2),
+        sq_shape(106, 66, 3.4, True),
+        shape(circle_cmds(62, 38, 12), fill="paper", sw=3),
+        shape(hair, sw=2),
+        shape(circle_cmds(62, 72, 28, ry=23), fill="paper", dots=True, sw=3,
+              dot_bounds=(34, 82, 90, 96)),
+        shape([("M", 62, 70), ("C", 60.5, 76, 60.5, 84, 62, 92)], sw=2),
+        shape(circle_cmds(62, 62, 2.6), fill="dot", sw=1.4),
+        shape(circle_cmds(48, 97, 6, ry=7), fill="paper", sw=2.2),
+        shape(circle_cmds(76, 97, 6, ry=7), fill="paper", sw=2.2),
+    ]
+
+
+def il_tongue_tie():
+    # 벌린 입(입술 이중 링) + 들어 올린 하트 혀(밑 홈) + 혀 밑 띠
+    tongue = [
+        ("M", 48, 68), ("C", 48, 56, 53, 50, 60, 50),
+        ("C", 67, 50, 72, 56, 72, 68),
+        ("C", 72, 74, 68, 78, 64, 78),
+        ("C", 62, 78, 61, 76, 60, 73.5),
+        ("C", 59, 76, 58, 78, 56, 78),
+        ("C", 52, 78, 48, 74, 48, 68), ("Z",),
+    ]
+    return [
+        plus_shape(18, 22, 5, 2.4), plus_shape(103, 24, 4, 2.2),
+        sq_shape(104, 88, 3.4, True),
+        shape(circle_cmds(60, 62, 30, ry=27), fill="paper", sw=3),
+        shape(circle_cmds(60, 63, 23, ry=20), fill="paper", dots=True, sw=2.2),
+        # 들린 혀 밑 띠(혀-입바닥 연결)
+        shape([("M", 60, 74), ("L", 60, 84.5)], sw=2),
+        shape(tongue, fill="paper", sw=2.4),
+    ]
+
+
+def il_vaccine():
+    # 둥근 주사기(위) + 반창고 붙인 팔뚝(아래) + 별
+    return [
+        star_shape(24, 12, 4, sw=1.5), star_shape(102, 50, 5.5),
+        plus_shape(104, 88, 4, 2.2), sq_shape(16, 90, 3.4, True),
+        # 주사기
+        shape([("M", 36, 24), ("L", 25, 24)], sw=1.8),
+        shape(rrect_cmds(36, 16, 40, 16, 6), fill="paper", dots=True, sw=2.6,
+              dot_bounds=(34, 14, 58, 34)),
+        shape([("M", 48, 26), ("L", 48, 32)], sw=1.4),
+        shape([("M", 56, 26), ("L", 56, 32)], sw=1.4),
+        shape([("M", 64, 26), ("L", 64, 32)], sw=1.4),
+        shape([("M", 78, 12), ("L", 78, 36)], sw=2.2),
+        shape([("M", 78, 24), ("L", 90, 24)], sw=2.4),
+        shape(rrect_cmds(90, 18, 5, 12, 2), fill="paper", sw=2),
+        # 팔뚝 + 소매 + 반창고
+        shape(capsule_cmds(38, 84, 88, 72, 12), fill="paper", sw=3),
+        shape(rrect_cmds(24, 68, 16, 26, 5), fill="paper", dots=True, sw=2.6),
+        shape(capsule_cmds(60, 76, 74, 72, 5.5), fill="paper", dots=True,
+              sw=2, dot_bounds=(63, 66, 71, 82)),
+    ]
+
+
+def il_formula():
+    # 젖병(좌) + 분유 스푼(아래) + 김 오르는 포트(우)
+    teat_dome = [("M", 34, 49), ("C", 34, 42, 38, 38, 42, 38),
+                 ("C", 46, 38, 50, 42, 50, 49), ("Z",)]
+    nipple = [("M", 39, 38), ("C", 39, 33.5, 40.5, 31, 42, 31),
+              ("C", 43.5, 31, 45, 33.5, 45, 38), ("Z",)]
+    return [
+        plus_shape(17, 22, 5, 2.4), plus_shape(106, 26, 4, 2.2),
+        sq_shape(14, 90, 3.4, True),
+        squiggle(76, 50, 13), squiggle(88, 48, 14),
+        # 젖병
+        shape(rrect_cmds(30, 54, 24, 40, 8), fill="paper", dots=True, sw=2.8,
+              dot_bounds=(28, 72, 56, 96)),
+        shape([("M", 30, 72), ("L", 54, 72)], sw=1.8),
+        shape(rrect_cmds(28, 49, 28, 7, 3), fill="paper", sw=2.2),
+        shape(teat_dome, fill="paper", sw=2.2),
+        shape(nipple, fill="paper", sw=2),
+        # 포트
+        shape([("M", 66, 70), ("C", 60, 69, 59, 75, 66, 77)], fill="paper", sw=2),
+        shape(circle_cmds(82, 76, 17, ry=15), fill="paper", sw=3),
+        shape([("M", 97, 70), ("C", 106, 71, 106, 80, 97, 82)], sw=2.4),
+        shape(circle_cmds(82, 61, 13, ry=4), fill="paper", sw=2.2),
+        shape(circle_cmds(82, 55, 2.6), fill="paper", sw=2),
+        # 분유 스푼
+        shape(circle_cmds(62, 102, 6, ry=5), fill="paper", dots=True, sw=2),
+        shape([("M", 68, 101), ("L", 79, 97)], sw=2.4),
+    ]
+
+
+def il_milk_storage():
+    # 날짜 라벨 붙은 모유 저장팩 + 눈꽃 결정
+    return [
+        plus_shape(18, 22, 5, 2.4), plus_shape(100, 20, 4, 2.2),
+        sq_shape(16, 92, 3.4, True),
+        shape(rrect_cmds(36, 30, 42, 62, 6), fill="paper", dots=True, sw=3,
+              dot_bounds=(34, 64, 80, 94)),
+        shape([("M", 36, 38), ("L", 78, 38)], sw=1.6),
+        shape([("M", 36, 42), ("L", 78, 42)], sw=1.6),
+        shape([("M", 36, 64), ("L", 78, 64)], sw=1.8),
+        # 라벨(날짜 줄 2개)
+        shape(rrect_cmds(44, 46, 26, 13, 2), fill="paper", sw=2),
+        shape([("M", 48, 50.5), ("L", 66, 50.5)], sw=1.4),
+        shape([("M", 48, 54.5), ("L", 58, 54.5)], sw=1.4),
+        # 눈꽃(6갈래 결정)
+        shape([("M", 99, 44), ("L", 99, 60)], sw=1.8),
+        shape([("M", 92, 48), ("L", 106, 56)], sw=1.8),
+        shape([("M", 106, 48), ("L", 92, 56)], sw=1.8),
+        star_shape(100, 78, 4, sw=1.5),
+    ]
+
+
+def il_lochia():
+    # 아래로 지는 꽃잎 3장 — 진한(액센트 면) → 하프톤 → 옅은(선만)
+    petal = [
+        ("M", 0, -9), ("C", 6.5, -6.5, 7.5, 0.5, 3.5, 7),
+        ("C", 1.5, 10, -1.5, 10, -3.5, 7),
+        ("C", -7.5, 0.5, -6.5, -6.5, 0, -9), ("Z",),
+    ]
+    return [
+        plus_shape(18, 24, 4.5, 2.2), sq_shape(104, 92, 3.2, True),
+        star_shape(102, 70, 4.5, sw=1.5),
+        shape(rot_cmds(petal, 80, 28, -25, 10 / 9), fill="dot", sw=1.6),
+        shape([("M", 88, 42), ("C", 84, 46, 82, 50, 82, 54)], sw=1.2),
+        shape(rot_cmds(petal, 60, 56, 20, 10 / 9), fill="paper", dots=True, sw=2),
+        shape([("M", 68, 72), ("C", 64, 76, 62, 79, 62, 83)], sw=1.2),
+        shape(rot_cmds(petal, 42, 84, -15), fill="paper", sw=2),
+    ]
+
+
+def il_baby_blues():
+    # 엄마 옆얼굴 실루엣 + 작은 구름·빗방울 + 구름 뒤 해(희망)
+    profile = [
+        ("M", 56, 52),
+        ("C", 54, 58, 53, 62, 51, 66),
+        ("C", 49.5, 68.5, 49.5, 69.5, 51, 70),
+        ("C", 50, 72.5, 51, 74, 52.5, 74.5),
+        ("C", 51.5, 77, 52.5, 79, 55, 80),
+        ("C", 58, 83, 62, 86, 66, 87),
+        ("C", 68, 90, 69, 93, 69, 97),
+        ("L", 88, 97),
+        ("C", 88, 88, 90, 78, 90, 66),
+        ("C", 90, 50, 80, 42, 70, 42),
+        ("C", 65, 42, 58, 46, 56, 52), ("Z",),
+    ]
+    cloud = [
+        ("M", 28, 30), ("C", 26, 23, 34, 19, 39, 22),
+        ("C", 41, 15, 52, 15, 54, 22), ("C", 61, 20, 63, 28, 57, 31),
+        ("C", 54, 33, 31, 33, 28, 30), ("Z",),
+    ]
+    return [
+        sq_shape(106, 88, 3.4, True), plus_shape(18, 88, 4, 2.2),
+        # 해(구름 뒤 — 먼저 그린다)
+        shape(circle_cmds(62, 14, 8), fill="paper", sw=2.4),
+        shape([("M", 72, 8), ("L", 76, 5)], sw=1.8),
+        shape([("M", 74, 16), ("L", 79, 15)], sw=1.8),
+        shape(cloud, fill="paper", dots=True, sw=2.4, dot_bounds=(26, 26, 62, 34)),
+        shape(drop_cmds(36, 42, 6), fill="dot", sw=1.4),
+        shape(drop_cmds(46, 48, 5.5), fill="dot", sw=1.4),
+        shape(profile, fill="paper", sw=3),
+        shape(circle_cmds(88, 52, 7), fill="paper", dots=True, sw=2.2),
+        shape([("M", 57, 64), ("C", 58.5, 66, 61, 66, 62.5, 64.5)], sw=1.8),
+    ]
+
+
+def il_engorgement():
+    # 가슴 곡선 추상(수묵 능선) + 온기 파선 + 냉찜질팩
+    mound = [
+        ("M", 28, 90), ("C", 32, 62, 60, 50, 80, 58),
+        ("C", 94, 64, 100, 78, 97, 90), ("Z",),
+    ]
+    return [
+        plus_shape(18, 24, 5, 2.4), sq_shape(14, 92, 3.4, True),
+        squiggle(56, 44, 12), squiggle(68, 40, 12), squiggle(80, 44, 12),
+        shape(mound, fill="paper", dots=True, sw=3, dot_bounds=(78, 58, 102, 92)),
+        shape([("M", 38, 90), ("C", 42, 70, 60, 62, 76, 68)], sw=1.8),
+        shape(circle_cmds(66, 74, 3.2), fill="dot", sw=1.2),
+        # 냉찜질팩(눈꽃)
+        shape(rrect_cmds(84, 14, 26, 17, 7), fill="paper", sw=2.4),
+        shape([("M", 97, 17), ("L", 97, 28)], sw=1.5),
+        shape([("M", 92, 19.5), ("L", 102, 25.5)], sw=1.5),
+        shape([("M", 102, 19.5), ("L", 92, 25.5)], sw=1.5),
+    ]
+
+
+def il_nipple_care():
+    # 연고 튜브 + 수유패드 + 밴드
+    return [
+        plus_shape(18, 24, 5, 2.4), sq_shape(16, 90, 3.4, True),
+        star_shape(104, 54, 4, sw=1.5),
+        # 튜브
+        shape(rrect_cmds(28, 60, 34, 19, 4), fill="paper", sw=2.6),
+        shape([("M", 30.5, 60), ("L", 30.5, 79)], sw=1.6),
+        shape(rrect_cmds(34, 65, 16, 9, 2), fill="paper", sw=1.6),
+        shape([("M", 37, 69.5), ("L", 47, 69.5)], sw=1.4),
+        shape([("M", 62, 64.5), ("L", 68, 66), ("L", 68, 73),
+               ("L", 62, 74.5), ("Z",)], fill="paper", sw=2),
+        shape(rrect_cmds(68, 63.5, 9, 12, 2.5), fill="paper", dots=True, sw=2.2),
+        # 수유패드(이중 링)
+        shape(circle_cmds(88, 32, 15), fill="paper", dots=True, sw=2.6),
+        shape(circle_cmds(88, 32, 8), fill="paper", sw=1.6),
+        # 밴드
+        shape(capsule_cmds(80, 86, 102, 78, 6.5), fill="paper", dots=True,
+              sw=2.4, dot_bounds=(87, 74, 95, 92)),
+    ]
+
+
+def il_breastfeeding():
+    # 요람 수유 실루엣 — 수묵 곡선 중심(엄마 머리 + 품 곡선 + 포대기 아기)
+    return [
+        plus_shape(18, 88, 4, 2.2), sq_shape(104, 92, 3.2, True),
+        star_shape(100, 20, 4.5, sw=1.5),
+        # 품(팔) 곡선
+        shape([("M", 50, 38), ("C", 36, 48, 30, 64, 36, 78),
+               ("C", 42, 92, 64, 98, 80, 90), ("C", 86, 87, 90, 82, 92, 76)], sw=3),
+        shape([("M", 78, 40), ("C", 88, 48, 92, 60, 90, 72)], sw=2.2),
+        # 엄마 머리(숙임) + 낮은 쪽머리
+        shape(circle_cmds(64, 30, 13), fill="paper", sw=3),
+        shape(circle_cmds(76, 34, 5.5), fill="paper", dots=True, sw=2),
+        shape([("M", 56, 32), ("C", 57, 34, 59, 34, 60, 32)], sw=1.8),
+        # 품 안의 아기
+        shape(capsule_cmds(52, 72, 74, 76, 10), fill="paper", dots=True,
+              sw=2.6, dot_bounds=(48, 74, 84, 88)),
+        shape(circle_cmds(44, 68, 9), fill="paper", sw=2.6),
+        shape([("M", 41, 67), ("C", 42, 68.5, 44, 68.5, 45, 67)], sw=1.6),
+    ]
+
+
+def il_milk_supply():
+    # 눈금 젖병 반쯤 + 물음표 곡선
+    teat_dome = [("M", 40, 37), ("C", 40, 30, 45, 26, 51, 26),
+                 ("C", 57, 26, 62, 30, 62, 37), ("Z",)]
+    nipple = [("M", 47, 26), ("C", 47, 21, 49, 18.5, 51, 18.5),
+              ("C", 53, 18.5, 55, 21, 55, 26), ("Z",)]
+    return [
+        plus_shape(18, 24, 5, 2.4), sq_shape(16, 92, 3.4, True),
+        plus_shape(104, 80, 4, 2.2),
+        shape(rrect_cmds(36, 42, 30, 52, 9), fill="paper", dots=True, sw=3,
+              dot_bounds=(34, 70, 68, 96)),
+        shape([("M", 36, 70), ("L", 66, 70)], sw=2),
+        shape([("M", 60, 50), ("L", 66, 50)], sw=1.4),
+        shape([("M", 60, 58), ("L", 66, 58)], sw=1.4),
+        shape([("M", 60, 66), ("L", 66, 66)], sw=1.4),
+        shape([("M", 60, 78), ("L", 66, 78)], sw=1.4),
+        shape([("M", 60, 86), ("L", 66, 86)], sw=1.4),
+        shape(rrect_cmds(34, 37, 34, 8, 3), fill="paper", sw=2.2),
+        shape(teat_dome, fill="paper", sw=2.2),
+        shape(nipple, fill="paper", sw=2),
+        # 물음표
+        shape([("M", 80, 42), ("C", 80, 32, 97, 32, 97, 42),
+               ("C", 97, 51, 88.5, 50, 88.5, 60)], sw=3),
+        shape(circle_cmds(88.5, 69, 2.4), fill="ink"),
+    ]
+
+
+def il_recovery():
+    # 김 오르는 찻잔 + 담요 방석 + 새싹
+    cup = [
+        ("M", 38, 56), ("C", 38, 72, 45, 82, 58, 82),
+        ("C", 71, 82, 78, 72, 78, 56), ("Z",),
+    ]
+    return [
+        plus_shape(18, 24, 5, 2.4), sq_shape(14, 74, 3.4, True),
+        star_shape(100, 26, 4.5, sw=1.5),
+        squiggle(50, 44, 12), squiggle(64, 42, 13),
+        shape([("M", 78, 60), ("C", 88, 58, 90, 68, 79, 73)], sw=2.4),
+        shape(cup, fill="paper", sw=3),
+        shape(circle_cmds(58, 56, 20, ry=6), fill="paper", sw=2.4),
+        shape(circle_cmds(58, 56, 14, ry=3.8), fill="paper", dots=True, sw=1.8),
+        # 방석·담요
+        shape(rrect_cmds(28, 88, 64, 16, 8), fill="paper", dots=True, sw=2.6,
+              dot_bounds=(26, 96, 94, 106)),
+        shape([("M", 34, 96), ("L", 86, 96)], sw=1.4),
+        # 새싹
+        shape([("M", 97, 90), ("C", 99, 92, 105, 92, 107, 90)], sw=1.8),
+        shape([("M", 102, 88), ("C", 102, 82, 102, 77, 102, 72)], sw=2),
+        shape([("M", 102, 77), ("C", 93, 75, 89, 67, 93, 61),
+               ("C", 99, 58, 103, 68, 102, 77), ("Z",)], fill="paper", sw=1.8),
+        shape([("M", 102, 74), ("C", 110, 70, 113, 61, 108, 56),
+               ("C", 102, 54, 100, 65, 102, 74), ("Z",)], fill="paper", sw=1.8),
+    ]
+
+
 ILLUSTRATIONS = {
     "tummy_pain": ("배앓이", il_tummy_pain),
     "teething": ("이앓이", il_teething),
@@ -502,6 +886,23 @@ ILLUSTRATIONS = {
     "prickly_heat": ("땀띠", il_prickly_heat),
     "jaundice": ("황달", il_jaundice),
     "eye_care": ("눈곱·눈물", il_eye_care),
+    # 신규 16종 (콘텐츠 계약 §1 — order_index 17~32)
+    "thrush": ("아구창", il_thrush),
+    "umbilical": ("배꼽·제대", il_umbilical),
+    "birthmark": ("반점·각질", il_birthmark),
+    "hormonal": ("가성생리·멍울", il_hormonal),
+    "dimple": ("엉덩이 딤플", il_dimple),
+    "tongue_tie": ("설소대", il_tongue_tie),
+    "vaccine": ("예방접종", il_vaccine),
+    "formula": ("분유 타기", il_formula),
+    "milk_storage": ("모유 보관", il_milk_storage),
+    "lochia": ("오로", il_lochia),
+    "baby_blues": ("산후 우울감", il_baby_blues),
+    "engorgement": ("젖몸살·유선염", il_engorgement),
+    "nipple_care": ("유두 통증", il_nipple_care),
+    "breastfeeding": ("모유수유 시작", il_breastfeeding),
+    "milk_supply": ("모유량 고민", il_milk_supply),
+    "recovery": ("산후 회복", il_recovery),
 }
 
 
@@ -610,7 +1011,7 @@ DART_HEADER = """\
 // 원본: tool/illustrations/generate_illustrations.py
 // 재생성: python3 tool/illustrations/generate_illustrations.py --dart
 //
-// 증상 16종 일러스트의 벡터 오퍼레이션 데이터. 렌더 엔진은
+// 증상 32종 일러스트의 벡터 오퍼레이션 데이터. 렌더 엔진은
 // `symptom_illustration.dart`의 `IllustrationShape`/페인터가 담당한다.
 
 import 'symptom_illustration.dart';

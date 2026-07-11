@@ -2,6 +2,27 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 
 part 'symptom.freezed.dart';
 
+/// 카드 대상 구분 (§7.1 `symptoms.audience` — 'baby' | 'mom').
+///
+/// 홈 그리드 그룹핑('아기 돌봄'/'엄마 돌봄')과 상세 의학 면책 문구 분기의
+/// 기준. 알 수 없는 와이어 값은 [baby]로 폴백한다.
+enum SymptomAudience {
+  /// 아기 증상·돌봄 카드(기본값).
+  baby('baby'),
+
+  /// 산모(엄마) 돌봄 카드.
+  mom('mom');
+
+  const SymptomAudience(this.wire);
+
+  /// DB `audience` 컬럼 문자열 값.
+  final String wire;
+
+  /// 와이어 값 → enum. null·미지 값은 [baby] 폴백(크래시 금지).
+  static SymptomAudience fromWire(String? value) =>
+      value == mom.wire ? mom : baby;
+}
+
 /// 증상 마스터 엔티티 (§7.1 `symptoms`, §3 C1/C2).
 ///
 /// 순수 도메인 모델 — Supabase/Drift 등 데이터 소스에 의존하지 않는다.
@@ -36,6 +57,9 @@ abstract class Symptom with _$Symptom {
 
     /// `order_index` — 홈 그리드 정렬 순서.
     @Default(0) int orderIndex,
+
+    /// `audience` — 카드 대상('baby'|'mom'). 기본 baby.
+    @Default(SymptomAudience.baby) SymptomAudience audience,
 
     /// `is_active`.
     @Default(true) bool isActive,

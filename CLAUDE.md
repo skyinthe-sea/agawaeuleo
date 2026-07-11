@@ -1,15 +1,16 @@
 # CLAUDE.md — 아가왜울어 개발 가이드
 
 아기 증상 검색 → 의학 참고정보 + 쿠팡 파트너스 제품 추천 + 육아 트래커 Flutter 앱.
-**단일 소스(SSOT): `agawaeuleo_spec.md` (v1.2)** — 모든 수치·문구·동작의 계약. 단, **시각·디자인 레이어는 `agawaeuleo_design_premium.md`(DESIGN v2)가 우선**(스펙 §16.4 v1.2 참조). 구현과 스펙이 어긋나면 스펙을 먼저 확인하고, 스펙 내부 모순이면 §3.3(게스트 우선) 원칙이 우선.
+**단일 소스(SSOT): `agawaeuleo_spec.md` (v1.3)** — 모든 수치·문구·동작의 계약. 단, **시각·디자인 레이어는 `agawaeuleo_design_premium.md`(DESIGN v2)가 우선**(스펙 §16.4 v1.2 참조). 구현과 스펙이 어긋나면 스펙을 먼저 확인하고, 스펙 내부 모순이면 §3.3(게스트 우선) 원칙이 우선.
 
-## 현재 상태 (2026-07-11 기준)
+## 현재 상태 (2026-07-12 기준)
 
-- **M1~M6 + Fable 최종 검토 + 디자인 v2("묵직한 페이퍼잉크") 완료.** `git log --oneline`이 마일스톤 기록 그 자체 (M1 파운데이션 → M2a 백엔드 → M2b 데이터 → M3+M4 화면 → M5 기본기능 → M6 빌드 → 검토 수정 18/20 → 디자인 v2).
+- **M1~M6 + Fable 최종 검토 + 디자인 v2("묵직한 페이퍼잉크") + M7 케어 콘텐츠 확장 완료.** `git log --oneline`이 마일스톤 기록 그 자체 (M1 파운데이션 → M2a 백엔드 → M2b 데이터 → M3+M4 화면 → M5 기본기능 → M6 빌드 → 검토 수정 18/20 → 디자인 v2 → M7).
+- **M7(스펙 v1.3)**: 카드 16→**32종**(아기 25 + 엄마 7 — `symptoms.audience`로 홈 '아기 돌봄'/'엄마 돌봄' 2그룹·검색 '엄마' 배지·면책 문구 분기). 조리원 실전 자료 + 근거 기반 웹 리서치로 전 카드 증보(섹션 243·응급신호 81·참고 출처 122). `symptom_infos.sections`는 **타입 섹션**(text/steps/checklist/table/qa/tips — 파서 `lib/data/supabase/symptom_info_mappers.dart`, 미지 타입 안전 폴백), `sources`(참고 자료) 컬럼 신설. 마이그레이션 0008(컬럼)→0009(시드 — **의학 검수 전 프로덕션 금지**, CONTENT_REVIEW.md 32종). 콘텐츠 수정 시 시드(0009)와 픽스처(fixture_symptoms.dart + fixture_symptom_infos_baby/_mom.dart)를 함께 갱신할 것. 원자료 `care_guide.md`는 **개인정보 포함 — 커밋 금지(비추적 유지)**.
 - 디자인 v2 시그니처(전부 `lib/presentation/widgets/`): 낙관 `InkSeal`·`InkHaloIcon`·`BrushDivider`·`SectionHeader`·그레인 `PaperBackground`·`AppSheetShell`/`AppDialogShell`·`SlidingSegment`, `AppCard` emphasis 3단(flat/raised/hero), 증상 카테고리 톤 `SymptomTone`. 새 UI는 이 컴포넌트들을 우선 재사용할 것.
-- 증상 일러스트 16종(홈 카드 우측 절반 + 상세 헤더 히어로): **수정은 반드시 `tool/illustrations/generate_illustrations.py`에서** → `python3 tool/illustrations/generate_illustrations.py --dart` 로 `symptom_illustration_data.dart` 재생성(+ dart format). 생성 파일 직접 편집 금지. 렌더 엔진·스타일 계약(먹선 3.0/보조 2.0~2.2·도트 r1.35/step4.8·토큰 ink900/paperRaised/accent)은 `symptom_illustration.dart`. 카드 한 줄 설명은 `symptoms.tagline`(공백 포함 8자 이내, 픽스처와 동일 값 유지).
-- 검증 그린: `flutter analyze` 0 이슈, 테스트 26파일 전체 통과, `flutter build apk --debug` ✓, `flutter build ios --debug --no-codesign` ✓.
-- Supabase 미구성 상태로 개발됨 → 앱은 **픽스처 데모 모드**(증상 16종)로 완전 동작. `.env` 값이 채워지면 실데이터 모드.
+- 증상 일러스트 32종(홈 카드 우측 절반 + 상세 헤더 히어로): **수정은 반드시 `tool/illustrations/generate_illustrations.py`에서** → `python3 tool/illustrations/generate_illustrations.py --dart` 로 `symptom_illustration_data.dart` 재생성(+ dart format). 생성 파일 직접 편집 금지. 렌더 엔진·스타일 계약(먹선 3.0/보조 2.0~2.2·도트 r1.35/step4.8·토큰 ink900/paperRaised/accent)은 `symptom_illustration.dart`. 카드 한 줄 설명은 `symptoms.tagline`(공백 포함 8자 이내, 픽스처와 동일 값 유지).
+- 검증 그린: `flutter analyze` 0 이슈, 테스트 35파일 전체 통과, `flutter build apk --debug` ✓, `flutter build ios --debug --no-codesign` ✓.
+- Supabase 미구성 상태로 개발됨 → 앱은 **픽스처 데모 모드**(카드 32종)로 완전 동작. `.env` 값이 채워지면 실데이터 모드(원격 select가 0008 컬럼을 포함하므로 **0008 적용과 앱 배포는 같은 릴리스로**).
 - 남은 것: 발주자 M0 작업(README.md 체크리스트), v1.1 로드맵(스펙 §3.4 — 홈 위젯·Live Activities·울음 분석·프리미엄).
 - 검토 잔존 2건: SnackBar 200ms(프레임워크 미지원 — 스펙 개정됨), `.env`/`.env.example`(시크릿 가드로 세션 내 생성 불가 — 발주자 수동).
 

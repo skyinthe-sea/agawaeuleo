@@ -10,7 +10,7 @@
 > | 1차 언어 | 한국어 |
 > | 타깃 | 0~24개월 영유아를 키우는 부모(주로 엄마), 수면부족·한손조작·짧은세션 환경 |
 > | 디자인 컨셉 | 페이퍼잉크(수묵) — 희석된 먹빛 + 명조 디스플레이 + 청록 잉크 액센트 |
-> | 문서 버전 | v1.2 (2026-07-10 개정 — 디자인 시각 레이어 DESIGN v2 부속 계약 신설, §16.4 변경 이력) |
+> | 문서 버전 | v1.3 (2026-07-12 개정 — 케어 콘텐츠 확장: 카드 32종·엄마 돌봄 카테고리·타입 섹션·참고 자료, §16.4 변경 이력) |
 
 ---
 
@@ -74,9 +74,9 @@
 ### 3.1 핵심 기능 (Primary)
 | ID | 기능 | 설명 |
 |---|---|---|
-| C1 | 증상 홈 | 대표 증상(배앓이, 이앓이, 태열, 변색, 트림, 게워냄, 콧물, 열, 발진, 수면퇴행 등)을 카드 그리드로 나열 |
+| C1 | 증상 홈 | 돌봄 카드 32종을 카드 그리드로 나열 — 아기 25종(배앓이, 이앓이, 태열, 변색, 게워냄, 열, 아구창, 배꼽, 예방접종, 분유 타기 등) + 엄마 7종(오로, 산후 우울감, 젖몸살·유선염, 모유수유 등). `audience`(baby/mom)로 '아기 돌봄'/'엄마 돌봄' 2그룹 표시(v1.3) |
 | C2 | 초성/부분 검색 | "배앓이" 또는 "ㅂㅇㅇ"로 검색. 한글 초성 매칭 + 부분일치 |
-| C3 | 증상 상세 | ① 간단 의학 참고정보 ② 응급신호 경고(해당 시) ③ 추천 제품 리스트 ④ 대가성 표시 ⑤ 의학 면책 |
+| C3 | 증상 상세 | ① 의학 참고정보(타입 섹션: text·steps·checklist·table·qa·tips — v1.3) ② 응급신호 경고(해당 시) ③ 참고 자료(sources — v1.3) ④ 추천 제품 리스트 ⑤ 대가성 표시 ⑥ 의학 면책(audience별 분기 — v1.3) |
 | C4 | 제품 카드 → 쿠팡 | 탭 시 `url_launcher`로 **외부 브라우저**에서 파트너스 딥링크 오픈 |
 | C5 | 즐겨찾기 | 자주 보는 증상/제품 북마크 (로컬 + 계정 동기화) |
 
@@ -240,6 +240,7 @@ create table symptoms (
   aliases       text[] default '{}',            -- 동의어 ['가스', '영아산통']
   emoji_or_icon text,                            -- 아이콘 키
   product_keywords text[] default '{}',          -- 제품 검색 키워드(Edge Function이 사용 — 코드 수정 없이 DB에서 관리)
+  audience      text not null default 'baby',    -- 'baby'|'mom' — 홈 2그룹·면책 분기 (v1.3, 마이그레이션 0008)
   order_index   int default 0,
   is_active     boolean default true,
   created_at    timestamptz default now()
@@ -250,8 +251,9 @@ create table symptom_infos (
   id          uuid primary key default gen_random_uuid(),
   symptom_id  uuid references symptoms(id) on delete cascade,
   summary     text not null,                    -- 2~3문장 요약
-  sections    jsonb not null default '[]',      -- [{title, body}] 형태
+  sections    jsonb not null default '[]',      -- 타입 섹션 [{type, title, ...}] — type: text|steps|checklist|table|qa|tips (v1.3, type 누락=text·미지 타입 안전 폴백)
   emergency   jsonb default '[]',               -- 응급신호 배열 [{sign, action}]
+  sources     jsonb not null default '[]',      -- 참고 자료 [{label, org?, url?}] (v1.3, 마이그레이션 0008 — 상세 '참고 자료' 블록)
   updated_at  timestamptz default now()
 );
 
@@ -656,7 +658,7 @@ Edge Function에서 `Deno.env.get('COUPANG_ACCESS_KEY')`로 사용. 앱 코드/�
   1. 상단바: 좌측 인사("오늘도 힘내세요" title 명조 22 or 아기 이름), 우측 알림 벨 아이콘(24, 배지 dot `coral`).
   2. **검색 바**(고정, 엄지 닿기 쉽게 상단바 바로 아래): 높이 52, radius `r.full`, 배경 `paper.card`, e1, 좌측 돋보기 아이콘 20 `ink.500`, placeholder "배앓이, ㅂㅇㅇ …" `ink.300`. 탭 시 검색 화면으로 Hero 전환(검색바가 상단으로 morph).
   3. (선택) 최근 본 증상 가로 스크롤 칩 — 칩 높이 36 radius `r.full` 배경 `accent.wash` 텍스트 `accent`.
-  4. **증상 카드 그리드**: 2열, 카드 간격 12, 카드 radius `r.md`, e1. 카드 내부: 상단 아이콘(수묵 라인 40×40, 배경 원 `accent.wash`), 하단 증상명 heading 18 `ink.900`. 카드 높이 ~120.
+  4. **증상 카드 그리드**: 2열, 카드 간격 12, 카드 radius `r.md`, e1. 카드 내부: 상단 아이콘(수묵 라인 40×40, 배경 원 `accent.wash`), 하단 증상명 heading 18 `ink.900`. 카드 높이 ~120. mom 카드가 로드되면 '아기 돌봄'/'엄마 돌봄' SectionHeader 2그룹으로 나눠 렌더(v1.3 — mom 없으면 기존과 동일, stagger 인덱스는 두 그룹에 걸쳐 연속).
   5. 하단 탭바.
 - **동작**:
   - 검색바 탭 → 검색 화면(§11.8), 검색바 Hero morph + 키보드 자동 포커스.
@@ -680,8 +682,9 @@ Edge Function에서 `Deno.env.get('COUPANG_ACCESS_KEY')`로 사용. 앱 코드/�
   1. 헤더: 증상 아이콘(Hero, 56) + 증상명 title 명조 22 + 우측 즐겨찾기 별(24).
   2. **요약 카드**: 배경 `paper.card`, radius `r.md`, e1, 본문 bodyL `ink.700` 2~3문장.
   3. (해당 시) **응급 경고 카드**: 배경 `coral.wash`, 좌측 4dp 바 `coral`(radius 0), 아이콘 `coral`, 제목 "이럴 땐 병원에", 본문 응급신호 + "가까운 병원 찾기" 버튼(탭 시 지도/전화 연결). 정보 최상단(요약 바로 아래) 노출.
-  4. 정보 섹션들: 아코디언 or 단순 나열(heading 18 + body). 섹션 예: 원인, 집에서 돌보기, 주의점.
-  5. **의학 면책 문구**(caption `ink.500`): "본 정보는 의학적 진단이 아니며 참고용입니다. 증상이 우려되면 소아과 전문의와 상담하세요."
+  4. 정보 섹션들: 아코디언(첫 섹션 펼침) + 타입별 본문 렌더러(v1.3) — text(본문)·steps(24dp 번호 칩)·checklist(체크 아이콘)·table(헤어라인 표, 넘치면 가로 스크롤)·qa(Q 볼드/A)·tips('조리원 실전 팁', accentWash 박스). 섹션 예: 원인, 집에서 돌보기, 주의점.
+  4-1. **참고 자료**(v1.3): sources의 label 불릿 리스트(caption `ink.500`) — 탭 액션·URL 노출 없음, 비면 생략. 면책 문구 바로 위.
+  5. **의학 면책 문구**(caption `ink.500`, audience 분기 — v1.3): baby "본 정보는 의학적 진단이 아니며 참고용입니다. 증상이 우려되면 소아과 전문의와 상담하세요." / mom "본 정보는 의학적 진단이 아니며 참고용입니다. 증상이 우려되면 산부인과 전문의 등 의료진과 상담하세요."
   6. **추천 제품 섹션**:
      - 섹션 헤더 heading "이럴 때 도움되는 용품" + **대가성 표시 배지**(바로 아래, 눈에 띄게): caption, 배경 `amber` 옅은 톤, "쿠팡 파트너스 활동으로 수수료를 받습니다".
      - 제품 카드 리스트(세로): 카드 높이 ~96, radius `r.md`, e1. 좌측 썸네일 72×72 radius `r.sm`, 우측 제목 body 2줄(말줄임) + 가격 data 16 `ink.900` + (있으면) 별점 caption. 우측 끝 외부링크 아이콘 16 `ink.300`.
@@ -803,7 +806,7 @@ Edge Function에서 `Deno.env.get('COUPANG_ACCESS_KEY')`로 사용. 앱 코드/�
 - [ ] 본문과 구분되게(색/크기) 표시.
 
 ### 13.3 의료/건강 정보
-- [ ] 모든 증상 상세에 **의학 면책** 문구(진단 아님·참고용·전문의 상담).
+- [ ] 모든 증상 상세에 **의학 면책** 문구(진단 아님·참고용·전문의 상담) — audience별 원문(§11.9-5: baby=소아과, mom=산부인과) 바이트 불변 유지.
 - [ ] 특정 질환 단정·특정 약물/제품을 치료로 권하는 표현 금지.
 - [ ] 응급신호(발열/호흡곤란/경련 등)는 병원 안내로 분리.
 
@@ -898,6 +901,11 @@ assets/ fonts(Pretendard, NotoSerifKR, JetBrainsMono), illustrations(수묵), ic
 - [ ] Android 먼저 출시 → iOS 보강 후 제출
 
 ### 16.4 변경 이력
+- **v1.3 (2026-07-12)**
+  1. **케어 콘텐츠 확장 — 조리원 실전 자료(care_guide.md) + 근거 기반 웹 리서치 통합**: 카드 16종 → **32종**(아기 25 = 기존 16 + 아구창·배꼽·제대·반점·각질·가성생리·멍울·엉덩이 딤플·설소대·예방접종·분유 타기·모유 보관 / 엄마 7 = 오로·산후 우울감·젖몸살·유선염·유두 통증·모유수유 시작·모유량 고민·산후 회복). 전 카드 콘텐츠 전면 증보(섹션 243·응급신호 81·참고 출처 122). 조리원 고유 정보(상호·내선·병원 추천·소방대피)는 제외, 위험·오류 항목은 근거 기반 교정(흔들린아이증후군 경고 신설, 아구창 항생제→항진균제, WHO 70°C 조유, 경사 눕히기 주의, CDC 모유 보관 기준 등). **배포 전 의학 검수 필수(CONTENT_REVIEW.md — 검수 전 프로덕션 시드 금지).**
+  2. **`symptoms.audience`**('baby'|'mom', 마이그레이션 0008) 신설 — 홈 '아기 돌봄'/'엄마 돌봄' 2그룹(§11.7), 검색 결과 '엄마' 배지, 의학 면책 문구 분기(§11.9-5, §13.3).
+  3. **symptom_infos 타입 섹션·참고 자료**: sections에 type(text|steps|checklist|table|qa|tips — 누락=text, 미지 타입 안전 폴백) 도입, `sources` jsonb 컬럼 신설(0008) — 상세 화면 타입별 렌더러 + '참고 자료' 블록(§11.9, C3). 시드는 0009_care_seed.sql(0008 선행 필수 — 0008 적용과 앱 배포를 동일 릴리스로).
+  4. 증상 일러스트 16종 → **32종**(신규 카드 전부, 산모 카드는 추상·상징 중심), SymptomTone·SymptomIcons 신규 키 매핑 확장.
 - **v1.2 (2026-07-10)**
   1. **디자인 시각 레이어 개정 — "묵직한 페이퍼잉크"**: 별도 부속 계약 `agawaeuleo_design_premium.md`(DESIGN v2) 신설. §9·§10·§11의 시각 사항과 충돌 시 해당 문서가 우선(기능·데이터·법적 문구는 본 스펙 우선). 요지: paperBg 반 단계 심화 + 신규 토큰(paperStack/seal/amberWash/sealWash), 음영 e1~e4 상향, 타이포 확장(displayL/overline/dataL + 자간), 종이 그레인 텍스처, 시그니처 컴포넌트 7종(낙관 InkSeal·붓결 디바이더·SectionHeader·InkHaloIcon·PaperBackground·시트/다이얼로그 셸·SlidingSegment), elevation·컬러·명조 운용 매트릭스.
 - **v1.1 (2026-07)**

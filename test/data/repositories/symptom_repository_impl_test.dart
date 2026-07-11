@@ -5,7 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 /// §11.7 홈 그리드 · §11.8 초성/부분/별칭 검색 — 미구성(데모) 모드에서 픽스처로 검증.
 ///
 /// 원격 데이터소스를 주입하지 않으면 리포지토리는 데모 모드로 동작해 시드와 동일한
-/// 16종 증상 픽스처를 반환한다(§12.2 빈 화면 방지).
+/// 32종 증상 픽스처를 반환한다(§12.2 빈 화면 방지).
 void main() {
   late SymptomRepositoryImpl repo;
 
@@ -16,9 +16,9 @@ void main() {
   Iterable<String> names(List<Symptom> list) => list.map((s) => s.name);
 
   group('마스터 조회', () {
-    test('getAll은 16종 픽스처를 order_index 오름차순으로 반환한다', () async {
+    test('getAll은 32종 픽스처를 order_index 오름차순으로 반환한다', () async {
       final all = await repo.getAll();
-      expect(all, hasLength(16));
+      expect(all, hasLength(32));
 
       final orders = all.map((s) => s.orderIndex).toList();
       final sorted = [...orders]..sort();
@@ -64,12 +64,13 @@ void main() {
       expect(names(result), contains('배앓이'));
     });
 
-    test("초성 부분열 'ㅂㅇ' → 배앓이만 반환된다(별칭발 오탐 방지)", () async {
+    test("초성 부분열 'ㅂㅇ' → 이름 초성 매칭만(별칭발 오탐 방지)", () async {
       // 다른 증상들의 별칭(발열/비염/분유 토함/유치발육/얼굴 붉어짐 등)이
-      // 우연히 초성 'ㅂㅇ'을 포함하더라도, 초성열 질의는 이름에만 매칭되므로
-      // 이름 자체가 'ㅂㅇ'으로 시작하는 '배앓이'만 나와야 한다.
+      // 우연히 초성 'ㅂㅇ'을 포함하더라도, 초성열 질의는 이름에만 매칭된다.
+      // 이름 초성에 'ㅂㅇ'이 들어가는 '배앓이'(ㅂㅇㅇ)·'분유 타기'(ㅂㅇㅌㄱ)만
+      // order_index 순으로 나오고, 별칭에만 'ㅂㅇ'이 있는 증상은 제외돼야 한다.
       final result = await repo.search('ㅂㅇ');
-      expect(names(result), ['배앓이']);
+      expect(names(result), ['배앓이', '분유 타기']);
     });
 
     test('부분 문자열 매칭 — 이름 일부로도 찾는다', () async {
@@ -83,10 +84,10 @@ void main() {
     });
   });
 
-  test('watchAll의 최초 방출이 16종 데모 목록을 준다', () async {
+  test('watchAll의 최초 방출이 32종 데모 목록을 준다', () async {
     await expectLater(
       repo.watchAll(),
-      emits(predicate<List<Symptom>>((l) => l.length == 16)),
+      emits(predicate<List<Symptom>>((l) => l.length == 32)),
     );
   });
 }

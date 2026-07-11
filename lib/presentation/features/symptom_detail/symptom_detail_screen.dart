@@ -15,6 +15,7 @@ import 'package:agawaeuleo/presentation/widgets/skeletons/skeleton_blocks.dart';
 import 'package:agawaeuleo/presentation/widgets/states/empty_state.dart';
 import 'package:agawaeuleo/presentation/widgets/states/error_state.dart';
 import 'package:agawaeuleo/presentation/widgets/surfaces/paper_background.dart';
+import 'package:agawaeuleo/presentation/widgets/symptom/symptom_illustration.dart';
 import 'package:agawaeuleo/presentation/widgets/symptom/symptom_tone.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -142,6 +143,8 @@ class _DetailBody extends ConsumerWidget {
 ///
 /// DESIGN v2 §7.3-1 — 독립 표면(`paperRaised` + 하단 헤어라인 + 그레인)으로
 /// 감싸고, 히어로 원을 [InkHaloIcon](56, elevated, [SymptomTone] 색)로 승격한다.
+/// [SymptomIllustrations] 등록 증상은 원 대신 동일 일러스트(56)를 써서 홈
+/// 일러스트 카드에서 히어로가 이어지게 한다.
 /// Hero 태그 `symptom-icon-<id>`/`symptom-name-<id>`는 그대로 유지한다.
 class _Header extends ConsumerWidget {
   const _Header({required this.symptom});
@@ -161,13 +164,18 @@ class _Header extends ConsumerWidget {
       children: [
         Hero(
           tag: 'symptom-icon-${symptom.id}',
-          child: InkHaloIcon(
-            size: 56,
-            icon: SymptomIcons.resolve(symptom.emojiOrIcon),
-            washColor: tone.wash,
-            fgColor: tone.fg,
-            elevated: true,
-          ),
+          child: SymptomIllustrations.has(symptom.emojiOrIcon)
+              ? SymptomIllustration(
+                  illustrationKey: symptom.emojiOrIcon!,
+                  size: 56,
+                )
+              : InkHaloIcon(
+                  size: 56,
+                  icon: SymptomIcons.resolve(symptom.emojiOrIcon),
+                  washColor: tone.wash,
+                  fgColor: tone.fg,
+                  elevated: true,
+                ),
         ),
         const SizedBox(width: AppSpacing.x16),
         Expanded(

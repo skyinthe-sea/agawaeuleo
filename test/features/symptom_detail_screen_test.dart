@@ -1,6 +1,7 @@
 import 'package:agawaeuleo/presentation/router/routes.dart';
 import 'package:agawaeuleo/presentation/widgets/brand/ink_halo_icon.dart';
 import 'package:agawaeuleo/presentation/widgets/dividers/brush_divider.dart';
+import 'package:agawaeuleo/presentation/widgets/symptom/symptom_illustration.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -27,7 +28,7 @@ void main() {
   });
 
   testWidgets(
-    'DESIGN v2 §7.3: Hero 태그 유지 + 히어로 InkHaloIcon/붓결 디바이더/제품 개수·순위 배지 렌더',
+    'DESIGN v2 §7.3: Hero 태그 유지 + 히어로 일러스트(colic)/붓결 디바이더/제품 개수·순위 배지 렌더',
     (tester) async {
       final router = await pumpBootedApp(tester);
 
@@ -56,8 +57,11 @@ void main() {
         findsOneWidget,
       );
 
-      // §7.3-1 히어로 원이 InkHaloIcon으로 승격됨.
-      expect(find.byType(InkHaloIcon), findsOneWidget);
+      // §7.3-1 히어로 — 일러스트 등록 증상(colic)은 InkHaloIcon 대신 홈 카드와
+      // 동일한 일러스트가 착지한다(§11.7 일러스트 카드 히어로 연속성).
+      // 미등록 증상의 InkHaloIcon 승격은 ink_halo_icon_test.dart 가 커버한다.
+      expect(find.byType(SymptomIllustration), findsOneWidget);
+      expect(find.byType(InkHaloIcon), findsNothing);
 
       // §7.3-5 의학 면책 박스의 안내 아이콘.
       expect(find.byIcon(Icons.info_outline), findsOneWidget);

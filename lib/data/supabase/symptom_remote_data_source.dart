@@ -65,6 +65,7 @@ class SymptomRemoteDataSource {
     name: row['name'] as String,
     chosung: row['chosung'] as String,
     aliases: _stringList(row['aliases']),
+    tagline: row['tagline'] as String?,
     emojiOrIcon: row['emoji_or_icon'] as String?,
     productKeywords: _stringList(row['product_keywords']),
     orderIndex: (row['order_index'] as num?)?.toInt() ?? 0,

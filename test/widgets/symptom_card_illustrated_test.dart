@@ -8,7 +8,8 @@ import '_widget_harness.dart';
 
 /// 홈 증상 카드 일러스트 레이아웃(배앓이 트라이얼) 스모크.
 ///
-/// - 등록 증상(colic): 제목 + 한 줄 설명 + 일러스트, 아이콘 히어로 없음.
+/// - 등록 증상(colic): 제목 + 한 줄 설명([Symptom.tagline]) + 우측 절반
+///   일러스트. 일러스트가 아이콘 히어로(`symptom-icon-<id>`)로 비행한다.
 /// - 미등록 증상(teething): 기존 아이콘 레이아웃 그대로.
 /// - 라이트/다크 모두 페인터가 예외 없이 렌더.
 void main() {
@@ -28,11 +29,15 @@ void main() {
     );
 
     expect(find.text('배앓이'), findsOneWidget);
-    expect(find.text('이유 없이 심하게 울 때'), findsOneWidget);
+    // 한 줄 설명은 엔티티(tagline — DB 컬럼 미러) 값이다.
+    expect(find.text(colic.tagline!), findsOneWidget);
     expect(find.byType(SymptomIllustration), findsOneWidget);
-    // 기본 레이아웃의 원형 아이콘 히어로는 없다(증상명 히어로 계약은 유지).
-    expect(heroWithTag('symptom-icon-${colic.id}'), findsNothing);
+    // 히어로 계약: 일러스트가 아이콘 히어로로, 증상명은 그대로 비행한다.
+    expect(heroWithTag('symptom-icon-${colic.id}'), findsOneWidget);
     expect(heroWithTag('symptom-name-${colic.id}'), findsOneWidget);
+    // 일러스트는 카드 우측 절반을 차지한다(§11.7 개정).
+    final illustSize = tester.getSize(find.byType(SymptomIllustration));
+    expect(illustSize.width, moreOrLessEquals(170 / 2, epsilon: 1));
     expect(tester.takeException(), isNull);
   });
 

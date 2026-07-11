@@ -45,6 +45,7 @@ final List<Symptom> fixtureSymptoms = <Symptom>[
     name: '배앓이',
     chosung: 'ㅂㅇㅇ',
     aliases: const ['영아산통', '가스', '가스참', '복통'],
+    tagline: '이유 없이 심하게 울 때',
     emojiOrIcon: 'tummy_pain',
     productKeywords: const ['배앓이', '영아산통 완화', '아기 가스제거'],
     orderIndex: 1,

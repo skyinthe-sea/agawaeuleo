@@ -1,9 +1,10 @@
+import 'dart:math' as math;
+
 import 'package:agawaeuleo/config/theme/theme.dart';
 import 'package:agawaeuleo/domain/entities/symptom.dart';
 import 'package:agawaeuleo/presentation/widgets/cards/app_card.dart';
 import 'package:agawaeuleo/presentation/widgets/symptom/symptom_icon.dart';
 import 'package:agawaeuleo/presentation/widgets/symptom/symptom_illustration.dart';
-import 'package:agawaeuleo/presentation/widgets/symptom/symptom_tagline.dart';
 import 'package:agawaeuleo/presentation/widgets/symptom/symptom_tone.dart';
 import 'package:flutter/material.dart';
 
@@ -11,8 +12,8 @@ import 'package:flutter/material.dart';
 ///
 /// 두 가지 레이아웃:
 /// - **일러스트 카드**([SymptomIllustrations] 등록 증상 — 현재 배앓이 트라이얼):
-///   좌상단 제목(heading) + 그 아래 한 줄 설명(caption `ink500`), 우하단
-///   빈 공간에 먹선+하프톤 손그림 일러스트.
+///   좌상단 제목(heading) + 그 아래 한 줄 설명([Symptom.tagline], caption
+///   `ink500`), 우측 절반에 먹선+하프톤 손그림 일러스트(세로 중앙).
 /// - **기본 카드**(나머지): 상단 수묵 라인 아이콘(40 원형, `SymptomTone` 톤) +
 ///   하단 증상명 — 기존 레이아웃 그대로.
 ///
@@ -20,17 +21,13 @@ import 'package:flutter/material.dart';
 /// 라이트 햅틱. 카드 자체는 그리드 밀도상 `flat`(기본값) 유지.
 ///
 /// Hero 태그 계약(상세 화면과 공유 — §11.9): 아이콘 `symptom-icon-<id>`,
-/// 증상명 `symptom-name-<id>`. 일러스트 카드는 아이콘 히어로 소스가 없어
-/// 증상명만 비행한다(상세 쪽 태그는 짝 없이 무해).
+/// 증상명 `symptom-name-<id>`. 일러스트 카드는 일러스트 자체가 아이콘
+/// 히어로로 비행한다(상세 헤더의 동일 일러스트로 축소 착지).
 class SymptomCard extends StatelessWidget {
   const SymptomCard({required this.symptom, required this.onTap, super.key});
 
   final Symptom symptom;
   final VoidCallback onTap;
-
-  /// 일러스트 렌더 크기·우하단 여백(dp). 카드 높이 120 기준 — 제목·설명
-  /// 텍스트 블록(상단 ~60dp)과 일러스트 상단이 겹치지 않는 상한이다.
-  static const double _illustrationSize = 56;
 
   @override
   Widget build(BuildContext context) {
@@ -40,43 +37,68 @@ class SymptomCard extends StatelessWidget {
     return _buildClassic(context);
   }
 
-  /// 좌상단 제목/설명 + 우하단 일러스트.
+  /// 좌상단 제목/설명 + 우측 절반 일러스트.
   Widget _buildIllustrated(BuildContext context) {
     final colors = context.colors;
-    final tagline = SymptomTaglines.resolve(symptom.slug);
+    final tagline = symptom.tagline;
 
     return AppCard(
       onTap: onTap,
       padding: EdgeInsets.zero,
-      child: Stack(
-        fit: StackFit.expand,
-        children: [
-          Positioned(
-            right: AppSpacing.x8,
-            bottom: AppSpacing.x8,
-            child: SymptomIllustration(
-              illustrationKey: symptom.emojiOrIcon!,
-              size: _illustrationSize,
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(AppSpacing.cardPadding),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _heroName(context),
-                const SizedBox(height: AppSpacing.x2),
-                if (tagline != null)
-                  Text(
-                    tagline,
-                    style: context.texts.caption.copyWith(color: colors.ink500),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          // 일러스트는 카드 우측 절반을 차지하되, 넓은 셀에서도 카드 높이
+          // (120 - 상하 숨쉴 여백)를 넘지 않는다.
+          final illustrationSize = math.min(
+            constraints.maxWidth / 2,
+            constraints.maxHeight - AppSpacing.x8,
+          );
+          return Stack(
+            fit: StackFit.expand,
+            children: [
+              Align(
+                alignment: Alignment.centerRight,
+                child: Padding(
+                  padding: const EdgeInsets.only(right: AppSpacing.x4),
+                  child: Hero(
+                    tag: 'symptom-icon-${symptom.id}',
+                    child: SymptomIllustration(
+                      illustrationKey: symptom.emojiOrIcon!,
+                      size: illustrationSize,
+                    ),
                   ),
-              ],
-            ),
-          ),
-        ],
+                ),
+              ),
+              Padding(
+                // 우측 인셋은 일러스트 폭에서 x12 양보 — 일러스트 뷰박스의
+                // 빈 왼쪽 마진(그림 본체는 x≈25dp부터)이라 겹쳐 보이지 않고,
+                // 설명 한 줄('심하게 울 때' 수준)의 폭이 확보된다.
+                padding: EdgeInsets.fromLTRB(
+                  AppSpacing.cardPadding,
+                  AppSpacing.cardPadding,
+                  illustrationSize - AppSpacing.x12,
+                  AppSpacing.cardPadding,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _heroName(context),
+                    const SizedBox(height: AppSpacing.x2),
+                    if (tagline != null)
+                      Text(
+                        tagline,
+                        style: context.texts.caption.copyWith(
+                          color: colors.ink500,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                  ],
+                ),
+              ),
+            ],
+          );
+        },
       ),
     );
   }

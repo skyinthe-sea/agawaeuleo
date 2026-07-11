@@ -24,6 +24,10 @@ abstract class Symptom with _$Symptom {
     /// `aliases` — 동의어. 예: ['가스', '영아산통'].
     @Default(<String>[]) List<String> aliases,
 
+    /// `tagline` — 홈 카드 한 줄 설명(§11.7 일러스트 카드). 예: '이유 없이
+    /// 심하게 울 때'. 참고용 톤 유지 — 의학 카피 검수 대상(§13.3).
+    String? tagline,
+
     /// `emoji_or_icon` — 아이콘 키(nullable).
     String? emojiOrIcon,
 

@@ -28,6 +28,22 @@ class SearchFieldBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
+    // 단일행 알약(52px) 세로 중앙 정렬 — 원인: 테마 InputDecorationTheme.constraints
+    // (minHeight 52)가 데코레이터 박스만 52로 늘리는데, InputDecorator는 내부
+    // 콘텐츠를 고유 높이(containerHeight)로만 배치하고 잉여 공간을 전부 아래에
+    // 붙인다(min-height는 레이아웃 계산에 미반영). 그래서 textAlignVertical·
+    // isDense·SizedBox 어떤 조합으로도 중앙에 오지 않는다.
+    // 해결: constraints를 로컬에서 비워 테마 min-height를 무력화하고, isCollapsed로
+    // 데코레이터를 텍스트 고유 높이로 줄인 뒤 Align이 기하학적으로 중앙 배치.
+    // 줄간격 1.0은 라인박스=폰트크기로 만들어 광학 중앙을 보장.
+    final fieldStyle = context.texts.bodyL.copyWith(
+      color: colors.ink900,
+      height: 1,
+    );
+    final hintFieldStyle = context.texts.bodyL.copyWith(
+      color: colors.ink300,
+      height: 1,
+    );
     return Hero(
       tag: 'home-search-bar',
       flightShuttleBuilder: _flightShuttle,
@@ -37,25 +53,35 @@ class SearchFieldBar extends StatelessWidget {
             Icon(Icons.search, size: 20, color: colors.ink500),
             const SizedBox(width: AppSpacing.iconTextGap),
             Expanded(
-              child: TextField(
-                controller: controller,
-                focusNode: focusNode,
-                autofocus: true,
-                textInputAction: TextInputAction.search,
-                onChanged: onChanged,
-                onSubmitted: onSubmitted,
-                cursorColor: colors.accent,
-                textAlignVertical: TextAlignVertical.center,
-                style: context.texts.bodyL.copyWith(color: colors.ink900),
-                decoration: InputDecoration(
-                  isDense: true,
-                  filled: false,
-                  border: InputBorder.none,
-                  enabledBorder: InputBorder.none,
-                  focusedBorder: InputBorder.none,
-                  contentPadding: EdgeInsets.zero,
-                  hintText: _hint,
-                  hintStyle: context.texts.bodyL.copyWith(color: colors.ink300),
+              // 알약 전체(빈 여백 포함)를 탭 히트영역으로 유지 — 데코레이터가
+              // 텍스트 높이로 줄었으므로 GestureDetector가 포커스를 복원한다.
+              // (텍스트 위 탭은 제스처 아레나에서 TextField가 우선.)
+              child: GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: focusNode.requestFocus,
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: TextField(
+                    controller: controller,
+                    focusNode: focusNode,
+                    autofocus: true,
+                    textInputAction: TextInputAction.search,
+                    onChanged: onChanged,
+                    onSubmitted: onSubmitted,
+                    cursorColor: colors.accent,
+                    style: fieldStyle,
+                    decoration: InputDecoration(
+                      isCollapsed: true,
+                      constraints: const BoxConstraints(),
+                      filled: false,
+                      border: InputBorder.none,
+                      enabledBorder: InputBorder.none,
+                      focusedBorder: InputBorder.none,
+                      contentPadding: EdgeInsets.zero,
+                      hintText: _hint,
+                      hintStyle: hintFieldStyle,
+                    ),
+                  ),
                 ),
               ),
             ),
@@ -91,6 +117,7 @@ class SearchFieldBar extends StatelessWidget {
                 overflow: TextOverflow.ellipsis,
                 style: flightContext.texts.bodyL.copyWith(
                   color: text.isEmpty ? colors.ink300 : colors.ink900,
+                  height: 1,
                 ),
               ),
             ),

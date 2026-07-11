@@ -59,3 +59,4 @@ supabase/.branches/
 
 # Xcode SwiftPM workspace state (Flutter 3.44 SPM integration)
 ios/Runner.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/
+tool/illustrations/preview/

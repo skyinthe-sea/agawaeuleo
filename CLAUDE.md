@@ -7,6 +7,7 @@
 
 - **M1~M6 + Fable 최종 검토 + 디자인 v2("묵직한 페이퍼잉크") 완료.** `git log --oneline`이 마일스톤 기록 그 자체 (M1 파운데이션 → M2a 백엔드 → M2b 데이터 → M3+M4 화면 → M5 기본기능 → M6 빌드 → 검토 수정 18/20 → 디자인 v2).
 - 디자인 v2 시그니처(전부 `lib/presentation/widgets/`): 낙관 `InkSeal`·`InkHaloIcon`·`BrushDivider`·`SectionHeader`·그레인 `PaperBackground`·`AppSheetShell`/`AppDialogShell`·`SlidingSegment`, `AppCard` emphasis 3단(flat/raised/hero), 증상 카테고리 톤 `SymptomTone`. 새 UI는 이 컴포넌트들을 우선 재사용할 것.
+- 증상 일러스트 16종(홈 카드 우측 절반 + 상세 헤더 히어로): **수정은 반드시 `tool/illustrations/generate_illustrations.py`에서** → `python3 tool/illustrations/generate_illustrations.py --dart` 로 `symptom_illustration_data.dart` 재생성(+ dart format). 생성 파일 직접 편집 금지. 렌더 엔진·스타일 계약(먹선 3.0/보조 2.0~2.2·도트 r1.35/step4.8·토큰 ink900/paperRaised/accent)은 `symptom_illustration.dart`. 카드 한 줄 설명은 `symptoms.tagline`(공백 포함 8자 이내, 픽스처와 동일 값 유지).
 - 검증 그린: `flutter analyze` 0 이슈, 테스트 26파일 전체 통과, `flutter build apk --debug` ✓, `flutter build ios --debug --no-codesign` ✓.
 - Supabase 미구성 상태로 개발됨 → 앱은 **픽스처 데모 모드**(증상 16종)로 완전 동작. `.env` 값이 채워지면 실데이터 모드.
 - 남은 것: 발주자 M0 작업(README.md 체크리스트), v1.1 로드맵(스펙 §3.4 — 홈 위젯·Live Activities·울음 분석·프리미엄).

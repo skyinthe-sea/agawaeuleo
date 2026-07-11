@@ -11,11 +11,11 @@ import 'package:flutter/material.dart';
 /// §11.7 홈 증상 그리드 카드. 높이 ~120 · r.md · e1 · 내부 패딩 16.
 ///
 /// 두 가지 레이아웃:
-/// - **일러스트 카드**([SymptomIllustrations] 등록 증상 — 현재 배앓이 트라이얼):
+/// - **일러스트 카드**([SymptomIllustrations] 등록 증상 — 시드 16종 전부):
 ///   좌상단 제목(heading) + 그 아래 한 줄 설명([Symptom.tagline], caption
-///   `ink500`), 우측 절반에 먹선+하프톤 손그림 일러스트(세로 중앙).
-/// - **기본 카드**(나머지): 상단 수묵 라인 아이콘(40 원형, `SymptomTone` 톤) +
-///   하단 증상명 — 기존 레이아웃 그대로.
+///   `ink500`, 개행 없음), 우측 절반에 먹선+하프톤 손그림 일러스트(세로 중앙).
+/// - **기본 카드**(폴백): 미등록 키/신규 증상용 — 상단 수묵 라인 아이콘
+///   (40 원형, `SymptomTone` 톤) + 하단 증상명.
 ///
 /// 탭 시 [AppCard]의 스프링(scale .96) + 눌림 그림자 + 잉크 워시 리플 +
 /// 라이트 햅틱. 카드 자체는 그리드 밀도상 `flat`(기본값) 유지.
@@ -70,13 +70,14 @@ class SymptomCard extends StatelessWidget {
                 ),
               ),
               Padding(
-                // 우측 인셋은 일러스트 폭에서 x12 양보 — 일러스트 뷰박스의
+                // 우측 인셋은 일러스트 폭에서 x16 양보 — 일러스트 뷰박스의
                 // 빈 왼쪽 마진(그림 본체는 x≈25dp부터)이라 겹쳐 보이지 않고,
-                // 설명 한 줄('심하게 울 때' 수준)의 폭이 확보된다.
+                // 설명이 개행 없이 **한 줄**로 들어갈 폭이 확보된다(카피는
+                // 공백 포함 8자 이내 계약 — §7.1 tagline 컬럼 코멘트).
                 padding: EdgeInsets.fromLTRB(
                   AppSpacing.cardPadding,
                   AppSpacing.cardPadding,
-                  illustrationSize - AppSpacing.x12,
+                  illustrationSize - AppSpacing.x16,
                   AppSpacing.cardPadding,
                 ),
                 child: Column(
@@ -90,7 +91,7 @@ class SymptomCard extends StatelessWidget {
                         style: context.texts.caption.copyWith(
                           color: colors.ink500,
                         ),
-                        maxLines: 2,
+                        maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
                   ],

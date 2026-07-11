@@ -138,6 +138,21 @@ class HomeScreen extends ConsumerWidget {
     List<Symptom> symptoms,
   ) {
     final reduce = context.reduceMotion;
+    // §10.2 stagger는 "첫 로드" 1회만. 스크롤 재마운트/상세 복귀 때마다
+    // 재생하면 라우트 전환과 겹친 fadeIn이 중간 불투명도로 얼어붙어 카드가
+    // 눌린 것처럼 어둡게 고착될 수 있다(실기기 재현). 재생 완료 후에는
+    // 정적으로 렌더한다.
+    final introPlayed = ref.watch(homeIntroPlayedProvider);
+    if (!reduce && !introPlayed) {
+      // 마지막 카드(delay 40ms×n) 재생이 끝난 뒤 플래그 승격. 빌드 중 state
+      // 변경 금지라 지연 스케줄로 처리한다. 노티파이어를 지금 캡처해 두면
+      // 홈 위젯이 먼저 dispose 되어도(ref 사용 불가) 안전하다(markPlayed 멱등).
+      final intro = ref.read(homeIntroPlayedProvider.notifier);
+      Future<void>.delayed(
+        AppMotion.base + Duration(milliseconds: 40 * symptoms.length + 200),
+        intro.markPlayed,
+      );
+    }
     final recent = _recentSymptoms(ref, symptoms);
 
     void onTap(Symptom symptom) {
@@ -174,7 +189,7 @@ class HomeScreen extends ConsumerWidget {
               symptom: symptom,
               onTap: () => onTap(symptom),
             );
-            if (reduce) {
+            if (reduce || introPlayed) {
               return KeyedSubtree(key: ValueKey(symptom.id), child: card);
             }
             // §10.2 첫 로드 stagger: fadeIn 260ms + slideY .08, 40ms 간격.

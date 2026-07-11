@@ -21,6 +21,28 @@ final homeSymptomsProvider = StreamProvider<List<Symptom>>((ref) {
   return ref.watch(symptomRepositoryProvider).watchAll();
 });
 
+/// §10.2 "첫 로드 stagger" 1회 계약 — 세션 내 홈 그리드 등장 애니메이션을
+/// 이미 재생했는지.
+///
+/// 스크롤로 카드가 재마운트되거나 상세에서 복귀할 때 재생을 반복하면, 라우트
+/// 전환과 겹치는 순간 fadeIn이 중간 불투명도로 얼어붙은 채 남을 수 있다
+/// (카드가 눌린 것처럼 어둡게 고착 — 실기기 재현 버그). 최초 1회만 재생하고
+/// 이후에는 정적으로 렌더한다.
+final homeIntroPlayedProvider = NotifierProvider<HomeIntroPlayedNotifier, bool>(
+  HomeIntroPlayedNotifier.new,
+);
+
+/// [homeIntroPlayedProvider]의 노티파이어 — stagger 재생 완료 시 1회 승격.
+class HomeIntroPlayedNotifier extends Notifier<bool> {
+  @override
+  bool build() => false;
+
+  /// 등장 애니메이션 재생 완료로 표시(이후 홈 그리드는 정적 렌더).
+  void markPlayed() {
+    if (!state) state = true;
+  }
+}
+
 // ── 오늘의 응원(홈 인사 하위 — 발주자 요청) ─────────────────────────────
 //
 // 공개 읽기 마스터 데이터. 홈은 수동 Riverpod 정책(코드젠 비의존)이므로 코드젠

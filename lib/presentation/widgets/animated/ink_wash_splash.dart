@@ -118,7 +118,13 @@ class InkWashSplash extends InteractiveInkFeature {
 
   @override
   void paintFeature(Canvas canvas, Matrix4 transform) {
-    final int alpha = _confirmed ? _fadeOut.value : _fadeIn.value;
+    // cancel()(탭 취소·스크롤 탈취)도 confirm 과 동일하게 fadeOut 컨트롤러가
+    // 돌므로, fadeOut 진행 중이면 항상 그 알파를 따른다 — 이전에는 미확정
+    // 경로가 fadeIn 알파를 유지하다 dispose 순간 툭 사라졌다(잔상/급소멸).
+    final bool fading = _confirmed || _fadeOutController.isAnimating;
+    final int alpha = fading
+        ? math.min(_fadeIn.value, _fadeOut.value)
+        : _fadeIn.value;
     if (alpha <= 0) return;
     final paint = Paint()..color = color.withAlpha(alpha);
     Offset center = _position;

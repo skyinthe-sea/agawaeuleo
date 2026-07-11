@@ -82,6 +82,15 @@ class _AppCardState extends State<AppCard> {
 
   bool get _tappable => widget.onTap != null || widget.onLongPress != null;
 
+  @override
+  void deactivate() {
+    // 슬리버 이동/재부모화로 서브트리가 비활성화되면 InkWell의
+    // onHighlightChanged(false) 콜백이 유실될 수 있다 — 눌림 시각(오목 그림자·
+    // 축소)이 고착되지 않도록 직접 초기화한다(재삽입 시 새 값으로 빌드됨).
+    _pressed = false;
+    super.deactivate();
+  }
+
   void _setPressed(bool value) {
     if (_pressed == value) return;
     setState(() => _pressed = value);

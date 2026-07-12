@@ -81,7 +81,7 @@ class HomeScreen extends ConsumerWidget {
                 child: HomeGreetingBar(
                   greeting: _greetingFor(baby),
                   dailyMessage: dailyMessage,
-                  onBellTap: () => _onBellTap(context),
+                  onMenuTap: () => _onMenuTap(context),
                 ),
               ),
               SliverPersistentHeader(
@@ -114,9 +114,9 @@ class HomeScreen extends ConsumerWidget {
   String _greetingFor(Baby? baby) =>
       (baby != null && baby.name.trim().isNotEmpty) ? baby.name : '오늘도 힘내세요';
 
-  void _onBellTap(BuildContext context) {
-    // §11.7 "벨 아이콘 탭 → (알림 목록 or 설정)". 별도 알림 목록 화면은 범위 밖이라
-    // 알림 토글이 모여 있는 설정 화면(§11.16 알림 그룹)으로 이동한다.
+  void _onMenuTap(BuildContext context) {
+    // §11.7 우상단 메뉴(햄버거) 탭 → 설정 화면(§11.16)으로 이동.
+    // (기존 알림 벨은 실제 알림 상태와 배선되지 않은 장식성 dot이라 메뉴 버튼으로 대체.)
     context.go(RoutePaths.settingsLocation);
   }
 

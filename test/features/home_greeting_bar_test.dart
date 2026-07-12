@@ -11,7 +11,7 @@ void main() {
       HomeGreetingBar(
         greeting: '오늘도 힘내세요',
         dailyMessage: '오늘도 애쓰는 당신, 참 대단해요',
-        onBellTap: () {},
+        onMenuTap: () {},
       ),
     );
 
@@ -22,7 +22,7 @@ void main() {
   testWidgets('dailyMessage가 없으면 응원 줄 없이 기존 2단으로 폴백한다', (tester) async {
     await pumpWidgetWithTheme(
       tester,
-      HomeGreetingBar(greeting: '민준', onBellTap: () {}),
+      HomeGreetingBar(greeting: '민준', onMenuTap: () {}),
     );
 
     expect(find.text('민준'), findsOneWidget);
@@ -35,7 +35,7 @@ void main() {
       HomeGreetingBar(
         greeting: '오늘도 힘내세요',
         dailyMessage: '   ',
-        onBellTap: () {},
+        onMenuTap: () {},
       ),
     );
 

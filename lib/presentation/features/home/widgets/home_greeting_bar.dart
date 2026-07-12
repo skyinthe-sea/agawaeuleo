@@ -6,26 +6,22 @@ import 'package:flutter/material.dart';
 /// DESIGN v2 §7.1-1 에디토리얼 2단(날짜 `overline` + 명조 인사 `title`)에 발주자 요청으로
 /// **세 번째 단 "오늘의 응원"([dailyMessage])**을 덧댄다: 인사 아래 한 줄 body(ink700).
 /// 3일마다 회전하는 짧은 위로 문구로, 값이 없으면(로딩/미제공) 렌더하지 않아 기존 2단
-/// 레이아웃으로 자연스럽게 폴백한다. 우측: 알림 벨 아이콘(24) + 안읽음 배지 dot(`coral`).
+/// 레이아웃으로 자연스럽게 폴백한다. 우측: 메뉴(햄버거) 아이콘(24) → 설정으로 이동.
 /// 배경은 페이지 배경과 동일해 스크롤아웃될 때 자연스럽게 사라진다.
 class HomeGreetingBar extends StatelessWidget {
   const HomeGreetingBar({
     required this.greeting,
-    required this.onBellTap,
+    required this.onMenuTap,
     this.dailyMessage,
-    this.hasUnread = true,
     super.key,
   });
 
   /// 표시할 인사 문구(아기 이름이 있으면 이름, 없으면 기본 인사).
   final String greeting;
-  final VoidCallback onBellTap;
+  final VoidCallback onMenuTap;
 
   /// 오늘의 응원 문구(3일마다 회전). null/공백이면 표시하지 않는다.
   final String? dailyMessage;
-
-  /// 벨 배지 dot 표시 여부.
-  final bool hasUnread;
 
   /// DESIGN v2 §7.1-1 요일 한글 배열(`DateTime.weekday` 1=월 ~ 7=일).
   /// intl 의존성 추가 금지 — 수동 포맷.
@@ -90,41 +86,24 @@ class HomeGreetingBar extends StatelessWidget {
               ],
             ),
           ),
-          _BellButton(
-            hasUnread: hasUnread,
-            onTap: onBellTap,
-            color: colors.ink700,
-            dotColor: colors.coral,
-            raised: colors.paperBg,
-          ),
+          _MenuButton(onTap: onMenuTap, color: colors.ink700),
         ],
       ),
     );
   }
 }
 
-class _BellButton extends StatelessWidget {
-  const _BellButton({
-    required this.hasUnread,
-    required this.onTap,
-    required this.color,
-    required this.dotColor,
-    required this.raised,
-  });
+class _MenuButton extends StatelessWidget {
+  const _MenuButton({required this.onTap, required this.color});
 
-  final bool hasUnread;
   final VoidCallback onTap;
   final Color color;
-  final Color dotColor;
-
-  /// dot 테두리 색(배경과 대비를 위한 얇은 링).
-  final Color raised;
 
   @override
   Widget build(BuildContext context) {
     return Semantics(
       button: true,
-      label: hasUnread ? '알림, 새 소식 있음' : '알림',
+      label: '메뉴',
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,
         onTap: onTap,
@@ -132,27 +111,8 @@ class _BellButton extends StatelessWidget {
         child: SizedBox(
           width: 48,
           height: 48,
-          child: Stack(
-            alignment: Alignment.center,
-            children: [
-              Icon(Icons.notifications_none_rounded, size: 24, color: color),
-              if (hasUnread)
-                // 히트 영역이 48로 커지며 중앙 아이콘 위치가 2px 이동해도
-                // 배지 dot이 벨 우상단에 붙어 보이도록 좌표를 함께 조정.
-                Positioned(
-                  top: 13,
-                  right: 13,
-                  child: Container(
-                    width: 8,
-                    height: 8,
-                    decoration: BoxDecoration(
-                      color: dotColor,
-                      shape: BoxShape.circle,
-                      border: Border.all(color: raised, width: 1.5),
-                    ),
-                  ),
-                ),
-            ],
+          child: Center(
+            child: Icon(Icons.menu_rounded, size: 24, color: color),
           ),
         ),
       ),

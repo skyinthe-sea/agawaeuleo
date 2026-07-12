@@ -1,3 +1,4 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 
 import '../../../config/theme/theme.dart';
@@ -32,6 +33,9 @@ class TapSpring extends StatefulWidget {
 class _TapSpringState extends State<TapSpring> {
   bool _pressed = false;
 
+  /// 포인터 다운 지점 — "누른 채 스크롤" 감지용(이동 슬롭 초과 시 눌림 해제).
+  Offset? _pointerDownPosition;
+
   bool get _enabled => widget.onTap != null || widget.onLongPress != null;
 
   void _setPressed(bool value) {
@@ -49,18 +53,35 @@ class _TapSpringState extends State<TapSpring> {
     final reduce = context.reduceMotion;
     final scale = (!reduce && _pressed) ? widget.pressedScale : 1.0;
 
-    return GestureDetector(
-      behavior: widget.behavior,
-      onTapDown: _enabled ? (_) => _setPressed(true) : null,
-      onTapUp: _enabled ? (_) => _setPressed(false) : null,
-      onTapCancel: _enabled ? () => _setPressed(false) : null,
-      onTap: widget.onTap == null ? null : _handleTap,
-      onLongPress: widget.onLongPress,
-      child: AnimatedScale(
-        scale: scale,
-        duration: _pressed ? AppMotion.instant : AppMotion.base,
-        curve: _pressed ? AppMotion.standard : AppMotion.spring,
-        child: widget.child,
+    // 눌림 해제 안전망: 부모(가로/세로) 스크롤이 제스처 아레나를 가져가면
+    // GestureDetector.onTapCancel이 유실될 수 있어 눌림 시각이 고착된다. Listener는
+    // 아레나 밖에서 물리 포인터를 관측하므로, 드래그가 슬롭을 넘으면 즉시 눌림을
+    // 풀고, 손을 떼거나 취소되면 반드시 초기화한다.
+    return Listener(
+      onPointerDown: (event) => _pointerDownPosition = event.position,
+      onPointerMove: (event) {
+        final down = _pointerDownPosition;
+        if (_pressed &&
+            down != null &&
+            (event.position - down).distance > kTouchSlop) {
+          _setPressed(false);
+        }
+      },
+      onPointerUp: (_) => _setPressed(false),
+      onPointerCancel: (_) => _setPressed(false),
+      child: GestureDetector(
+        behavior: widget.behavior,
+        onTapDown: _enabled ? (_) => _setPressed(true) : null,
+        onTapUp: _enabled ? (_) => _setPressed(false) : null,
+        onTapCancel: _enabled ? () => _setPressed(false) : null,
+        onTap: widget.onTap == null ? null : _handleTap,
+        onLongPress: widget.onLongPress,
+        child: AnimatedScale(
+          scale: scale,
+          duration: _pressed ? AppMotion.instant : AppMotion.base,
+          curve: _pressed ? AppMotion.standard : AppMotion.spring,
+          child: widget.child,
+        ),
       ),
     );
   }

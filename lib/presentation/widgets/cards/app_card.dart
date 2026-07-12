@@ -1,3 +1,4 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 
 import '../../../config/theme/theme.dart';
@@ -79,6 +80,9 @@ class AppCard extends StatefulWidget {
 
 class _AppCardState extends State<AppCard> {
   bool _pressed = false;
+
+  /// 포인터 다운 지점 — "누른 채 스크롤" 감지용(이동 슬롭 초과 시 눌림 해제).
+  Offset? _pointerDownPosition;
 
   bool get _tappable => widget.onTap != null || widget.onLongPress != null;
 
@@ -204,42 +208,61 @@ class _AppCardState extends State<AppCard> {
     final reduce = context.reduceMotion;
     final scale = (!reduce && _pressed) ? 0.96 : 1.0;
 
-    return AnimatedScale(
-      scale: scale,
-      duration: _pressed ? AppMotion.instant : AppMotion.base,
-      curve: _pressed ? AppMotion.standard : AppMotion.spring,
-      child: AnimatedContainer(
-        duration: AppMotion.fast,
-        curve: AppMotion.standard,
-        decoration: BoxDecoration(
-          color: surface,
-          borderRadius: radius,
-          // 눌림 시 부양감 제거 — 오목함은 아래 foregroundDecoration으로 표현.
-          boxShadow: _pressed ? AppShadows.e0 : baseShadow,
-          border: border,
-        ),
-        // §9.5 press 오목: 인셋 그림자를 자식 위(foregroundDecoration)에 덧그려야
-        // 실제로 보인다. boxShadow(fill 뒤)로는 불투명 배경에 가려 무효과.
-        foregroundDecoration: _pressed
-            ? BoxDecoration(borderRadius: radius, boxShadow: shadows.press)
-            : null,
-        child: Material(
-          type: MaterialType.transparency,
-          borderRadius: radius,
-          clipBehavior: Clip.antiAlias,
-          // grain은 Material 클립 안(그림자 밖)에서 그린다. 그레인 레이어는
-          // IgnorePointer라 InkWell 탭/리플에 영향 없음.
-          child: _withGrain(
-            grain,
-            InkWell(
-              splashFactory: InkWashSplash.splashFactory,
-              splashColor: colors.accentWash,
-              highlightColor: Colors.transparent,
-              borderRadius: radius,
-              onTap: _handleTap,
-              onLongPress: widget.onLongPress,
-              onHighlightChanged: _setPressed,
-              child: Padding(padding: widget.padding, child: widget.child),
+    // 눌림 해제 안전망(§9.5). InkWell.onHighlightChanged(false)는 부모 스크롤이
+    // 제스처 아레나를 가져가는 "누른 채 스크롤" 시퀀스에서 유실될 수 있어, 화면에
+    // 남은 카드가 눌린 채 어둡게 고착된다(실기기 재현). Listener는 아레나 밖에서
+    // 물리 포인터 수명을 관측하므로, 드래그가 슬롭을 넘으면 즉시(스크롤 시작 시점)
+    // 눌림을 풀고, 손을 떼거나 취소되면 반드시 초기화한다 — deactivate() 방어가
+    // 못 잡는 "온스크린 잔류" 경로를 덮는다.
+    return Listener(
+      onPointerDown: (event) => _pointerDownPosition = event.position,
+      onPointerMove: (event) {
+        final down = _pointerDownPosition;
+        if (_pressed &&
+            down != null &&
+            (event.position - down).distance > kTouchSlop) {
+          _setPressed(false);
+        }
+      },
+      onPointerUp: (_) => _setPressed(false),
+      onPointerCancel: (_) => _setPressed(false),
+      child: AnimatedScale(
+        scale: scale,
+        duration: _pressed ? AppMotion.instant : AppMotion.base,
+        curve: _pressed ? AppMotion.standard : AppMotion.spring,
+        child: AnimatedContainer(
+          duration: AppMotion.fast,
+          curve: AppMotion.standard,
+          decoration: BoxDecoration(
+            color: surface,
+            borderRadius: radius,
+            // 눌림 시 부양감 제거 — 오목함은 아래 foregroundDecoration으로 표현.
+            boxShadow: _pressed ? AppShadows.e0 : baseShadow,
+            border: border,
+          ),
+          // §9.5 press 오목: 인셋 그림자를 자식 위(foregroundDecoration)에 덧그려야
+          // 실제로 보인다. boxShadow(fill 뒤)로는 불투명 배경에 가려 무효과.
+          foregroundDecoration: _pressed
+              ? BoxDecoration(borderRadius: radius, boxShadow: shadows.press)
+              : null,
+          child: Material(
+            type: MaterialType.transparency,
+            borderRadius: radius,
+            clipBehavior: Clip.antiAlias,
+            // grain은 Material 클립 안(그림자 밖)에서 그린다. 그레인 레이어는
+            // IgnorePointer라 InkWell 탭/리플에 영향 없음.
+            child: _withGrain(
+              grain,
+              InkWell(
+                splashFactory: InkWashSplash.splashFactory,
+                splashColor: colors.accentWash,
+                highlightColor: Colors.transparent,
+                borderRadius: radius,
+                onTap: _handleTap,
+                onLongPress: widget.onLongPress,
+                onHighlightChanged: _setPressed,
+                child: Padding(padding: widget.padding, child: widget.child),
+              ),
             ),
           ),
         ),

@@ -9,9 +9,7 @@ import '../../../application/providers.dart';
 import '../../../config/theme/theme.dart';
 import '../../../core/haptics/app_haptics.dart';
 import '../../../core/notifications/notifications.dart';
-import '../../../data/local/daos/tracking_logs_dao.dart';
 import '../../../domain/entities/tracking_log.dart';
-import '../../../domain/repositories/auth_repository.dart';
 import '../../router/app_router.dart';
 import '../../router/routes.dart';
 import '../../widgets/animated/check_draw.dart';
@@ -24,7 +22,6 @@ import '../../widgets/sheets/app_bottom_sheet.dart';
 import '../../widgets/sheets/app_sheet_shell.dart';
 import 'tracking_elapsed_ticker.dart';
 import 'tracking_format.dart';
-import 'widgets/backup_priming_sheet.dart';
 
 /// §11.11 기록 추가/편집 시트를 모달로 연다(라우트 아님).
 ///
@@ -129,8 +126,6 @@ class _TrackingEntrySheetState extends ConsumerState<_TrackingEntrySheet> {
     final messenger = ScaffoldMessenger.of(context);
     // 위젯이 pop 되기 전에 캡처(성공 후 트리 언마운트 시 ref 접근 방지).
     final scheduler = ref.read(feedingReminderSchedulerProvider);
-    final auth = ref.read(authRepositoryProvider);
-    final trackingDao = ref.read(trackingLogsDaoProvider);
     try {
       await op();
       if (!mounted) return;
@@ -146,11 +141,10 @@ class _TrackingEntrySheetState extends ConsumerState<_TrackingEntrySheet> {
         nav.pop();
       }
       // §11.6 첫 기록 저장 직후 1회 알림 권한 프라이밍(맥락 있는 시점 → 수락률↑).
-      final primingShown = await _maybeShowPriming();
-      // §3.3 프라이밍과 동시 노출 금지(프라이밍 우선) — 프라이밍이 뜨지 않았을 때만 백업 유도.
-      if (!primingShown) {
-        await _maybeShowBackupPriming(auth: auth, trackingDao: trackingDao);
-      }
+      await _maybeShowPriming();
+      // 게스트 전용 모드: 계정 연결(백업) 유도 비활성화 — 트래킹 흐름에서 계정연결 UI를
+      // 노출하지 않는다(요청 1). 계정 기능 복원 시 _maybeShowBackupPriming와 관련
+      // import·캡처를 되살릴 것(widgets/backup_priming_sheet.dart는 그대로 보존).
     } catch (_) {
       if (!mounted) return;
       setState(() => _saving = false);
@@ -170,25 +164,6 @@ class _TrackingEntrySheetState extends ConsumerState<_TrackingEntrySheet> {
     if (!show || !rootContext.mounted) return false;
     rootContext.pushNamed(Routes.permissionPriming);
     return true;
-  }
-
-  /// §3.3 기록이 임계값에 도달하면 게스트에게 1회 백업(계정 연결)을 유도한다.
-  /// 프라이밍과의 동시 노출을 피하려고 프라이밍이 뜨지 않았을 때만 호출된다.
-  Future<void> _maybeShowBackupPriming({
-    required AuthRepository auth,
-    required TrackingLogsDao trackingDao,
-  }) async {
-    final rootContext = rootNavigatorKey.currentContext;
-    if (rootContext == null) return;
-    // 게스트(미연결)만 대상 — 이미 계정 연결됐다면 백업은 진행 중이다.
-    final isGuest = !auth.isSignedIn || auth.isAnonymous;
-    if (!isGuest) return;
-    if (!await BackupPrimingPrefs.shouldShow()) return;
-    final count = await trackingDao.countAll();
-    if (count < BackupPrimingPrefs.threshold) return;
-    await BackupPrimingPrefs.markShown();
-    if (!rootContext.mounted) return;
-    await showBackupPrimingSheet(rootContext);
   }
 
   String? _composedNote() {

@@ -4,7 +4,7 @@
     <!-- 재부팅 후 예약된 로컬 알림(다음 수유 예상 등) 재등록 — flutter_local_notifications. -->
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
     <application
-        android:label="agawaeuleo"
+        android:label="@string/app_name"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity
@@ -65,6 +65,12 @@
         <intent>
             <action android:name="android.intent.action.PROCESS_TEXT"/>
             <data android:mimeType="text/plain"/>
+        </intent>
+        <!-- 문의(§11.16): url_launcher 가 mailto 를 처리할 메일 앱을 볼 수 있어야
+             Android 11+ 패키지 가시성 정책에서 launchUrl 이 성공한다. -->
+        <intent>
+            <action android:name="android.intent.action.SENDTO"/>
+            <data android:scheme="mailto"/>
         </intent>
     </queries>
 </manifest>

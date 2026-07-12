@@ -9,20 +9,20 @@ import 'terms_doc.dart';
 /// §11.16 "정책/약관 탭 → 인앱 뷰어". [doc]으로 [TermsDoc.privacy]/[TermsDoc.terms]를
 /// 구분해 같은 뷰어를 재사용한다.
 ///
-/// **범위**: 여기 있는 본문은 구조를 보여주는 자리표시자(placeholder) 초안이다.
-/// §12.1-9에 따라 실제 법률 문구의 작성·최종 검수 책임은 발주자에게 있다 — 아래
-/// `_sectionsFor`의 TODO 지점을 확정 텍스트로 교체해야 스토어 제출이 가능하다
-/// (§13.4 "개인정보처리방침·이용약관 링크").
+/// **범위**: 본문은 현재 앱 동작(로그인 없는 게스트 전용 · 기록은 기기에 로컬 저장 ·
+/// 개인정보 미수집)에 맞춘 내용이다. 서버/제휴 구성이 바뀌면(계정 연결 도입, 수집
+/// 항목 추가 등) 이 문구도 함께 갱신해야 하며, 스토어 제출 전 발주자의 최종 확인을
+/// 권장한다(§13.4 "개인정보처리방침·이용약관 링크"). 대가성(§13.2)·의학 면책(§13.3)
+/// 문구는 앱 내 다른 표기와 동일한 원문을 사용한다.
 ///
-/// DESIGN v2 §7.7 — amber 하드코딩 배경을 `amberWash` 토큰으로, 섹션 제목 앞에
-/// 번호 배지(20dp 원, accentWash/accent, data체)를 붙이고, 문서 말미에
-/// `InkSeal`(watermark) + 시행일로 마무리한다.
+/// DESIGN v2 §7.7 — 섹션 제목 앞에 번호 배지(20dp 원, accentWash/accent, data체)를
+/// 붙이고, 문서 말미에 `InkSeal`(watermark) + 시행일로 마무리한다.
 class TermsViewerScreen extends StatelessWidget {
   const TermsViewerScreen({required this.doc, super.key});
 
   final String doc;
 
-  static const String _effectiveDateNotice = '시행일: TODO(발주자) — 최종 확정 후 표기';
+  static const String _effectiveDateNotice = '시행일: 2026년 7월 12일';
 
   @override
   Widget build(BuildContext context) {
@@ -44,20 +44,6 @@ class TermsViewerScreen extends StatelessWidget {
             Text(
               _effectiveDateNotice,
               style: texts.caption.copyWith(color: colors.ink500),
-            ),
-            const SizedBox(height: AppSpacing.x16),
-            Container(
-              padding: const EdgeInsets.all(AppSpacing.cardPadding),
-              decoration: BoxDecoration(
-                color: colors.amberWash,
-                borderRadius: AppRadius.brMd,
-                border: Border.all(color: colors.amber.withValues(alpha: 0.4)),
-              ),
-              child: Text(
-                '이 문서는 개발 단계의 임시 초안입니다. 발주자의 법률 검토를 거쳐 '
-                '확정된 문구로 교체한 뒤 스토어에 제출해야 합니다(§12.1, §13.4).',
-                style: texts.caption.copyWith(color: colors.ink700),
-              ),
             ),
             const SizedBox(height: AppSpacing.x24),
             for (var i = 0; i < sections.length; i++) ...[
@@ -104,57 +90,71 @@ class TermsViewerScreen extends StatelessWidget {
   List<_TermsSection> _sectionsFor(String doc) => switch (doc) {
     TermsDoc.privacy => const [
       _TermsSection(
-        '1. 수집하는 개인정보 항목',
-        'TODO(발주자): 이메일, 아기 프로필(생년월일 등), '
-            '트래킹 기록, 기기 식별자 등 실제 수집 항목을 확정해 채워주세요.',
+        '1. 개인정보를 수집하지 않습니다',
+        '아가왜울어는 회원가입과 로그인이 없으며, 이름·이메일·전화번호·주소처럼 '
+            '개인을 식별할 수 있는 정보를 수집하지 않습니다. 서비스를 이용하기 위해 '
+            '별도의 계정을 만들 필요가 없습니다.',
       ),
       _TermsSection(
-        '2. 개인정보의 수집 및 이용 목적',
-        'TODO(발주자): 서비스 제공, 계정 식별, '
-            '맞춤 콘텐츠 제공 등 목적을 명시해주세요.',
+        '2. 육아 기록은 기기에 저장됩니다',
+        '수유·수면·기저귀 같은 육아 기록, 아기 프로필, 즐겨찾기 등 이용자가 입력한 '
+            '정보는 이용자의 기기(로컬 저장소)에 저장됩니다. 로그인이 없으므로 이 기록은 '
+            '이름·이메일 같은 개인을 식별하는 정보와 연결되지 않으며, 제3자에게 판매·'
+            '공유되지 않습니다. 앱을 삭제하면 기기의 기록도 삭제되니, 중요한 기록은 기기 '
+            '분실에 대비해 별도로 보관해 주세요.',
       ),
       _TermsSection(
-        '3. 개인정보의 보유 및 이용 기간',
-        'TODO(발주자): 계정 삭제 시 파기 원칙 및 '
-            '법령에 따른 보존 예외를 기재해주세요(§13.4 계정 삭제 요건).',
+        '3. 증상·제품 정보의 표시',
+        '앱이 보여 주는 증상 참고정보와 육아용품 목록은 서버에서 내려받아 표시하는 '
+            '공용 콘텐츠입니다. 이 정보를 불러오는 과정에서 이용자를 식별하는 개인정보는 '
+            '서버로 전송되지 않습니다.',
       ),
       _TermsSection(
-        '4. 이용자의 권리와 행사 방법',
-        'TODO(발주자): 열람·정정·삭제·처리정지 요구권 '
-            '및 설정 내 계정 삭제 경로를 안내해주세요.',
+        '4. 외부 서비스로의 연결',
+        '육아용품 추천 링크를 누르면 외부 브라우저 또는 쿠팡 앱이 열립니다. 링크 이동 '
+            '이후의 정보 처리는 해당 서비스(쿠팡)의 개인정보처리방침을 따릅니다. '
+            '아가왜울어는 쿠팡 파트너스 활동으로 수수료를 받습니다.',
       ),
       _TermsSection(
-        '5. 제3자 제공 및 위탁',
-        'TODO(발주자): Supabase, 쿠팡 파트너스, 푸시(FCM) '
-            '등 사용 중인 외부 서비스와 위탁 범위를 기재해주세요.',
+        '5. 앱 안정성 진단',
+        '앱의 오류를 개선하기 위해, 개인을 식별할 수 없는 익명의 오류·진단 정보가 '
+            '수집될 수 있습니다. 이 정보에는 이름·연락처 등 개인정보가 포함되지 않습니다.',
       ),
+      _TermsSection('6. 문의', '개인정보 처리에 관한 문의는 myclick90@gmail.com 으로 연락해 주세요.'),
     ],
     TermsDoc.terms => const [
-      _TermsSection(
-        '1. 목적',
-        'TODO(발주자): 본 약관이 아가왜울어 앱 이용에 관한 조건을 '
-            '규정함을 명시해주세요.',
-      ),
+      _TermsSection('1. 목적', '본 약관은 아가왜울어(이하 ‘앱’)의 이용 조건과 절차를 정합니다.'),
       _TermsSection(
         '2. 서비스의 내용',
-        'TODO(발주자): 증상 정보 제공(참고용, 진단 아님), '
-            '육아용품 추천(쿠팡 파트너스 활동으로 수수료 수취 — §13.2), 트래킹 등 '
-            '제공 기능을 기재해주세요.',
+        '앱은 아기 증상에 대한 참고정보, 육아용품 추천, 육아 기록(트래킹) 기능을 '
+            '제공합니다. 증상 정보는 의학적 진단이 아니라 일반적인 참고 목적으로 '
+            '제공됩니다.',
       ),
       _TermsSection(
-        '3. 회원가입 및 게스트 이용',
-        'TODO(발주자): 로그인 없이 이용 가능한 범위와 '
-            '계정 연결 시 데이터 승계 원칙을 안내해주세요(§3.3 게스트 우선).',
+        '3. 로그인 없는 이용',
+        '앱은 회원가입이나 로그인 없이 게스트 상태로 모든 기능을 이용할 수 있습니다. '
+            '이용자가 입력한 기록은 이용자의 기기 안에만 저장됩니다.',
       ),
       _TermsSection(
         '4. 의학 정보에 관한 면책',
-        'TODO(발주자): 앱 내 증상 정보는 의학적 진단이 '
-            '아니며 참고용이라는 점, 응급 시 병원 방문을 안내해주세요(§13.3).',
+        '본 정보는 의학적 진단이 아니며 참고용입니다. 증상이 우려되면 소아과 전문의와 '
+            '상담하세요. 발열·호흡곤란·경련 등 응급 신호가 있으면 지체 없이 병원을 '
+            '방문하거나 119에 연락하세요.',
       ),
       _TermsSection(
-        '5. 계정 해지(탈퇴)',
-        'TODO(발주자): 설정 › 계정 관리에서 계정 삭제 시 '
-            '데이터 파기 범위와 절차를 안내해주세요.',
+        '5. 제휴 및 수수료 고지',
+        '앱의 제품 추천 링크는 쿠팡 파트너스 활동의 일환입니다. 아가왜울어는 쿠팡 '
+            '파트너스 활동으로 수수료를 받습니다.',
+      ),
+      _TermsSection(
+        '6. 책임의 한계',
+        '앱은 정보의 정확성을 위해 노력하지만, 제공된 정보의 이용으로 발생한 결과에 '
+            '대해서는 관련 법령이 허용하는 범위에서 책임을 지지 않습니다. 기기에 저장된 '
+            '기록은 기기 분실이나 앱 삭제 시 복구되지 않을 수 있습니다.',
+      ),
+      _TermsSection(
+        '7. 약관 변경 및 문의',
+        '약관이 변경되면 앱을 통해 공지합니다. 문의: myclick90@gmail.com',
       ),
     ],
     _ => const [_TermsSection('문서를 찾을 수 없어요', '요청하신 약관 문서가 존재하지 않습니다.')],

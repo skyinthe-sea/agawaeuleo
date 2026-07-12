@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 import '../../../application/notification_providers.dart';
 import '../../../application/notifiers/theme_mode_notifier.dart';
 import '../../../config/theme/theme.dart';
 import '../../../core/notifications/notifications.dart';
+import '../../../core/support/support_contact.dart';
 import '../../router/routes.dart';
 import '../../widgets/animated/shimmer_skeleton.dart';
 import '../../widgets/navigation/app_app_bar.dart';
@@ -15,7 +15,8 @@ import '../../widgets/surfaces/paper_background.dart';
 import 'providers/settings_providers.dart';
 import 'terms_doc.dart';
 import 'widgets/app_switch.dart';
-import 'widgets/connect_account_banner.dart';
+// 게스트 전용 모드: 계정 연결 배너 숨김(아래 사용처와 함께 주석 처리).
+// import 'widgets/connect_account_banner.dart';
 import 'widgets/notification_permission_hint.dart';
 import 'widgets/settings_group.dart';
 
@@ -27,9 +28,6 @@ import 'widgets/settings_group.dart';
 /// ([AccountScreen] · `dialogs/account_action_dialogs.dart`).
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
-
-  /// TODO(발주자): 실제 고객 문의 창구(이메일/폼) 확정 후 교체.
-  static const String _supportEmail = 'support@agawaeuleo.app';
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -48,13 +46,14 @@ class SettingsScreen extends ConsumerWidget {
         child: ListView(
           padding: const EdgeInsets.all(AppSpacing.screenPadding),
           children: [
-            // §11.16 "연결 유도 시점: 설정 화면 상단 배너" — 게스트일 때 화면 최상단.
-            if (isGuest) ...[
-              ConnectAccountBanner(
-                onTap: () => context.pushNamed(Routes.login),
-              ),
-              const SizedBox(height: AppSpacing.sectionGap),
-            ],
+            // 게스트 전용 모드: 계정 연결 유도 배너 숨김(계정 기능 복원 시 되돌릴 것).
+            // §11.16 원문: 게스트일 때 화면 최상단에 ConnectAccountBanner 노출.
+            // if (isGuest) ...[
+            //   ConnectAccountBanner(
+            //     onTap: () => context.pushNamed(Routes.login),
+            //   ),
+            //   const SizedBox(height: AppSpacing.sectionGap),
+            // ],
             _buildScreenGroup(context, ref, themeMode),
             const SizedBox(height: AppSpacing.sectionGap),
             _buildNotificationGroup(context, ref, notifications),
@@ -215,16 +214,17 @@ class SettingsScreen extends ConsumerWidget {
             pathParameters: {RouteParams.doc: TermsDoc.terms},
           ),
         ),
-        SettingsTile(
-          label: '오픈소스 라이선스',
-          icon: Icons.code_rounded,
-          showChevron: true,
-          onTap: () => showLicensePage(
-            context: context,
-            applicationName: '아가왜울어',
-            applicationVersion: appVersion.value,
-          ),
-        ),
+        // 오픈소스 라이선스 표기 숨김(발주자 요청). 필요 시 아래 타일을 복원할 것.
+        // SettingsTile(
+        //   label: '오픈소스 라이선스',
+        //   icon: Icons.code_rounded,
+        //   showChevron: true,
+        //   onTap: () => showLicensePage(
+        //     context: context,
+        //     applicationName: '아가왜울어',
+        //     applicationVersion: appVersion.value,
+        //   ),
+        // ),
         SettingsTile(
           label: '앱 버전',
           icon: Icons.info_outline_rounded,
@@ -244,30 +244,9 @@ class SettingsScreen extends ConsumerWidget {
           label: '문의',
           icon: Icons.mail_outline_rounded,
           showChevron: true,
-          onTap: () => _openSupportEmail(context),
+          onTap: () => launchSupportEmail(context),
         ),
       ],
     );
-  }
-
-  Future<void> _openSupportEmail(BuildContext context) async {
-    final uri = Uri(
-      scheme: 'mailto',
-      path: _supportEmail,
-      queryParameters: {'subject': '[아가왜울어] 문의'},
-    );
-    final messenger = ScaffoldMessenger.of(context);
-    try {
-      final launched = await launchUrl(uri);
-      if (!launched) {
-        messenger.showSnackBar(
-          SnackBar(content: Text('메일 앱을 열 수 없어요 · $_supportEmail')),
-        );
-      }
-    } on Object {
-      messenger.showSnackBar(
-        SnackBar(content: Text('메일 앱을 열 수 없어요 · $_supportEmail')),
-      );
-    }
   }
 }

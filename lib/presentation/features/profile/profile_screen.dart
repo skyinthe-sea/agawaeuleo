@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 import '../../../config/theme/theme.dart';
+import '../../../core/support/support_contact.dart';
 import '../../router/routes.dart';
 import '../../widgets/cards/app_card.dart';
 import '../../widgets/dividers/brush_divider.dart';
@@ -28,26 +28,10 @@ import 'widgets/profile_menu_tile.dart';
 class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({super.key});
 
-  static const String _contactEmail = 'support@agawaeuleo.app';
-
-  Future<void> _openContact(BuildContext context) async {
-    final uri = Uri(
-      scheme: 'mailto',
-      path: _contactEmail,
-      queryParameters: <String, String>{'subject': '아가왜울어 문의'},
-    );
-    final messenger = ScaffoldMessenger.of(context);
-    final launched = await launchUrl(uri);
-    if (!launched && context.mounted) {
-      messenger.showSnackBar(const SnackBar(content: Text('메일 앱을 열 수 없어요.')));
-    }
-  }
-
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final colors = context.colors;
     final isGuest = ref.watch(isGuestProvider);
-    final userId = ref.watch(currentUserIdProvider);
 
     return Scaffold(
       backgroundColor: colors.paperBg,
@@ -56,12 +40,9 @@ class ProfileScreen extends ConsumerWidget {
           child: ListView(
             padding: const EdgeInsets.all(AppSpacing.screenPadding),
             children: [
-              ProfileHeader(
-                isGuest: isGuest,
-                subtitle: userId,
-                onTap: () =>
-                    context.pushNamed(isGuest ? Routes.login : Routes.settings),
-              ),
+              // 게스트 전용 모드: 계정 연결/편집 진입점을 숨긴다 —
+              // onTap 없이 정보 표시용 헤더로만 노출(chevron·탭 없음).
+              ProfileHeader(isGuest: isGuest),
               const SizedBox(height: AppSpacing.x12),
               const BrushDivider.section(),
               const SizedBox(height: AppSpacing.x32),
@@ -104,7 +85,7 @@ class ProfileScreen extends ConsumerWidget {
                       washColor: colors.sageWash,
                       iconColor: colors.sage,
                       index: 3,
-                      onTap: () => _openContact(context),
+                      onTap: () => launchSupportEmail(context),
                     ),
                   ],
                 ),

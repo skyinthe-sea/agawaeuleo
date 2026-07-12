@@ -59,6 +59,10 @@ class _AgawaeuleoAppState extends ConsumerState<AgawaeuleoApp> {
     // 프로바이더라 이후에도 유지된다. 미구성 시에는 원격 대상이 없어 즉시 no-op이 된다.
     ref.read(syncServiceProvider);
 
+    // 마스터 데이터 캐시 동기화 기동(§5.3): 서버 매니페스트로 로컬 Drift 캐시를
+    // 채우고 realtime로 재검증한다. 미구성 시 no-op(픽스처 데모).
+    ref.read(masterDataCacheServiceProvider);
+
     // 알림 인프라 기동: 로컬 알림 채널·타임존 초기화(§3.2 S4)와 FCM 토큰 확보(§12).
     // 권한 요청은 하지 않는다 — 프라이밍 화면(§11.6)에서 맥락과 함께 요청한다. 두 호출 모두
     // 미구성(파이어베이스 설정 파일 없음 등) 환경을 내부 가드로 흡수하므로 부팅을 막지 않는다.

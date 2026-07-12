@@ -1,3 +1,4 @@
+import 'package:agawaeuleo/application/providers.dart';
 import 'package:agawaeuleo/config/theme/theme.dart';
 import 'package:agawaeuleo/domain/entities/baby.dart';
 import 'package:agawaeuleo/domain/entities/symptom.dart';
@@ -58,7 +59,11 @@ class HomeScreen extends ConsumerWidget {
           child: CustomScrollView(
             slivers: [
               CupertinoSliverRefreshControl(
-                onRefresh: () => ref.refresh(homeSymptomsProvider.future),
+                // 당겨서 새로고침 → 서버 매니페스트 강제 재검증(§5.3). 캐시가 갱신되면
+                // Drift 스트림(homeSymptomsProvider)이 자동 재방출한다. 미구성(데모)
+                // 모드에서는 즉시 완료되는 no-op.
+                onRefresh: () =>
+                    ref.read(masterDataCacheServiceProvider).refresh(),
                 builder:
                     (
                       context,

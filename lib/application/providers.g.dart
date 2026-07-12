@@ -595,6 +595,57 @@ final class ProductRemoteDataSourceProvider
 String _$productRemoteDataSourceHash() =>
     r'cd0141bf131a8ff37b5cbd761e2e548b8a07285c';
 
+@ProviderFor(contentVersionRemoteDataSource)
+final contentVersionRemoteDataSourceProvider =
+    ContentVersionRemoteDataSourceProvider._();
+
+final class ContentVersionRemoteDataSourceProvider
+    extends
+        $FunctionalProvider<
+          ContentVersionRemoteDataSource?,
+          ContentVersionRemoteDataSource?,
+          ContentVersionRemoteDataSource?
+        >
+    with $Provider<ContentVersionRemoteDataSource?> {
+  ContentVersionRemoteDataSourceProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'contentVersionRemoteDataSourceProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$contentVersionRemoteDataSourceHash();
+
+  @$internal
+  @override
+  $ProviderElement<ContentVersionRemoteDataSource?> $createElement(
+    $ProviderPointer pointer,
+  ) => $ProviderElement(pointer);
+
+  @override
+  ContentVersionRemoteDataSource? create(Ref ref) {
+    return contentVersionRemoteDataSource(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(ContentVersionRemoteDataSource? value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<ContentVersionRemoteDataSource?>(
+        value,
+      ),
+    );
+  }
+}
+
+String _$contentVersionRemoteDataSourceHash() =>
+    r'a1cada273b5c0e9eaec997868ad616f23812a4e2';
+
 @ProviderFor(appConfigRemoteDataSource)
 final appConfigRemoteDataSourceProvider = AppConfigRemoteDataSourceProvider._();
 
@@ -787,6 +838,47 @@ final class FavoriteRemoteDataSourceProvider
 String _$favoriteRemoteDataSourceHash() =>
     r'7736e4ec146a065bdfd66bea929cf1d31fa99a73';
 
+@ProviderFor(masterCacheDao)
+final masterCacheDaoProvider = MasterCacheDaoProvider._();
+
+final class MasterCacheDaoProvider
+    extends $FunctionalProvider<MasterCacheDao, MasterCacheDao, MasterCacheDao>
+    with $Provider<MasterCacheDao> {
+  MasterCacheDaoProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'masterCacheDaoProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$masterCacheDaoHash();
+
+  @$internal
+  @override
+  $ProviderElement<MasterCacheDao> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
+
+  @override
+  MasterCacheDao create(Ref ref) {
+    return masterCacheDao(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(MasterCacheDao value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<MasterCacheDao>(value),
+    );
+  }
+}
+
+String _$masterCacheDaoHash() => r'43bda9a323c3d402e86e55cb66675773719a0e80';
+
 @ProviderFor(symptomRepository)
 final symptomRepositoryProvider = SymptomRepositoryProvider._();
 
@@ -832,7 +924,7 @@ final class SymptomRepositoryProvider
   }
 }
 
-String _$symptomRepositoryHash() => r'80b37a834f2c34e7563e40356ba373f666989c24';
+String _$symptomRepositoryHash() => r'cdce9f6bf22de3aa75561f2dd8423a4634485a7b';
 
 @ProviderFor(symptomInfoRepository)
 final symptomInfoRepositoryProvider = SymptomInfoRepositoryProvider._();
@@ -880,7 +972,7 @@ final class SymptomInfoRepositoryProvider
 }
 
 String _$symptomInfoRepositoryHash() =>
-    r'286c97a73725287e650ffc70feda88c24cbddcfc';
+    r'998d18744ef2c71e13345ea2b69095fc8a7ee10a';
 
 @ProviderFor(productRepository)
 final productRepositoryProvider = ProductRepositoryProvider._();
@@ -927,7 +1019,7 @@ final class ProductRepositoryProvider
   }
 }
 
-String _$productRepositoryHash() => r'7f8b8e37cbe10ff84a788d91011d5185b9da29c0';
+String _$productRepositoryHash() => r'25f7d2db57424f7b85a69885b8c3b256ba92aae5';
 
 @ProviderFor(appConfigRepository)
 final appConfigRepositoryProvider = AppConfigRepositoryProvider._();
@@ -1251,3 +1343,51 @@ final class SyncServiceProvider
 }
 
 String _$syncServiceHash() => r'ca9deada969118251575aacb8c29dfe764f3dd6d';
+
+@ProviderFor(masterDataCacheService)
+final masterDataCacheServiceProvider = MasterDataCacheServiceProvider._();
+
+final class MasterDataCacheServiceProvider
+    extends
+        $FunctionalProvider<
+          MasterDataCacheService,
+          MasterDataCacheService,
+          MasterDataCacheService
+        >
+    with $Provider<MasterDataCacheService> {
+  MasterDataCacheServiceProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'masterDataCacheServiceProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$masterDataCacheServiceHash();
+
+  @$internal
+  @override
+  $ProviderElement<MasterDataCacheService> $createElement(
+    $ProviderPointer pointer,
+  ) => $ProviderElement(pointer);
+
+  @override
+  MasterDataCacheService create(Ref ref) {
+    return masterDataCacheService(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(MasterDataCacheService value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<MasterDataCacheService>(value),
+    );
+  }
+}
+
+String _$masterDataCacheServiceHash() =>
+    r'add64a217d8f1d07a0444c7cb23ab6ba9479acf3';

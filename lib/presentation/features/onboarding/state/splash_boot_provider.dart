@@ -26,6 +26,7 @@ final splashBootProvider = FutureProvider.autoDispose<SplashDestination>((
 ) async {
   const minDisplay = Duration(milliseconds: 600);
   final auth = ref.watch(authRepositoryProvider);
+  final cacheService = ref.watch(masterDataCacheServiceProvider);
 
   Future<SplashDestination> boot() async {
     final done = await OnboardingPrefs.isDone();
@@ -34,6 +35,9 @@ final splashBootProvider = FutureProvider.autoDispose<SplashDestination>((
     } catch (_) {
       // 오프라인 등으로 실패해도 게스트 진입 자체는 막지 않는다(§2-8 가입 강요 금지).
     }
+    // 마스터 데이터 캐시 첫 동기화(§5.3): 콜드 캐시(첫 실행)에서만 대기해 빈 홈을
+    // 막고, 이미 캐시가 있으면 즉시 진행(백그라운드 재검증). 미구성 시 즉시 반환.
+    await cacheService.ensureFirstSync();
     return done ? SplashDestination.home : SplashDestination.onboarding;
   }
 

@@ -1,7 +1,7 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../domain/entities/product.dart';
-import 'row_mappers.dart';
+import 'entity_wire_mappers.dart';
 import 'supabase_error_mapper.dart';
 
 /// 제품 캐시 원격 데이터소스 (§7.1 `products`, §11.9 수익 화면, §5.3).
@@ -26,7 +26,7 @@ class ProductRemoteDataSource {
       .map(
         (rows) => rows
             .where((r) => r['is_active'] as bool? ?? true)
-            .map(_fromRow)
+            .map(productFromWire)
             .toList(growable: false),
       )
       .mapErrorToAppException();
@@ -39,23 +39,23 @@ class ProductRemoteDataSource {
           .eq('symptom_id', symptomId)
           .eq('is_active', true)
           .order('rank_index', ascending: true);
-      return rows.map(_fromRow).toList(growable: false);
+      return rows.map(productFromWire).toList(growable: false);
     } on Object catch (error, stackTrace) {
       throw mapSupabaseError(error, stackTrace);
     }
   }
 
-  Product _fromRow(Map<String, dynamic> row) => Product(
-    id: row['id'] as String,
-    symptomId: row['symptom_id'] as String,
-    coupangPid: row['coupang_pid'] as String,
-    title: row['title'] as String,
-    imageUrl: row['image_url'] as String?,
-    price: asIntOrNull(row['price']),
-    rating: asDoubleOrNull(row['rating']),
-    deeplink: row['deeplink'] as String,
-    rankIndex: asIntOrNull(row['rank_index']) ?? 0,
-    isActive: row['is_active'] as bool? ?? true,
-    fetchedAt: parseDate(row['fetched_at']),
-  );
+  /// 캐시 적재용 — 활성 제품 전체 원시 행(symptom_id, rank_index 순) (§5.3
+  /// MasterDataCacheService).
+  Future<List<Map<String, dynamic>>> fetchActiveRows() async {
+    try {
+      return await _from
+          .select()
+          .eq('is_active', true)
+          .order('symptom_id')
+          .order('rank_index', ascending: true);
+    } on Object catch (error, stackTrace) {
+      throw mapSupabaseError(error, stackTrace);
+    }
+  }
 }

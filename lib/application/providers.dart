@@ -1,3 +1,4 @@
+import 'package:agawaeuleo/application/master_data_cache_service.dart';
 import 'package:agawaeuleo/application/sync_service.dart';
 import 'package:agawaeuleo/data/local/local.dart';
 import 'package:agawaeuleo/data/repositories/repositories.dart';
@@ -89,6 +90,12 @@ ProductRemoteDataSource? productRemoteDataSource(Ref ref) {
 }
 
 @Riverpod(keepAlive: true)
+ContentVersionRemoteDataSource? contentVersionRemoteDataSource(Ref ref) {
+  final client = ref.watch(supabaseClientProvider);
+  return client == null ? null : ContentVersionRemoteDataSource(client);
+}
+
+@Riverpod(keepAlive: true)
 AppConfigRemoteDataSource? appConfigRemoteDataSource(Ref ref) {
   final client = ref.watch(supabaseClientProvider);
   return client == null ? null : AppConfigRemoteDataSource(client);
@@ -112,19 +119,36 @@ FavoriteRemoteDataSource? favoriteRemoteDataSource(Ref ref) {
   return client == null ? null : FavoriteRemoteDataSource(client);
 }
 
-// ── 마스터 데이터 리포지토리(구성 시 Supabase, 아니면 픽스처) ─────────────
+// ── 마스터 데이터 캐시(구성 시 Drift 로컬 캐시, 아니면 null=픽스처 데모) ───────
+//
+// 구성됨: 앱은 마스터 데이터를 로컬 Drift 캐시에서만 읽고(§5.3 오프라인 우선),
+// [masterDataCacheServiceProvider]가 서버 매니페스트 버전 비교로 캐시를 채운다.
+// 미구성: null → 리포지토리가 픽스처(데모)로 동작(§12.2).
+
+@Riverpod(keepAlive: true)
+MasterCacheDao masterCacheDao(Ref ref) =>
+    ref.watch(appDatabaseProvider).masterCacheDao;
+
+/// 구성 시 캐시 DAO를 돌려주고 캐시 동기화 서비스를 기동한다. 미구성이면 null.
+MasterCacheDao? _masterCacheOrNull(Ref ref) {
+  if (ref.watch(supabaseClientProvider) == null) return null;
+  ref.watch(masterDataCacheServiceProvider); // 캐시 채우기·재검증 기동.
+  return ref.watch(masterCacheDaoProvider);
+}
+
+// ── 마스터 데이터 리포지토리(구성 시 캐시, 아니면 픽스처) ────────────────────
 
 @Riverpod(keepAlive: true)
 SymptomRepository symptomRepository(Ref ref) =>
-    SymptomRepositoryImpl(ref.watch(symptomRemoteDataSourceProvider));
+    SymptomRepositoryImpl(_masterCacheOrNull(ref));
 
 @Riverpod(keepAlive: true)
 SymptomInfoRepository symptomInfoRepository(Ref ref) =>
-    SymptomInfoRepositoryImpl(ref.watch(symptomInfoRemoteDataSourceProvider));
+    SymptomInfoRepositoryImpl(_masterCacheOrNull(ref));
 
 @Riverpod(keepAlive: true)
 ProductRepository productRepository(Ref ref) =>
-    ProductRepositoryImpl(ref.watch(productRemoteDataSourceProvider));
+    ProductRepositoryImpl(_masterCacheOrNull(ref));
 
 @Riverpod(keepAlive: true)
 AppConfigRepository appConfigRepository(Ref ref) =>
@@ -197,6 +221,27 @@ SyncService syncService(Ref ref) {
     trackingRemote: ref.watch(trackingRemoteDataSourceProvider),
     babyRemote: ref.watch(babyRemoteDataSourceProvider),
     favoriteRemote: ref.watch(favoriteRemoteDataSourceProvider),
+  );
+  service.start();
+  ref.onDispose(service.dispose);
+  return service;
+}
+
+// ── 마스터 데이터 캐시 동기화 서비스(§5.3) ──────────────────────────────────
+//
+// 서버 `content_versions` 매니페스트를 읽어 바뀐 데이터셋만 Supabase→Drift로
+// 재조회한다(stale-while-revalidate). 미구성 시 원격 의존이 모두 null이라 no-op.
+// 마스터 리포지토리 프로바이더가 구성 시 이를 watch 해 자동 기동한다.
+
+@Riverpod(keepAlive: true)
+MasterDataCacheService masterDataCacheService(Ref ref) {
+  final configured = ref.watch(supabaseClientProvider) != null;
+  final service = MasterDataCacheService(
+    configured ? ref.watch(masterCacheDaoProvider) : null,
+    ref.watch(contentVersionRemoteDataSourceProvider),
+    ref.watch(symptomRemoteDataSourceProvider),
+    ref.watch(symptomInfoRemoteDataSourceProvider),
+    ref.watch(productRemoteDataSourceProvider),
   );
   service.start();
   ref.onDispose(service.dispose);

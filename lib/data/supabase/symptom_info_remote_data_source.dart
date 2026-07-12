@@ -1,9 +1,8 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../domain/entities/symptom_info.dart';
-import 'row_mappers.dart';
+import 'entity_wire_mappers.dart';
 import 'supabase_error_mapper.dart';
-import 'symptom_info_mappers.dart';
 
 /// 증상별 참고정보 원격 데이터소스 (§7.1 `symptom_infos`, §11.9, §5.3 공개 읽기).
 ///
@@ -29,7 +28,7 @@ class SymptomInfoRemoteDataSource {
       .stream(primaryKey: ['id'])
       .eq('symptom_id', symptomId)
       .order('updated_at', ascending: false)
-      .map((rows) => rows.isEmpty ? null : _fromRow(rows.first))
+      .map((rows) => rows.isEmpty ? null : symptomInfoFromWire(rows.first))
       .mapErrorToAppException();
 
   /// 특정 증상의 참고정보 1회 조회. 없으면 null.
@@ -40,26 +39,29 @@ class SymptomInfoRemoteDataSource {
           .eq('symptom_id', symptomId)
           .order('updated_at', ascending: false)
           .limit(1);
-      return rows.isEmpty ? null : _fromRow(rows.first);
+      return rows.isEmpty ? null : symptomInfoFromWire(rows.first);
     } on Object catch (error, stackTrace) {
       throw mapSupabaseError(error, stackTrace);
     }
   }
 
-  SymptomInfo _fromRow(Map<String, dynamic> row) => SymptomInfo(
-    id: row['id'] as String,
-    symptomId: row['symptom_id'] as String,
-    summary: row['summary'] as String,
-    sections: infoSectionsFromJson(row['sections']),
-    emergency: asMapList(row['emergency'])
-        .map(
-          (m) => EmergencySign(
-            sign: (m['sign'] ?? '') as String,
-            action: (m['action'] ?? '') as String,
-          ),
-        )
-        .toList(growable: false),
-    sources: infoSourcesFromJson(row['sources']),
-    updatedAt: parseDate(row['updated_at']),
-  );
+  /// 캐시 적재용 — 증상당 최신(`updated_at`) 1건씩의 원시 행 (§5.3
+  /// MasterDataCacheService). 전체를 최신순으로 받아 symptom_id별 첫 행만 남긴다.
+  Future<List<Map<String, dynamic>>> fetchLatestRowsPerSymptom() async {
+    try {
+      final rows = await _from
+          .select(_columns)
+          .order('updated_at', ascending: false);
+      final seen = <String>{};
+      final latest = <Map<String, dynamic>>[];
+      for (final row in rows) {
+        final symptomId = row['symptom_id'] as String?;
+        if (symptomId == null || !seen.add(symptomId)) continue;
+        latest.add(row);
+      }
+      return latest;
+    } on Object catch (error, stackTrace) {
+      throw mapSupabaseError(error, stackTrace);
+    }
+  }
 }

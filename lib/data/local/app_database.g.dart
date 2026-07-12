@@ -2227,6 +2227,1285 @@ class PendingOpsCompanion extends UpdateCompanion<PendingOpRow> {
   }
 }
 
+class $CachedSymptomsTable extends CachedSymptoms
+    with TableInfo<$CachedSymptomsTable, CachedSymptomRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $CachedSymptomsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _slugMeta = const VerificationMeta('slug');
+  @override
+  late final GeneratedColumn<String> slug = GeneratedColumn<String>(
+    'slug',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _orderIndexMeta = const VerificationMeta(
+    'orderIndex',
+  );
+  @override
+  late final GeneratedColumn<int> orderIndex = GeneratedColumn<int>(
+    'order_index',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  static const VerificationMeta _isActiveMeta = const VerificationMeta(
+    'isActive',
+  );
+  @override
+  late final GeneratedColumn<bool> isActive = GeneratedColumn<bool>(
+    'is_active',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("is_active" IN (0, 1))',
+    ),
+    defaultValue: const Constant(true),
+  );
+  static const VerificationMeta _dataMeta = const VerificationMeta('data');
+  @override
+  late final GeneratedColumn<String> data = GeneratedColumn<String>(
+    'data',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [id, slug, orderIndex, isActive, data];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'cached_symptoms';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<CachedSymptomRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('slug')) {
+      context.handle(
+        _slugMeta,
+        slug.isAcceptableOrUnknown(data['slug']!, _slugMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_slugMeta);
+    }
+    if (data.containsKey('order_index')) {
+      context.handle(
+        _orderIndexMeta,
+        orderIndex.isAcceptableOrUnknown(data['order_index']!, _orderIndexMeta),
+      );
+    }
+    if (data.containsKey('is_active')) {
+      context.handle(
+        _isActiveMeta,
+        isActive.isAcceptableOrUnknown(data['is_active']!, _isActiveMeta),
+      );
+    }
+    if (data.containsKey('data')) {
+      context.handle(
+        _dataMeta,
+        this.data.isAcceptableOrUnknown(data['data']!, _dataMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_dataMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  CachedSymptomRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return CachedSymptomRow(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      slug: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}slug'],
+      )!,
+      orderIndex: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}order_index'],
+      )!,
+      isActive: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}is_active'],
+      )!,
+      data: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}data'],
+      )!,
+    );
+  }
+
+  @override
+  $CachedSymptomsTable createAlias(String alias) {
+    return $CachedSymptomsTable(attachedDatabase, alias);
+  }
+}
+
+class CachedSymptomRow extends DataClass
+    implements Insertable<CachedSymptomRow> {
+  /// `symptoms.id`(uuid, PK).
+  final String id;
+
+  /// `symptoms.slug`.
+  final String slug;
+
+  /// `symptoms.order_index`.
+  final int orderIndex;
+
+  /// `symptoms.is_active`.
+  final bool isActive;
+
+  /// 원본 행 JSON(와이어 셰이프).
+  final String data;
+  const CachedSymptomRow({
+    required this.id,
+    required this.slug,
+    required this.orderIndex,
+    required this.isActive,
+    required this.data,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['slug'] = Variable<String>(slug);
+    map['order_index'] = Variable<int>(orderIndex);
+    map['is_active'] = Variable<bool>(isActive);
+    map['data'] = Variable<String>(data);
+    return map;
+  }
+
+  CachedSymptomsCompanion toCompanion(bool nullToAbsent) {
+    return CachedSymptomsCompanion(
+      id: Value(id),
+      slug: Value(slug),
+      orderIndex: Value(orderIndex),
+      isActive: Value(isActive),
+      data: Value(data),
+    );
+  }
+
+  factory CachedSymptomRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return CachedSymptomRow(
+      id: serializer.fromJson<String>(json['id']),
+      slug: serializer.fromJson<String>(json['slug']),
+      orderIndex: serializer.fromJson<int>(json['orderIndex']),
+      isActive: serializer.fromJson<bool>(json['isActive']),
+      data: serializer.fromJson<String>(json['data']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'slug': serializer.toJson<String>(slug),
+      'orderIndex': serializer.toJson<int>(orderIndex),
+      'isActive': serializer.toJson<bool>(isActive),
+      'data': serializer.toJson<String>(data),
+    };
+  }
+
+  CachedSymptomRow copyWith({
+    String? id,
+    String? slug,
+    int? orderIndex,
+    bool? isActive,
+    String? data,
+  }) => CachedSymptomRow(
+    id: id ?? this.id,
+    slug: slug ?? this.slug,
+    orderIndex: orderIndex ?? this.orderIndex,
+    isActive: isActive ?? this.isActive,
+    data: data ?? this.data,
+  );
+  CachedSymptomRow copyWithCompanion(CachedSymptomsCompanion data) {
+    return CachedSymptomRow(
+      id: data.id.present ? data.id.value : this.id,
+      slug: data.slug.present ? data.slug.value : this.slug,
+      orderIndex: data.orderIndex.present
+          ? data.orderIndex.value
+          : this.orderIndex,
+      isActive: data.isActive.present ? data.isActive.value : this.isActive,
+      data: data.data.present ? data.data.value : this.data,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('CachedSymptomRow(')
+          ..write('id: $id, ')
+          ..write('slug: $slug, ')
+          ..write('orderIndex: $orderIndex, ')
+          ..write('isActive: $isActive, ')
+          ..write('data: $data')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(id, slug, orderIndex, isActive, data);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is CachedSymptomRow &&
+          other.id == this.id &&
+          other.slug == this.slug &&
+          other.orderIndex == this.orderIndex &&
+          other.isActive == this.isActive &&
+          other.data == this.data);
+}
+
+class CachedSymptomsCompanion extends UpdateCompanion<CachedSymptomRow> {
+  final Value<String> id;
+  final Value<String> slug;
+  final Value<int> orderIndex;
+  final Value<bool> isActive;
+  final Value<String> data;
+  final Value<int> rowid;
+  const CachedSymptomsCompanion({
+    this.id = const Value.absent(),
+    this.slug = const Value.absent(),
+    this.orderIndex = const Value.absent(),
+    this.isActive = const Value.absent(),
+    this.data = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  CachedSymptomsCompanion.insert({
+    required String id,
+    required String slug,
+    this.orderIndex = const Value.absent(),
+    this.isActive = const Value.absent(),
+    required String data,
+    this.rowid = const Value.absent(),
+  }) : id = Value(id),
+       slug = Value(slug),
+       data = Value(data);
+  static Insertable<CachedSymptomRow> custom({
+    Expression<String>? id,
+    Expression<String>? slug,
+    Expression<int>? orderIndex,
+    Expression<bool>? isActive,
+    Expression<String>? data,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (slug != null) 'slug': slug,
+      if (orderIndex != null) 'order_index': orderIndex,
+      if (isActive != null) 'is_active': isActive,
+      if (data != null) 'data': data,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  CachedSymptomsCompanion copyWith({
+    Value<String>? id,
+    Value<String>? slug,
+    Value<int>? orderIndex,
+    Value<bool>? isActive,
+    Value<String>? data,
+    Value<int>? rowid,
+  }) {
+    return CachedSymptomsCompanion(
+      id: id ?? this.id,
+      slug: slug ?? this.slug,
+      orderIndex: orderIndex ?? this.orderIndex,
+      isActive: isActive ?? this.isActive,
+      data: data ?? this.data,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (slug.present) {
+      map['slug'] = Variable<String>(slug.value);
+    }
+    if (orderIndex.present) {
+      map['order_index'] = Variable<int>(orderIndex.value);
+    }
+    if (isActive.present) {
+      map['is_active'] = Variable<bool>(isActive.value);
+    }
+    if (data.present) {
+      map['data'] = Variable<String>(data.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('CachedSymptomsCompanion(')
+          ..write('id: $id, ')
+          ..write('slug: $slug, ')
+          ..write('orderIndex: $orderIndex, ')
+          ..write('isActive: $isActive, ')
+          ..write('data: $data, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $CachedSymptomInfosTable extends CachedSymptomInfos
+    with TableInfo<$CachedSymptomInfosTable, CachedSymptomInfoRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $CachedSymptomInfosTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _symptomIdMeta = const VerificationMeta(
+    'symptomId',
+  );
+  @override
+  late final GeneratedColumn<String> symptomId = GeneratedColumn<String>(
+    'symptom_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _dataMeta = const VerificationMeta('data');
+  @override
+  late final GeneratedColumn<String> data = GeneratedColumn<String>(
+    'data',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
+    'updatedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
+    'updated_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [symptomId, data, updatedAt];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'cached_symptom_infos';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<CachedSymptomInfoRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('symptom_id')) {
+      context.handle(
+        _symptomIdMeta,
+        symptomId.isAcceptableOrUnknown(data['symptom_id']!, _symptomIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_symptomIdMeta);
+    }
+    if (data.containsKey('data')) {
+      context.handle(
+        _dataMeta,
+        this.data.isAcceptableOrUnknown(data['data']!, _dataMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_dataMeta);
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(
+        _updatedAtMeta,
+        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_updatedAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {symptomId};
+  @override
+  CachedSymptomInfoRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return CachedSymptomInfoRow(
+      symptomId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}symptom_id'],
+      )!,
+      data: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}data'],
+      )!,
+      updatedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}updated_at'],
+      )!,
+    );
+  }
+
+  @override
+  $CachedSymptomInfosTable createAlias(String alias) {
+    return $CachedSymptomInfosTable(attachedDatabase, alias);
+  }
+}
+
+class CachedSymptomInfoRow extends DataClass
+    implements Insertable<CachedSymptomInfoRow> {
+  /// `symptom_infos.symptom_id`(PK — 증상당 1건).
+  final String symptomId;
+
+  /// 원본 행 JSON(와이어 셰이프).
+  final String data;
+
+  /// `symptom_infos.updated_at`(최신 판별용).
+  final DateTime updatedAt;
+  const CachedSymptomInfoRow({
+    required this.symptomId,
+    required this.data,
+    required this.updatedAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['symptom_id'] = Variable<String>(symptomId);
+    map['data'] = Variable<String>(data);
+    map['updated_at'] = Variable<DateTime>(updatedAt);
+    return map;
+  }
+
+  CachedSymptomInfosCompanion toCompanion(bool nullToAbsent) {
+    return CachedSymptomInfosCompanion(
+      symptomId: Value(symptomId),
+      data: Value(data),
+      updatedAt: Value(updatedAt),
+    );
+  }
+
+  factory CachedSymptomInfoRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return CachedSymptomInfoRow(
+      symptomId: serializer.fromJson<String>(json['symptomId']),
+      data: serializer.fromJson<String>(json['data']),
+      updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'symptomId': serializer.toJson<String>(symptomId),
+      'data': serializer.toJson<String>(data),
+      'updatedAt': serializer.toJson<DateTime>(updatedAt),
+    };
+  }
+
+  CachedSymptomInfoRow copyWith({
+    String? symptomId,
+    String? data,
+    DateTime? updatedAt,
+  }) => CachedSymptomInfoRow(
+    symptomId: symptomId ?? this.symptomId,
+    data: data ?? this.data,
+    updatedAt: updatedAt ?? this.updatedAt,
+  );
+  CachedSymptomInfoRow copyWithCompanion(CachedSymptomInfosCompanion data) {
+    return CachedSymptomInfoRow(
+      symptomId: data.symptomId.present ? data.symptomId.value : this.symptomId,
+      data: data.data.present ? data.data.value : this.data,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('CachedSymptomInfoRow(')
+          ..write('symptomId: $symptomId, ')
+          ..write('data: $data, ')
+          ..write('updatedAt: $updatedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(symptomId, data, updatedAt);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is CachedSymptomInfoRow &&
+          other.symptomId == this.symptomId &&
+          other.data == this.data &&
+          other.updatedAt == this.updatedAt);
+}
+
+class CachedSymptomInfosCompanion
+    extends UpdateCompanion<CachedSymptomInfoRow> {
+  final Value<String> symptomId;
+  final Value<String> data;
+  final Value<DateTime> updatedAt;
+  final Value<int> rowid;
+  const CachedSymptomInfosCompanion({
+    this.symptomId = const Value.absent(),
+    this.data = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  CachedSymptomInfosCompanion.insert({
+    required String symptomId,
+    required String data,
+    required DateTime updatedAt,
+    this.rowid = const Value.absent(),
+  }) : symptomId = Value(symptomId),
+       data = Value(data),
+       updatedAt = Value(updatedAt);
+  static Insertable<CachedSymptomInfoRow> custom({
+    Expression<String>? symptomId,
+    Expression<String>? data,
+    Expression<DateTime>? updatedAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (symptomId != null) 'symptom_id': symptomId,
+      if (data != null) 'data': data,
+      if (updatedAt != null) 'updated_at': updatedAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  CachedSymptomInfosCompanion copyWith({
+    Value<String>? symptomId,
+    Value<String>? data,
+    Value<DateTime>? updatedAt,
+    Value<int>? rowid,
+  }) {
+    return CachedSymptomInfosCompanion(
+      symptomId: symptomId ?? this.symptomId,
+      data: data ?? this.data,
+      updatedAt: updatedAt ?? this.updatedAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (symptomId.present) {
+      map['symptom_id'] = Variable<String>(symptomId.value);
+    }
+    if (data.present) {
+      map['data'] = Variable<String>(data.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<DateTime>(updatedAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('CachedSymptomInfosCompanion(')
+          ..write('symptomId: $symptomId, ')
+          ..write('data: $data, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $CachedProductsTable extends CachedProducts
+    with TableInfo<$CachedProductsTable, CachedProductRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $CachedProductsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _symptomIdMeta = const VerificationMeta(
+    'symptomId',
+  );
+  @override
+  late final GeneratedColumn<String> symptomId = GeneratedColumn<String>(
+    'symptom_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _rankIndexMeta = const VerificationMeta(
+    'rankIndex',
+  );
+  @override
+  late final GeneratedColumn<int> rankIndex = GeneratedColumn<int>(
+    'rank_index',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  static const VerificationMeta _isActiveMeta = const VerificationMeta(
+    'isActive',
+  );
+  @override
+  late final GeneratedColumn<bool> isActive = GeneratedColumn<bool>(
+    'is_active',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("is_active" IN (0, 1))',
+    ),
+    defaultValue: const Constant(true),
+  );
+  static const VerificationMeta _dataMeta = const VerificationMeta('data');
+  @override
+  late final GeneratedColumn<String> data = GeneratedColumn<String>(
+    'data',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    symptomId,
+    rankIndex,
+    isActive,
+    data,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'cached_products';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<CachedProductRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('symptom_id')) {
+      context.handle(
+        _symptomIdMeta,
+        symptomId.isAcceptableOrUnknown(data['symptom_id']!, _symptomIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_symptomIdMeta);
+    }
+    if (data.containsKey('rank_index')) {
+      context.handle(
+        _rankIndexMeta,
+        rankIndex.isAcceptableOrUnknown(data['rank_index']!, _rankIndexMeta),
+      );
+    }
+    if (data.containsKey('is_active')) {
+      context.handle(
+        _isActiveMeta,
+        isActive.isAcceptableOrUnknown(data['is_active']!, _isActiveMeta),
+      );
+    }
+    if (data.containsKey('data')) {
+      context.handle(
+        _dataMeta,
+        this.data.isAcceptableOrUnknown(data['data']!, _dataMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_dataMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  CachedProductRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return CachedProductRow(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      symptomId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}symptom_id'],
+      )!,
+      rankIndex: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}rank_index'],
+      )!,
+      isActive: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}is_active'],
+      )!,
+      data: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}data'],
+      )!,
+    );
+  }
+
+  @override
+  $CachedProductsTable createAlias(String alias) {
+    return $CachedProductsTable(attachedDatabase, alias);
+  }
+}
+
+class CachedProductRow extends DataClass
+    implements Insertable<CachedProductRow> {
+  /// `products.id`(uuid, PK).
+  final String id;
+
+  /// `products.symptom_id`.
+  final String symptomId;
+
+  /// `products.rank_index`.
+  final int rankIndex;
+
+  /// `products.is_active`.
+  final bool isActive;
+
+  /// 원본 행 JSON(와이어 셰이프).
+  final String data;
+  const CachedProductRow({
+    required this.id,
+    required this.symptomId,
+    required this.rankIndex,
+    required this.isActive,
+    required this.data,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['symptom_id'] = Variable<String>(symptomId);
+    map['rank_index'] = Variable<int>(rankIndex);
+    map['is_active'] = Variable<bool>(isActive);
+    map['data'] = Variable<String>(data);
+    return map;
+  }
+
+  CachedProductsCompanion toCompanion(bool nullToAbsent) {
+    return CachedProductsCompanion(
+      id: Value(id),
+      symptomId: Value(symptomId),
+      rankIndex: Value(rankIndex),
+      isActive: Value(isActive),
+      data: Value(data),
+    );
+  }
+
+  factory CachedProductRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return CachedProductRow(
+      id: serializer.fromJson<String>(json['id']),
+      symptomId: serializer.fromJson<String>(json['symptomId']),
+      rankIndex: serializer.fromJson<int>(json['rankIndex']),
+      isActive: serializer.fromJson<bool>(json['isActive']),
+      data: serializer.fromJson<String>(json['data']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'symptomId': serializer.toJson<String>(symptomId),
+      'rankIndex': serializer.toJson<int>(rankIndex),
+      'isActive': serializer.toJson<bool>(isActive),
+      'data': serializer.toJson<String>(data),
+    };
+  }
+
+  CachedProductRow copyWith({
+    String? id,
+    String? symptomId,
+    int? rankIndex,
+    bool? isActive,
+    String? data,
+  }) => CachedProductRow(
+    id: id ?? this.id,
+    symptomId: symptomId ?? this.symptomId,
+    rankIndex: rankIndex ?? this.rankIndex,
+    isActive: isActive ?? this.isActive,
+    data: data ?? this.data,
+  );
+  CachedProductRow copyWithCompanion(CachedProductsCompanion data) {
+    return CachedProductRow(
+      id: data.id.present ? data.id.value : this.id,
+      symptomId: data.symptomId.present ? data.symptomId.value : this.symptomId,
+      rankIndex: data.rankIndex.present ? data.rankIndex.value : this.rankIndex,
+      isActive: data.isActive.present ? data.isActive.value : this.isActive,
+      data: data.data.present ? data.data.value : this.data,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('CachedProductRow(')
+          ..write('id: $id, ')
+          ..write('symptomId: $symptomId, ')
+          ..write('rankIndex: $rankIndex, ')
+          ..write('isActive: $isActive, ')
+          ..write('data: $data')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(id, symptomId, rankIndex, isActive, data);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is CachedProductRow &&
+          other.id == this.id &&
+          other.symptomId == this.symptomId &&
+          other.rankIndex == this.rankIndex &&
+          other.isActive == this.isActive &&
+          other.data == this.data);
+}
+
+class CachedProductsCompanion extends UpdateCompanion<CachedProductRow> {
+  final Value<String> id;
+  final Value<String> symptomId;
+  final Value<int> rankIndex;
+  final Value<bool> isActive;
+  final Value<String> data;
+  final Value<int> rowid;
+  const CachedProductsCompanion({
+    this.id = const Value.absent(),
+    this.symptomId = const Value.absent(),
+    this.rankIndex = const Value.absent(),
+    this.isActive = const Value.absent(),
+    this.data = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  CachedProductsCompanion.insert({
+    required String id,
+    required String symptomId,
+    this.rankIndex = const Value.absent(),
+    this.isActive = const Value.absent(),
+    required String data,
+    this.rowid = const Value.absent(),
+  }) : id = Value(id),
+       symptomId = Value(symptomId),
+       data = Value(data);
+  static Insertable<CachedProductRow> custom({
+    Expression<String>? id,
+    Expression<String>? symptomId,
+    Expression<int>? rankIndex,
+    Expression<bool>? isActive,
+    Expression<String>? data,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (symptomId != null) 'symptom_id': symptomId,
+      if (rankIndex != null) 'rank_index': rankIndex,
+      if (isActive != null) 'is_active': isActive,
+      if (data != null) 'data': data,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  CachedProductsCompanion copyWith({
+    Value<String>? id,
+    Value<String>? symptomId,
+    Value<int>? rankIndex,
+    Value<bool>? isActive,
+    Value<String>? data,
+    Value<int>? rowid,
+  }) {
+    return CachedProductsCompanion(
+      id: id ?? this.id,
+      symptomId: symptomId ?? this.symptomId,
+      rankIndex: rankIndex ?? this.rankIndex,
+      isActive: isActive ?? this.isActive,
+      data: data ?? this.data,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (symptomId.present) {
+      map['symptom_id'] = Variable<String>(symptomId.value);
+    }
+    if (rankIndex.present) {
+      map['rank_index'] = Variable<int>(rankIndex.value);
+    }
+    if (isActive.present) {
+      map['is_active'] = Variable<bool>(isActive.value);
+    }
+    if (data.present) {
+      map['data'] = Variable<String>(data.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('CachedProductsCompanion(')
+          ..write('id: $id, ')
+          ..write('symptomId: $symptomId, ')
+          ..write('rankIndex: $rankIndex, ')
+          ..write('isActive: $isActive, ')
+          ..write('data: $data, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $CacheMetaTable extends CacheMeta
+    with TableInfo<$CacheMetaTable, CacheMetaRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $CacheMetaTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _datasetMeta = const VerificationMeta(
+    'dataset',
+  );
+  @override
+  late final GeneratedColumn<String> dataset = GeneratedColumn<String>(
+    'dataset',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _versionMeta = const VerificationMeta(
+    'version',
+  );
+  @override
+  late final GeneratedColumn<int> version = GeneratedColumn<int>(
+    'version',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  static const VerificationMeta _fetchedAtMeta = const VerificationMeta(
+    'fetchedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> fetchedAt = GeneratedColumn<DateTime>(
+    'fetched_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [dataset, version, fetchedAt];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'cache_meta';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<CacheMetaRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('dataset')) {
+      context.handle(
+        _datasetMeta,
+        dataset.isAcceptableOrUnknown(data['dataset']!, _datasetMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_datasetMeta);
+    }
+    if (data.containsKey('version')) {
+      context.handle(
+        _versionMeta,
+        version.isAcceptableOrUnknown(data['version']!, _versionMeta),
+      );
+    }
+    if (data.containsKey('fetched_at')) {
+      context.handle(
+        _fetchedAtMeta,
+        fetchedAt.isAcceptableOrUnknown(data['fetched_at']!, _fetchedAtMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {dataset};
+  @override
+  CacheMetaRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return CacheMetaRow(
+      dataset: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}dataset'],
+      )!,
+      version: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}version'],
+      )!,
+      fetchedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}fetched_at'],
+      ),
+    );
+  }
+
+  @override
+  $CacheMetaTable createAlias(String alias) {
+    return $CacheMetaTable(attachedDatabase, alias);
+  }
+}
+
+class CacheMetaRow extends DataClass implements Insertable<CacheMetaRow> {
+  /// 데이터셋 키(서버 매니페스트와 동일).
+  final String dataset;
+
+  /// 이 기기에 마지막으로 반영된 데이터셋 버전.
+  final int version;
+
+  /// 마지막 재조회 시각(디버그·정책용, nullable).
+  final DateTime? fetchedAt;
+  const CacheMetaRow({
+    required this.dataset,
+    required this.version,
+    this.fetchedAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['dataset'] = Variable<String>(dataset);
+    map['version'] = Variable<int>(version);
+    if (!nullToAbsent || fetchedAt != null) {
+      map['fetched_at'] = Variable<DateTime>(fetchedAt);
+    }
+    return map;
+  }
+
+  CacheMetaCompanion toCompanion(bool nullToAbsent) {
+    return CacheMetaCompanion(
+      dataset: Value(dataset),
+      version: Value(version),
+      fetchedAt: fetchedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(fetchedAt),
+    );
+  }
+
+  factory CacheMetaRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return CacheMetaRow(
+      dataset: serializer.fromJson<String>(json['dataset']),
+      version: serializer.fromJson<int>(json['version']),
+      fetchedAt: serializer.fromJson<DateTime?>(json['fetchedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'dataset': serializer.toJson<String>(dataset),
+      'version': serializer.toJson<int>(version),
+      'fetchedAt': serializer.toJson<DateTime?>(fetchedAt),
+    };
+  }
+
+  CacheMetaRow copyWith({
+    String? dataset,
+    int? version,
+    Value<DateTime?> fetchedAt = const Value.absent(),
+  }) => CacheMetaRow(
+    dataset: dataset ?? this.dataset,
+    version: version ?? this.version,
+    fetchedAt: fetchedAt.present ? fetchedAt.value : this.fetchedAt,
+  );
+  CacheMetaRow copyWithCompanion(CacheMetaCompanion data) {
+    return CacheMetaRow(
+      dataset: data.dataset.present ? data.dataset.value : this.dataset,
+      version: data.version.present ? data.version.value : this.version,
+      fetchedAt: data.fetchedAt.present ? data.fetchedAt.value : this.fetchedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('CacheMetaRow(')
+          ..write('dataset: $dataset, ')
+          ..write('version: $version, ')
+          ..write('fetchedAt: $fetchedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(dataset, version, fetchedAt);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is CacheMetaRow &&
+          other.dataset == this.dataset &&
+          other.version == this.version &&
+          other.fetchedAt == this.fetchedAt);
+}
+
+class CacheMetaCompanion extends UpdateCompanion<CacheMetaRow> {
+  final Value<String> dataset;
+  final Value<int> version;
+  final Value<DateTime?> fetchedAt;
+  final Value<int> rowid;
+  const CacheMetaCompanion({
+    this.dataset = const Value.absent(),
+    this.version = const Value.absent(),
+    this.fetchedAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  CacheMetaCompanion.insert({
+    required String dataset,
+    this.version = const Value.absent(),
+    this.fetchedAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  }) : dataset = Value(dataset);
+  static Insertable<CacheMetaRow> custom({
+    Expression<String>? dataset,
+    Expression<int>? version,
+    Expression<DateTime>? fetchedAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (dataset != null) 'dataset': dataset,
+      if (version != null) 'version': version,
+      if (fetchedAt != null) 'fetched_at': fetchedAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  CacheMetaCompanion copyWith({
+    Value<String>? dataset,
+    Value<int>? version,
+    Value<DateTime?>? fetchedAt,
+    Value<int>? rowid,
+  }) {
+    return CacheMetaCompanion(
+      dataset: dataset ?? this.dataset,
+      version: version ?? this.version,
+      fetchedAt: fetchedAt ?? this.fetchedAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (dataset.present) {
+      map['dataset'] = Variable<String>(dataset.value);
+    }
+    if (version.present) {
+      map['version'] = Variable<int>(version.value);
+    }
+    if (fetchedAt.present) {
+      map['fetched_at'] = Variable<DateTime>(fetchedAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('CacheMetaCompanion(')
+          ..write('dataset: $dataset, ')
+          ..write('version: $version, ')
+          ..write('fetchedAt: $fetchedAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -2235,6 +3514,11 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $FavoritesTable favorites = $FavoritesTable(this);
   late final $RecentSearchesTable recentSearches = $RecentSearchesTable(this);
   late final $PendingOpsTable pendingOps = $PendingOpsTable(this);
+  late final $CachedSymptomsTable cachedSymptoms = $CachedSymptomsTable(this);
+  late final $CachedSymptomInfosTable cachedSymptomInfos =
+      $CachedSymptomInfosTable(this);
+  late final $CachedProductsTable cachedProducts = $CachedProductsTable(this);
+  late final $CacheMetaTable cacheMeta = $CacheMetaTable(this);
   late final TrackingLogsDao trackingLogsDao = TrackingLogsDao(
     this as AppDatabase,
   );
@@ -2244,6 +3528,9 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     this as AppDatabase,
   );
   late final PendingOpsDao pendingOpsDao = PendingOpsDao(this as AppDatabase);
+  late final MasterCacheDao masterCacheDao = MasterCacheDao(
+    this as AppDatabase,
+  );
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -2254,6 +3541,10 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     favorites,
     recentSearches,
     pendingOps,
+    cachedSymptoms,
+    cachedSymptomInfos,
+    cachedProducts,
+    cacheMeta,
   ];
 }
 
@@ -3411,6 +4702,757 @@ typedef $$PendingOpsTableProcessedTableManager =
       PendingOpRow,
       PrefetchHooks Function()
     >;
+typedef $$CachedSymptomsTableCreateCompanionBuilder =
+    CachedSymptomsCompanion Function({
+      required String id,
+      required String slug,
+      Value<int> orderIndex,
+      Value<bool> isActive,
+      required String data,
+      Value<int> rowid,
+    });
+typedef $$CachedSymptomsTableUpdateCompanionBuilder =
+    CachedSymptomsCompanion Function({
+      Value<String> id,
+      Value<String> slug,
+      Value<int> orderIndex,
+      Value<bool> isActive,
+      Value<String> data,
+      Value<int> rowid,
+    });
+
+class $$CachedSymptomsTableFilterComposer
+    extends Composer<_$AppDatabase, $CachedSymptomsTable> {
+  $$CachedSymptomsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get slug => $composableBuilder(
+    column: $table.slug,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get orderIndex => $composableBuilder(
+    column: $table.orderIndex,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get isActive => $composableBuilder(
+    column: $table.isActive,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get data => $composableBuilder(
+    column: $table.data,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$CachedSymptomsTableOrderingComposer
+    extends Composer<_$AppDatabase, $CachedSymptomsTable> {
+  $$CachedSymptomsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get slug => $composableBuilder(
+    column: $table.slug,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get orderIndex => $composableBuilder(
+    column: $table.orderIndex,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get isActive => $composableBuilder(
+    column: $table.isActive,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get data => $composableBuilder(
+    column: $table.data,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$CachedSymptomsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $CachedSymptomsTable> {
+  $$CachedSymptomsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get slug =>
+      $composableBuilder(column: $table.slug, builder: (column) => column);
+
+  GeneratedColumn<int> get orderIndex => $composableBuilder(
+    column: $table.orderIndex,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<bool> get isActive =>
+      $composableBuilder(column: $table.isActive, builder: (column) => column);
+
+  GeneratedColumn<String> get data =>
+      $composableBuilder(column: $table.data, builder: (column) => column);
+}
+
+class $$CachedSymptomsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $CachedSymptomsTable,
+          CachedSymptomRow,
+          $$CachedSymptomsTableFilterComposer,
+          $$CachedSymptomsTableOrderingComposer,
+          $$CachedSymptomsTableAnnotationComposer,
+          $$CachedSymptomsTableCreateCompanionBuilder,
+          $$CachedSymptomsTableUpdateCompanionBuilder,
+          (
+            CachedSymptomRow,
+            BaseReferences<
+              _$AppDatabase,
+              $CachedSymptomsTable,
+              CachedSymptomRow
+            >,
+          ),
+          CachedSymptomRow,
+          PrefetchHooks Function()
+        > {
+  $$CachedSymptomsTableTableManager(
+    _$AppDatabase db,
+    $CachedSymptomsTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$CachedSymptomsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$CachedSymptomsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$CachedSymptomsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> id = const Value.absent(),
+                Value<String> slug = const Value.absent(),
+                Value<int> orderIndex = const Value.absent(),
+                Value<bool> isActive = const Value.absent(),
+                Value<String> data = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => CachedSymptomsCompanion(
+                id: id,
+                slug: slug,
+                orderIndex: orderIndex,
+                isActive: isActive,
+                data: data,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String id,
+                required String slug,
+                Value<int> orderIndex = const Value.absent(),
+                Value<bool> isActive = const Value.absent(),
+                required String data,
+                Value<int> rowid = const Value.absent(),
+              }) => CachedSymptomsCompanion.insert(
+                id: id,
+                slug: slug,
+                orderIndex: orderIndex,
+                isActive: isActive,
+                data: data,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$CachedSymptomsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $CachedSymptomsTable,
+      CachedSymptomRow,
+      $$CachedSymptomsTableFilterComposer,
+      $$CachedSymptomsTableOrderingComposer,
+      $$CachedSymptomsTableAnnotationComposer,
+      $$CachedSymptomsTableCreateCompanionBuilder,
+      $$CachedSymptomsTableUpdateCompanionBuilder,
+      (
+        CachedSymptomRow,
+        BaseReferences<_$AppDatabase, $CachedSymptomsTable, CachedSymptomRow>,
+      ),
+      CachedSymptomRow,
+      PrefetchHooks Function()
+    >;
+typedef $$CachedSymptomInfosTableCreateCompanionBuilder =
+    CachedSymptomInfosCompanion Function({
+      required String symptomId,
+      required String data,
+      required DateTime updatedAt,
+      Value<int> rowid,
+    });
+typedef $$CachedSymptomInfosTableUpdateCompanionBuilder =
+    CachedSymptomInfosCompanion Function({
+      Value<String> symptomId,
+      Value<String> data,
+      Value<DateTime> updatedAt,
+      Value<int> rowid,
+    });
+
+class $$CachedSymptomInfosTableFilterComposer
+    extends Composer<_$AppDatabase, $CachedSymptomInfosTable> {
+  $$CachedSymptomInfosTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get symptomId => $composableBuilder(
+    column: $table.symptomId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get data => $composableBuilder(
+    column: $table.data,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$CachedSymptomInfosTableOrderingComposer
+    extends Composer<_$AppDatabase, $CachedSymptomInfosTable> {
+  $$CachedSymptomInfosTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get symptomId => $composableBuilder(
+    column: $table.symptomId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get data => $composableBuilder(
+    column: $table.data,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$CachedSymptomInfosTableAnnotationComposer
+    extends Composer<_$AppDatabase, $CachedSymptomInfosTable> {
+  $$CachedSymptomInfosTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get symptomId =>
+      $composableBuilder(column: $table.symptomId, builder: (column) => column);
+
+  GeneratedColumn<String> get data =>
+      $composableBuilder(column: $table.data, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+}
+
+class $$CachedSymptomInfosTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $CachedSymptomInfosTable,
+          CachedSymptomInfoRow,
+          $$CachedSymptomInfosTableFilterComposer,
+          $$CachedSymptomInfosTableOrderingComposer,
+          $$CachedSymptomInfosTableAnnotationComposer,
+          $$CachedSymptomInfosTableCreateCompanionBuilder,
+          $$CachedSymptomInfosTableUpdateCompanionBuilder,
+          (
+            CachedSymptomInfoRow,
+            BaseReferences<
+              _$AppDatabase,
+              $CachedSymptomInfosTable,
+              CachedSymptomInfoRow
+            >,
+          ),
+          CachedSymptomInfoRow,
+          PrefetchHooks Function()
+        > {
+  $$CachedSymptomInfosTableTableManager(
+    _$AppDatabase db,
+    $CachedSymptomInfosTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$CachedSymptomInfosTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$CachedSymptomInfosTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$CachedSymptomInfosTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<String> symptomId = const Value.absent(),
+                Value<String> data = const Value.absent(),
+                Value<DateTime> updatedAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => CachedSymptomInfosCompanion(
+                symptomId: symptomId,
+                data: data,
+                updatedAt: updatedAt,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String symptomId,
+                required String data,
+                required DateTime updatedAt,
+                Value<int> rowid = const Value.absent(),
+              }) => CachedSymptomInfosCompanion.insert(
+                symptomId: symptomId,
+                data: data,
+                updatedAt: updatedAt,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$CachedSymptomInfosTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $CachedSymptomInfosTable,
+      CachedSymptomInfoRow,
+      $$CachedSymptomInfosTableFilterComposer,
+      $$CachedSymptomInfosTableOrderingComposer,
+      $$CachedSymptomInfosTableAnnotationComposer,
+      $$CachedSymptomInfosTableCreateCompanionBuilder,
+      $$CachedSymptomInfosTableUpdateCompanionBuilder,
+      (
+        CachedSymptomInfoRow,
+        BaseReferences<
+          _$AppDatabase,
+          $CachedSymptomInfosTable,
+          CachedSymptomInfoRow
+        >,
+      ),
+      CachedSymptomInfoRow,
+      PrefetchHooks Function()
+    >;
+typedef $$CachedProductsTableCreateCompanionBuilder =
+    CachedProductsCompanion Function({
+      required String id,
+      required String symptomId,
+      Value<int> rankIndex,
+      Value<bool> isActive,
+      required String data,
+      Value<int> rowid,
+    });
+typedef $$CachedProductsTableUpdateCompanionBuilder =
+    CachedProductsCompanion Function({
+      Value<String> id,
+      Value<String> symptomId,
+      Value<int> rankIndex,
+      Value<bool> isActive,
+      Value<String> data,
+      Value<int> rowid,
+    });
+
+class $$CachedProductsTableFilterComposer
+    extends Composer<_$AppDatabase, $CachedProductsTable> {
+  $$CachedProductsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get symptomId => $composableBuilder(
+    column: $table.symptomId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get rankIndex => $composableBuilder(
+    column: $table.rankIndex,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get isActive => $composableBuilder(
+    column: $table.isActive,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get data => $composableBuilder(
+    column: $table.data,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$CachedProductsTableOrderingComposer
+    extends Composer<_$AppDatabase, $CachedProductsTable> {
+  $$CachedProductsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get symptomId => $composableBuilder(
+    column: $table.symptomId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get rankIndex => $composableBuilder(
+    column: $table.rankIndex,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get isActive => $composableBuilder(
+    column: $table.isActive,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get data => $composableBuilder(
+    column: $table.data,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$CachedProductsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $CachedProductsTable> {
+  $$CachedProductsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get symptomId =>
+      $composableBuilder(column: $table.symptomId, builder: (column) => column);
+
+  GeneratedColumn<int> get rankIndex =>
+      $composableBuilder(column: $table.rankIndex, builder: (column) => column);
+
+  GeneratedColumn<bool> get isActive =>
+      $composableBuilder(column: $table.isActive, builder: (column) => column);
+
+  GeneratedColumn<String> get data =>
+      $composableBuilder(column: $table.data, builder: (column) => column);
+}
+
+class $$CachedProductsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $CachedProductsTable,
+          CachedProductRow,
+          $$CachedProductsTableFilterComposer,
+          $$CachedProductsTableOrderingComposer,
+          $$CachedProductsTableAnnotationComposer,
+          $$CachedProductsTableCreateCompanionBuilder,
+          $$CachedProductsTableUpdateCompanionBuilder,
+          (
+            CachedProductRow,
+            BaseReferences<
+              _$AppDatabase,
+              $CachedProductsTable,
+              CachedProductRow
+            >,
+          ),
+          CachedProductRow,
+          PrefetchHooks Function()
+        > {
+  $$CachedProductsTableTableManager(
+    _$AppDatabase db,
+    $CachedProductsTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$CachedProductsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$CachedProductsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$CachedProductsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> id = const Value.absent(),
+                Value<String> symptomId = const Value.absent(),
+                Value<int> rankIndex = const Value.absent(),
+                Value<bool> isActive = const Value.absent(),
+                Value<String> data = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => CachedProductsCompanion(
+                id: id,
+                symptomId: symptomId,
+                rankIndex: rankIndex,
+                isActive: isActive,
+                data: data,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String id,
+                required String symptomId,
+                Value<int> rankIndex = const Value.absent(),
+                Value<bool> isActive = const Value.absent(),
+                required String data,
+                Value<int> rowid = const Value.absent(),
+              }) => CachedProductsCompanion.insert(
+                id: id,
+                symptomId: symptomId,
+                rankIndex: rankIndex,
+                isActive: isActive,
+                data: data,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$CachedProductsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $CachedProductsTable,
+      CachedProductRow,
+      $$CachedProductsTableFilterComposer,
+      $$CachedProductsTableOrderingComposer,
+      $$CachedProductsTableAnnotationComposer,
+      $$CachedProductsTableCreateCompanionBuilder,
+      $$CachedProductsTableUpdateCompanionBuilder,
+      (
+        CachedProductRow,
+        BaseReferences<_$AppDatabase, $CachedProductsTable, CachedProductRow>,
+      ),
+      CachedProductRow,
+      PrefetchHooks Function()
+    >;
+typedef $$CacheMetaTableCreateCompanionBuilder =
+    CacheMetaCompanion Function({
+      required String dataset,
+      Value<int> version,
+      Value<DateTime?> fetchedAt,
+      Value<int> rowid,
+    });
+typedef $$CacheMetaTableUpdateCompanionBuilder =
+    CacheMetaCompanion Function({
+      Value<String> dataset,
+      Value<int> version,
+      Value<DateTime?> fetchedAt,
+      Value<int> rowid,
+    });
+
+class $$CacheMetaTableFilterComposer
+    extends Composer<_$AppDatabase, $CacheMetaTable> {
+  $$CacheMetaTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get dataset => $composableBuilder(
+    column: $table.dataset,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get version => $composableBuilder(
+    column: $table.version,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get fetchedAt => $composableBuilder(
+    column: $table.fetchedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$CacheMetaTableOrderingComposer
+    extends Composer<_$AppDatabase, $CacheMetaTable> {
+  $$CacheMetaTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get dataset => $composableBuilder(
+    column: $table.dataset,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get version => $composableBuilder(
+    column: $table.version,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get fetchedAt => $composableBuilder(
+    column: $table.fetchedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$CacheMetaTableAnnotationComposer
+    extends Composer<_$AppDatabase, $CacheMetaTable> {
+  $$CacheMetaTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get dataset =>
+      $composableBuilder(column: $table.dataset, builder: (column) => column);
+
+  GeneratedColumn<int> get version =>
+      $composableBuilder(column: $table.version, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get fetchedAt =>
+      $composableBuilder(column: $table.fetchedAt, builder: (column) => column);
+}
+
+class $$CacheMetaTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $CacheMetaTable,
+          CacheMetaRow,
+          $$CacheMetaTableFilterComposer,
+          $$CacheMetaTableOrderingComposer,
+          $$CacheMetaTableAnnotationComposer,
+          $$CacheMetaTableCreateCompanionBuilder,
+          $$CacheMetaTableUpdateCompanionBuilder,
+          (
+            CacheMetaRow,
+            BaseReferences<_$AppDatabase, $CacheMetaTable, CacheMetaRow>,
+          ),
+          CacheMetaRow,
+          PrefetchHooks Function()
+        > {
+  $$CacheMetaTableTableManager(_$AppDatabase db, $CacheMetaTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$CacheMetaTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$CacheMetaTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$CacheMetaTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> dataset = const Value.absent(),
+                Value<int> version = const Value.absent(),
+                Value<DateTime?> fetchedAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => CacheMetaCompanion(
+                dataset: dataset,
+                version: version,
+                fetchedAt: fetchedAt,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String dataset,
+                Value<int> version = const Value.absent(),
+                Value<DateTime?> fetchedAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => CacheMetaCompanion.insert(
+                dataset: dataset,
+                version: version,
+                fetchedAt: fetchedAt,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$CacheMetaTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $CacheMetaTable,
+      CacheMetaRow,
+      $$CacheMetaTableFilterComposer,
+      $$CacheMetaTableOrderingComposer,
+      $$CacheMetaTableAnnotationComposer,
+      $$CacheMetaTableCreateCompanionBuilder,
+      $$CacheMetaTableUpdateCompanionBuilder,
+      (
+        CacheMetaRow,
+        BaseReferences<_$AppDatabase, $CacheMetaTable, CacheMetaRow>,
+      ),
+      CacheMetaRow,
+      PrefetchHooks Function()
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -3425,4 +5467,12 @@ class $AppDatabaseManager {
       $$RecentSearchesTableTableManager(_db, _db.recentSearches);
   $$PendingOpsTableTableManager get pendingOps =>
       $$PendingOpsTableTableManager(_db, _db.pendingOps);
+  $$CachedSymptomsTableTableManager get cachedSymptoms =>
+      $$CachedSymptomsTableTableManager(_db, _db.cachedSymptoms);
+  $$CachedSymptomInfosTableTableManager get cachedSymptomInfos =>
+      $$CachedSymptomInfosTableTableManager(_db, _db.cachedSymptomInfos);
+  $$CachedProductsTableTableManager get cachedProducts =>
+      $$CachedProductsTableTableManager(_db, _db.cachedProducts);
+  $$CacheMetaTableTableManager get cacheMeta =>
+      $$CacheMetaTableTableManager(_db, _db.cacheMeta);
 }

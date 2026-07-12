@@ -1,9 +1,14 @@
 import 'package:agawaeuleo/data/local/daos/babies_dao.dart';
 import 'package:agawaeuleo/data/local/daos/favorites_dao.dart';
+import 'package:agawaeuleo/data/local/daos/master_cache_dao.dart';
 import 'package:agawaeuleo/data/local/daos/pending_ops_dao.dart';
 import 'package:agawaeuleo/data/local/daos/recent_searches_dao.dart';
 import 'package:agawaeuleo/data/local/daos/tracking_logs_dao.dart';
 import 'package:agawaeuleo/data/local/tables/babies_table.dart';
+import 'package:agawaeuleo/data/local/tables/cache_meta_table.dart';
+import 'package:agawaeuleo/data/local/tables/cached_products_table.dart';
+import 'package:agawaeuleo/data/local/tables/cached_symptom_infos_table.dart';
+import 'package:agawaeuleo/data/local/tables/cached_symptoms_table.dart';
 import 'package:agawaeuleo/data/local/tables/favorites_table.dart';
 import 'package:agawaeuleo/data/local/tables/pending_ops_table.dart';
 import 'package:agawaeuleo/data/local/tables/recent_searches_table.dart';
@@ -20,13 +25,25 @@ part 'app_database.g.dart';
 /// 동기화 큐(`pending_ops`)를 담는다. Supabase에 직접 접근하지 않으며,
 /// 미구성/오프라인에서도 완전히 동작한다.
 @DriftDatabase(
-  tables: [TrackingLogs, Babies, Favorites, RecentSearches, PendingOps],
+  tables: [
+    TrackingLogs,
+    Babies,
+    Favorites,
+    RecentSearches,
+    PendingOps,
+    // 마스터 데이터 오프라인 캐시(§5.3) — 읽기 전용 캐시, MasterDataCacheService가 채운다.
+    CachedSymptoms,
+    CachedSymptomInfos,
+    CachedProducts,
+    CacheMeta,
+  ],
   daos: [
     TrackingLogsDao,
     BabiesDao,
     FavoritesDao,
     RecentSearchesDao,
     PendingOpsDao,
+    MasterCacheDao,
   ],
 )
 class AppDatabase extends _$AppDatabase {
@@ -42,12 +59,23 @@ class AppDatabase extends _$AppDatabase {
 
   static const String _dbName = 'agawaeuleo';
 
+  // v2: 마스터 데이터 오프라인 캐시 테이블 추가(§5.3 캐싱 기능).
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => 2;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
     onCreate: (m) => m.createAll(),
+    onUpgrade: (m, from, to) async {
+      if (from < 2) {
+        // 개인기록 테이블은 보존하고 캐시 테이블만 신규 생성. 캐시는 비어 있어도
+        // MasterDataCacheService가 다음 부팅 때 서버 매니페스트로 다시 채운다.
+        await m.createTable(cachedSymptoms);
+        await m.createTable(cachedSymptomInfos);
+        await m.createTable(cachedProducts);
+        await m.createTable(cacheMeta);
+      }
+    },
     beforeOpen: (details) async {
       await customStatement('PRAGMA foreign_keys = ON');
     },

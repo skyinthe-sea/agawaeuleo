@@ -189,10 +189,13 @@ enum AppCardEmphasis { flat, raised, hero }
 - `scrolled == false`에도 **하단 헤어라인 `line` 상시** 표시(현재는 완전 무경계). `scrolled == true` 시 헤어라인 유지 + e2 추가(현행).
 - 옵션 `subtitle`(caption, ink500) 슬롯 추가 — 타이틀 아래 2dp.
 
-### 5.3 `AppBottomNav` — 먹점 인디케이터 (`widgets/navigation/app_bottom_nav.dart`)
+### 5.3 `AppBottomNav` — 플로팅 페이퍼 독 + 모핑 잉크 알약 (`widgets/navigation/app_bottom_nav.dart`)
 
-- 상단 헤어라인 `line` 1px 추가(raised 표면 경계).
-- 활성 탭: 아이콘 위 2dp 지점에 **먹점**(3.5dp 원, `accent`) — AnimatedScale(0→1, spring) + fade. 색 트윈(현행)·햅틱 유지. 비활성 탭은 점 없음.
+> 개정 이력: 먹점 인디케이터 → 잉크워시 알약 → **플로팅 독 + 모핑 알약(2026-07-13, 현행)**.
+
+- **독**: 화면 하단에 붙지 않고 좌우 16dp·하단 12dp(+세이프에어리어) 부양. `paperRaised` + `line` 헤어라인 **전체 보더**(기존 상단 헤어라인 시그니처를 승계) + **e4**(§6.1 오버레이 레벨) + 스타디움 라운드(`brFull`). 총 높이 64(아이템 48 + 패딩 8×2). 그라디언트·블러 금지(페이퍼잉크 계약).
+- **활성 탭**: `accentWash` 알약이 아이콘에서 라벨 방향으로 **펼쳐지는 모핑**(base 260ms·spring, reduce-motion 시 0ms·linear). 아이콘(filled)·라벨(caption) `accent`, 다크 가독성용 accent 헤어라인(α 0.22). **비활성 탭**: 외곽선 아이콘 단독 `ink500`(라벨 없음) — 시각 라벨 부재는 `Semantics`(button/selected/label)로 보강.
+- 햅틱 `selectionClick`·라벨 배율 상한 1.3(+FittedBox scaleDown 오버플로 방어) 유지. 탭 전환 fade-through는 셸 담당(현행).
 
 ### 5.4 상태 위젯 (`widgets/states/`)
 
@@ -220,7 +223,7 @@ enum AppCardEmphasis { flat, raised, hero }
 | e1 | 정지 카드(그리드 카드, 정보 카드, 리스트 카드) = `AppCard.flat` |
 | e2 | **강조·상승 표면**: hero/raised 카드, 스크롤된 앱바·고정 검색바, 슬라이딩 인디케이터, 프로필 아바타, 버튼(현행) |
 | e3 | 시트·다이얼로그 (`AppSheetShell`/`AppDialogShell`) |
-| e4 | FAB·스낵바·스탬프 오버레이 |
+| e4 | FAB·스낵바·스탬프 오버레이·플로팅 하단 독(§5.3) |
 
 ### 6.2 증상 카테고리 톤 — `SymptomTone` (`widgets/symptom/symptom_tone.dart` 신규)
 
@@ -314,7 +317,7 @@ enum AppCardEmphasis { flat, raised, hero }
 
 ### 7.8 전역
 
-- 3탭 셸: `AppBottomNav` 먹점+헤어라인(§5.3).
+- 3탭 셸: `AppBottomNav` 플로팅 독+모핑 알약(§5.3).
 - 모든 화면의 앱바: §5.2 상시 헤어라인(위젯 수정만으로 전파).
 - 라우터 전환·기존 모션 값: **변경 금지**(이미 완성도 높음).
 

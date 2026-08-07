@@ -84,11 +84,7 @@ class FavoriteProductTile extends StatelessWidget {
                                   color: colors.ink900,
                                 ),
                               ),
-                              _PriceRow(
-                                price: product.price,
-                                rating: product.rating,
-                                addedAt: addedAt,
-                              ),
+                              _MetaRow(blurb: product.blurb, addedAt: addedAt),
                             ],
                           ),
                         ),
@@ -122,11 +118,15 @@ class FavoriteProductTile extends StatelessWidget {
   }
 }
 
-class _PriceRow extends StatelessWidget {
-  const _PriceRow({required this.price, required this.rating, this.addedAt});
+/// 제목 아래 메타 줄 — 한 줄 설명(`products.blurb`) + 즐겨찾기 추가일.
+///
+/// 가격·평점은 노출하지 않는다(마이그레이션 0011 — 파트너스 API 승인 전까지
+/// 어드민 수동 입력값이라 시세를 따라가지 못한다).
+class _MetaRow extends StatelessWidget {
+  const _MetaRow({required this.blurb, this.addedAt});
 
-  final int? price;
-  final double? rating;
+  /// `products.blurb`. 비어 있으면 설명을 생략하고 추가일만 오른쪽에 남긴다.
+  final String? blurb;
 
   /// DESIGN v2 §7.4-3 — 즐겨찾기 추가일. 있으면 caption(ink300)으로 노출.
   final DateTime? addedAt;
@@ -136,47 +136,31 @@ class _PriceRow extends StatelessWidget {
     final colors = context.colors;
     final texts = context.texts;
     final added = addedAt;
+    final text = blurb?.trim() ?? '';
     return Row(
-      crossAxisAlignment: CrossAxisAlignment.baseline,
-      textBaseline: TextBaseline.alphabetic,
       children: [
-        if (price != null)
-          Text(
-            _formatPrice(price!),
-            style: texts.data.copyWith(color: colors.ink900),
-          ),
-        if (rating != null) ...[
-          const SizedBox(width: AppSpacing.x8),
-          Icon(Icons.star_rounded, size: 13, color: colors.amber),
-          const SizedBox(width: AppSpacing.x2),
-          Text(
-            rating!.toStringAsFixed(1),
-            style: texts.caption.copyWith(color: colors.ink500),
-          ),
-        ],
-        if (added != null)
+        if (text.isEmpty)
+          const Spacer()
+        else
           Expanded(
             child: Text(
-              '${added.month}월 ${added.day}일 추가',
-              textAlign: TextAlign.end,
+              text,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: texts.caption.copyWith(color: colors.ink300),
+              style: texts.caption.copyWith(color: colors.ink500),
             ),
           ),
+        if (added != null) ...[
+          const SizedBox(width: AppSpacing.x8),
+          Text(
+            '${added.month}월 ${added.day}일 추가',
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: texts.caption.copyWith(color: colors.ink300),
+          ),
+        ],
       ],
     );
-  }
-
-  /// 천 단위 구분 + '원' 접미. 예: 12900 → '12,900원'.
-  static String _formatPrice(int won) {
-    final digits = won.toString();
-    final buffer = StringBuffer();
-    for (var i = 0; i < digits.length; i++) {
-      if (i != 0 && (digits.length - i) % 3 == 0) buffer.write(',');
-      buffer.write(digits[i]);
-    }
-    return '$buffer원';
   }
 }
 

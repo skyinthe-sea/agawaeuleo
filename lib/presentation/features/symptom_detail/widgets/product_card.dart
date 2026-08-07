@@ -7,29 +7,39 @@ import 'package:flutter/material.dart';
 /// §11.9-6 추천 제품 카드.
 ///
 /// 높이 ~96, radius `r.md`, e1. 좌측 썸네일 72×72 `r.sm`, 우측 제목 body 2줄
-/// (말줄임) + 가격 data 16 `ink.900` + (있으면) 별점 caption. 우측 끝 외부링크
-/// 아이콘 16 `ink.300`. 탭 → 딥링크 외부 오픈 + 스프링/눌림 그림자 + 라이트 햅틱
-/// (AppCard가 처리).
+/// (말줄임) + 한 줄 설명 caption `ink.500`. 우측 끝 외부링크 아이콘 16 `ink.300`.
+/// 탭 → 딥링크 외부 오픈 + 스프링/눌림 그림자 + 라이트 햅틱(AppCard가 처리).
 ///
-/// [topRanked]가 true면 DESIGN v2 §7.3-6에 따라 `lineStrong` 보더로 승격하고
-/// 좌상단에 20dp 순위 배지("1", `amberWash`/`amber`)를 얹는다.
+/// 좌상단에 20dp 순위 배지를 **모든 카드에** 얹는다([rank], 1부터). 1위는
+/// DESIGN v2 §7.3-6에 따라 `amberWash`/`amber` 배지 + `lineStrong` 보더로
+/// 승격하고, 2위 이하는 `paperBg`/`line`/`ink.500`의 중립 배지를 쓴다.
+///
+/// 가격·평점은 노출하지 않는다 — 파트너스 API 승인 전까지 어드민 수동 입력값
+/// 이라 시세를 따라가지 못한다(마이그레이션 0011). 엔티티 필드는 보존되며,
+/// 대신 어드민이 쓴 `blurb`(한 줄 설명)를 보여준다.
 class ProductCard extends StatelessWidget {
-  const ProductCard({required this.product, super.key, this.topRanked = false});
+  const ProductCard({required this.product, required this.rank, super.key});
 
   final Product product;
 
-  /// true면 1위 강조(순위 배지 + `lineStrong` 보더)를 적용한다.
-  final bool topRanked;
+  /// 증상 내 노출 순위(1부터). 배지에 그대로 표시된다.
+  final int rank;
+
+  /// 1위 강조(`amberWash` 배지 + `lineStrong` 보더) 적용 여부.
+  bool get _topRanked => rank == 1;
 
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
     final texts = context.texts;
+    // 어드민이 설명을 비워둘 수 있다 → 빈 값이면 설명 줄을 아예 그리지 않고,
+    // 제목만 고정 높이 안에서 세로 중앙에 놓는다.
+    final blurb = product.blurb?.trim() ?? '';
 
     final card = AppCard(
       padding: const EdgeInsets.all(AppSpacing.x12),
       // 1위는 아래 외곽 lineStrong 보더로 대체하므로 AppCard 자체 헤어라인은 끈다.
-      showBorder: !topRanked,
+      showBorder: !_topRanked,
       onTap: () => ExternalLauncher.openDeeplink(product.deeplink),
       child: SizedBox(
         height: 72,
@@ -41,7 +51,9 @@ class ProductCard extends StatelessWidget {
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                mainAxisAlignment: blurb.isEmpty
+                    ? MainAxisAlignment.center
+                    : MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
                     product.title,
@@ -49,7 +61,7 @@ class ProductCard extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                     style: texts.body.copyWith(color: colors.ink900),
                   ),
-                  _PriceRow(price: product.price, rating: product.rating),
+                  if (blurb.isNotEmpty) _Blurb(blurb: blurb),
                 ],
               ),
             ),
@@ -60,8 +72,6 @@ class ProductCard extends StatelessWidget {
       ),
     );
 
-    if (!topRanked) return card;
-
     // §7.3-6: 균일색 Border.all + radius이므로 app_card.dart:54-66의
     // 비균일-보더 assert 위험이 없다(단일 색 전체 보더). `Container`(가
     // `DecoratedBox`와 달리 border 두께만큼 child에 암묵적 padding을 더해줌)를
@@ -69,73 +79,78 @@ class ProductCard extends StatelessWidget {
     return Stack(
       clipBehavior: Clip.none,
       children: [
-        Container(
-          decoration: BoxDecoration(
-            borderRadius: AppRadius.brMd,
-            border: Border.all(color: colors.lineStrong),
-          ),
-          child: card,
-        ),
+        if (_topRanked)
+          Container(
+            decoration: BoxDecoration(
+              borderRadius: AppRadius.brMd,
+              border: Border.all(color: colors.lineStrong),
+            ),
+            child: card,
+          )
+        else
+          card,
         Positioned(
           top: 6,
           left: 6,
-          child: Container(
-            width: AppSpacing.x20,
-            height: AppSpacing.x20,
-            alignment: Alignment.center,
-            decoration: BoxDecoration(
-              color: colors.amberWash,
-              shape: BoxShape.circle,
-            ),
-            child: Text('1', style: texts.data.copyWith(color: colors.amber)),
-          ),
+          child: _RankBadge(rank: rank, highlighted: _topRanked),
         ),
       ],
     );
   }
 }
 
-class _PriceRow extends StatelessWidget {
-  const _PriceRow({required this.price, required this.rating});
+/// 좌상단 순위 배지. 1위만 `amberWash`/`amber`로 강조하고, 2위 이하는 썸네일
+/// 사진 위에서도 읽히도록 불투명 `paperBg` + `line` 헤어라인을 쓴다.
+class _RankBadge extends StatelessWidget {
+  const _RankBadge({required this.rank, required this.highlighted});
 
-  final int? price;
-  final double? rating;
+  final int rank;
+  final bool highlighted;
 
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
     final texts = context.texts;
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.baseline,
-      textBaseline: TextBaseline.alphabetic,
-      children: [
-        if (price != null)
-          Text(
-            _formatPrice(price!),
-            style: texts.data.copyWith(color: colors.ink900),
+    return Container(
+      width: AppSpacing.x20,
+      height: AppSpacing.x20,
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        color: highlighted ? colors.amberWash : colors.paperBg,
+        shape: BoxShape.circle,
+        border: highlighted ? null : Border.all(color: colors.line),
+      ),
+      // 두 자리 순위(10위 이상)·큰 textScaler에서도 배지를 넘치지 않게 축소.
+      child: FittedBox(
+        fit: BoxFit.scaleDown,
+        child: Text(
+          '$rank',
+          style: texts.data.copyWith(
+            color: highlighted ? colors.amber : colors.ink500,
           ),
-        if (rating != null) ...[
-          const SizedBox(width: AppSpacing.x8),
-          Icon(Icons.star_rounded, size: 13, color: colors.amber),
-          const SizedBox(width: AppSpacing.x2),
-          Text(
-            rating!.toStringAsFixed(1),
-            style: texts.caption.copyWith(color: colors.ink500),
-          ),
-        ],
-      ],
+        ),
+      ),
     );
   }
+}
 
-  /// 천 단위 구분 + '원' 접미. 예: 12900 → '12,900원'.
-  static String _formatPrice(int won) {
-    final digits = won.toString();
-    final buffer = StringBuffer();
-    for (var i = 0; i < digits.length; i++) {
-      if (i != 0 && (digits.length - i) % 3 == 0) buffer.write(',');
-      buffer.write(digits[i]);
-    }
-    return '$buffer원';
+/// 제목 아래 한 줄 설명(`products.blurb`). 어드민이 직접 쓴 값이며, 비어 있으면
+/// 호출부에서 아예 렌더하지 않는다(§0011 — 가격 표시 대체).
+class _Blurb extends StatelessWidget {
+  const _Blurb({required this.blurb});
+
+  final String blurb;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.colors;
+    final texts = context.texts;
+    return Text(
+      blurb,
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
+      style: texts.caption.copyWith(color: colors.ink500),
+    );
   }
 }
 

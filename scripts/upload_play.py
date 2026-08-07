@@ -1,0 +1,113 @@
+#!/usr/bin/env python3
+"""아가왜울어 — 이미 빌드된 AAB를 Play Console 내부 테스트 트랙에 업로드.
+
+cupplus `scripts/build_and_upload.py`의 업로드 절차(edits().insert →
+bundles().upload → tracks().update → commit)를 그대로 따르되, **빌드는 하지
+않는다**(호출 전에 `flutter build appbundle --release`가 끝나 있어야 함).
+
+인증: cupplus 프로젝트의 Play Developer API 서비스계정 JSON을 재사용한다.
+이 계정(`revenuecat-play-integration@cupplus-487101`)은 Play Console에서
+`com.jiseosiyu.aga.agawaeuleo` 앱에 대한 권한을 이미 부여받았다.
+
+사용:
+    python3 scripts/upload_play.py
+    python3 scripts/upload_play.py --track internal --sa /path/to/sa.json
+"""
+
+from __future__ import annotations
+
+import argparse
+import re
+import sys
+from pathlib import Path
+
+from google.oauth2 import service_account
+from googleapiclient.discovery import build
+from googleapiclient.http import MediaFileUpload
+
+ROOT = Path(__file__).resolve().parent.parent
+AAB = ROOT / "build/app/outputs/bundle/release/app-release.aab"
+PUBSPEC = ROOT / "pubspec.yaml"
+PACKAGE_NAME = "com.jiseosiyu.aga.agawaeuleo"
+DEFAULT_SA = Path.home() / "cupplus/oauth/cupplus-487101-085b3e121547.json"
+
+
+def read_version() -> tuple[str, int]:
+    """pubspec.yaml의 `version: X.Y.Z+N` → (X.Y.Z, N)."""
+    text = PUBSPEC.read_text(encoding="utf-8")
+    m = re.search(r"^version:\s*([\d.]+)\+(\d+)\s*$", text, re.MULTILINE)
+    if not m:
+        sys.exit("pubspec.yaml에서 version을 찾지 못했습니다.")
+    return m.group(1), int(m.group(2))
+
+
+def upload(sa_json: Path, track: str, version_name: str, build_num: int) -> None:
+    if not AAB.exists():
+        sys.exit(
+            f"AAB가 없습니다: {AAB}\n"
+            "먼저 `flutter build appbundle --release`를 실행하세요."
+        )
+    if not sa_json.exists():
+        sys.exit(f"서비스계정 JSON이 없습니다: {sa_json}")
+
+    size_mb = AAB.stat().st_size / 1024 / 1024
+    print(f"업로드 대상: {AAB.name} ({size_mb:.1f}MB), 트랙={track}")
+
+    creds = service_account.Credentials.from_service_account_file(
+        str(sa_json),
+        scopes=["https://www.googleapis.com/auth/androidpublisher"],
+    )
+    service = build("androidpublisher", "v3", credentials=creds)
+
+    edit = service.edits().insert(packageName=PACKAGE_NAME, body={}).execute()
+    edit_id = edit["id"]
+
+    media = MediaFileUpload(
+        str(AAB), mimetype="application/octet-stream", resumable=True
+    )
+    bundle = (
+        service.edits()
+        .bundles()
+        .upload(packageName=PACKAGE_NAME, editId=edit_id, media_body=media)
+        .execute()
+    )
+    vc = bundle["versionCode"]
+    print(f"AAB 업로드 완료 (versionCode={vc})")
+
+    service.edits().tracks().update(
+        packageName=PACKAGE_NAME,
+        editId=edit_id,
+        track=track,
+        body={
+            "track": track,
+            "releases": [
+                {
+                    "name": f"{version_name} ({build_num})",
+                    "versionCodes": [str(vc)],
+                    "status": "completed",
+                    "releaseNotes": [
+                        {
+                            "language": "ko-KR",
+                            "text": (
+                                "제품 카드에서 가격 대신 한 줄 설명을 보여주고, "
+                                "추천 순위 번호를 모든 카드에 표시합니다."
+                            ),
+                        }
+                    ],
+                }
+            ],
+        },
+    ).execute()
+
+    service.edits().commit(packageName=PACKAGE_NAME, editId=edit_id).execute()
+    print(f"\n✅ 완료: {version_name}+{build_num} → Play '{track}' 트랙")
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--track", default="internal")
+    parser.add_argument("--sa", type=Path, default=DEFAULT_SA)
+    args = parser.parse_args()
+
+    name, num = read_version()
+    upload(args.sa, args.track, name, num)

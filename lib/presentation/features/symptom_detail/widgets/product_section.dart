@@ -119,8 +119,9 @@ class _ProductList extends StatelessWidget {
             padding: EdgeInsets.only(
               bottom: index == products.length - 1 ? 0 : AppSpacing.listItemGap,
             ),
-            // DESIGN v2 §7.3-6 — 1위 카드에만 순위 배지 + lineStrong 보더.
-            child: ProductCard(product: product, topRanked: index == 0),
+            // 순위 배지는 모든 카드에(1부터). 1위만 DESIGN v2 §7.3-6의
+            // amber 배지 + lineStrong 보더로 승격된다(ProductCard 내부 판단).
+            child: ProductCard(product: product, rank: index + 1),
           ),
       ],
     );

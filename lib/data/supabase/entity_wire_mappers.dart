@@ -52,6 +52,7 @@ Product productFromWire(Map<String, dynamic> row) => Product(
   symptomId: row['symptom_id'] as String,
   coupangPid: row['coupang_pid'] as String,
   title: row['title'] as String,
+  blurb: row['blurb'] as String?,
   imageUrl: row['image_url'] as String?,
   price: asIntOrNull(row['price']),
   rating: asDoubleOrNull(row['rating']),

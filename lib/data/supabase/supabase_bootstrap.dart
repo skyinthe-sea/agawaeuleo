@@ -36,8 +36,28 @@ class SupabaseBootstrap {
       );
       _initialized = true;
     }
-    await _ensureGuestSession();
+    // 게스트 전용 출시: 개인기록 동기화가 꺼져 있으면 익명 세션 자체를 만들지 않는다
+    // (AppConfig.personalDataSyncEnabled 주석 참조). 공용 콘텐츠는 anon 키만으로 읽힌다.
+    if (AppConfig.personalDataSyncEnabled) {
+      await _ensureGuestSession();
+    } else {
+      await _discardRestoredSession();
+    }
     return true;
+  }
+
+  /// 동기화가 꺼진 빌드로 올라온 기존 설치본 정리: 이전 버전이 만들어 로컬에 저장해 둔
+  /// 익명 세션이 [Supabase.initialize]에서 복원되므로, 여기서 폐기해 앱이 서버 신원을
+  /// 계속 들고 다니지 않게 한다. 세션이 없으면 아무 일도 일어나지 않는다.
+  static Future<void> _discardRestoredSession() async {
+    final auth = Supabase.instance.client.auth;
+    if (auth.currentSession == null) return;
+    try {
+      await auth.signOut();
+    } on Object {
+      // 오프라인 등으로 실패해도 부팅을 막지 않는다 — 원격 개인기록 경로는 이미 배선이
+      // 끊겨 있어(원격 데이터소스 null) 세션이 남아도 개인기록이 전송되지 않는다.
+    }
   }
 
   /// 세션이 없으면 익명 로그인 시도(실패는 삼킨다 — §3.3).

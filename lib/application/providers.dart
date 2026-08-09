@@ -1,5 +1,6 @@
 import 'package:agawaeuleo/application/master_data_cache_service.dart';
 import 'package:agawaeuleo/application/sync_service.dart';
+import 'package:agawaeuleo/config/app_config.dart';
 import 'package:agawaeuleo/data/local/local.dart';
 import 'package:agawaeuleo/data/repositories/repositories.dart';
 import 'package:agawaeuleo/data/supabase/supabase.dart';
@@ -67,6 +68,10 @@ LocalIdentityStore localIdentityStore(Ref ref) => LocalIdentityStore();
 
 @Riverpod(keepAlive: true)
 AuthDataSource? authDataSource(Ref ref) {
+  // 게스트 전용 출시: 개인기록 동기화가 꺼져 있으면 원격 인증을 아예 배선하지 않는다
+  // → AuthRepositoryImpl 이 로컬 게스트 신원으로 폴백하고 익명 세션을 만들지 않는다
+  // (AppConfig.personalDataSyncEnabled 주석 참조).
+  if (!AppConfig.personalDataSyncEnabled) return null;
   final client = ref.watch(supabaseClientProvider);
   return client == null ? null : AuthDataSource(client);
 }
@@ -103,18 +108,21 @@ AppConfigRemoteDataSource? appConfigRemoteDataSource(Ref ref) {
 
 @Riverpod(keepAlive: true)
 BabyRemoteDataSource? babyRemoteDataSource(Ref ref) {
+  if (!AppConfig.personalDataSyncEnabled) return null;
   final client = ref.watch(supabaseClientProvider);
   return client == null ? null : BabyRemoteDataSource(client);
 }
 
 @Riverpod(keepAlive: true)
 TrackingRemoteDataSource? trackingRemoteDataSource(Ref ref) {
+  if (!AppConfig.personalDataSyncEnabled) return null;
   final client = ref.watch(supabaseClientProvider);
   return client == null ? null : TrackingRemoteDataSource(client);
 }
 
 @Riverpod(keepAlive: true)
 FavoriteRemoteDataSource? favoriteRemoteDataSource(Ref ref) {
+  if (!AppConfig.personalDataSyncEnabled) return null;
   final client = ref.watch(supabaseClientProvider);
   return client == null ? null : FavoriteRemoteDataSource(client);
 }
@@ -170,7 +178,9 @@ RecentSearchRepository recentSearchRepository(Ref ref) =>
 
 // ── 개인기록 리포지토리(로컬 우선 → 동기화 큐) ──────────────────────────
 //
-// 동기화가 가능한지(`syncEnabled`)는 초기화된 Supabase 클라이언트 유무로 판단한다.
+// 동기화가 가능한지(`syncEnabled`)는 [AppConfig.personalDataSyncEnabled] 스위치와
+// 초기화된 Supabase 클라이언트 유무로 판단한다. 게스트 전용 출시에서는 스위치가 `false`라
+// `pending_ops` 적재 자체가 일어나지 않는다(보낼 큐가 쌓이지 않음).
 // 각 프로바이더는 [syncServiceProvider]를 watch 해 최초 사용 시 동기화 서비스를 기동한다.
 
 @Riverpod(keepAlive: true)
@@ -180,7 +190,9 @@ TrackingRepository trackingRepository(Ref ref) {
     ref.watch(trackingLogsDaoProvider),
     ref.watch(pendingOpsDaoProvider),
     ref.watch(localIdentityStoreProvider),
-    syncEnabled: ref.watch(supabaseClientProvider) != null,
+    syncEnabled:
+        AppConfig.personalDataSyncEnabled &&
+        ref.watch(supabaseClientProvider) != null,
   );
 }
 
@@ -191,7 +203,9 @@ BabyRepository babyRepository(Ref ref) {
     ref.watch(babiesDaoProvider),
     ref.watch(pendingOpsDaoProvider),
     ref.watch(localIdentityStoreProvider),
-    syncEnabled: ref.watch(supabaseClientProvider) != null,
+    syncEnabled:
+        AppConfig.personalDataSyncEnabled &&
+        ref.watch(supabaseClientProvider) != null,
   );
 }
 
@@ -202,7 +216,9 @@ FavoriteRepository favoriteRepository(Ref ref) {
     ref.watch(favoritesDaoProvider),
     ref.watch(pendingOpsDaoProvider),
     ref.watch(localIdentityStoreProvider),
-    syncEnabled: ref.watch(supabaseClientProvider) != null,
+    syncEnabled:
+        AppConfig.personalDataSyncEnabled &&
+        ref.watch(supabaseClientProvider) != null,
   );
 }
 

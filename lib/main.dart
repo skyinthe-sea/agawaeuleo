@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -6,6 +8,7 @@ import 'package:sentry_flutter/sentry_flutter.dart';
 import 'application/notification_providers.dart';
 import 'application/notifiers/theme_mode_notifier.dart';
 import 'application/providers.dart';
+import 'config/app_config.dart';
 import 'config/env.dart';
 import 'config/theme/theme.dart';
 import 'data/supabase/supabase.dart';
@@ -58,6 +61,14 @@ class _AgawaeuleoAppState extends ConsumerState<AgawaeuleoApp> {
     // 앱 시작 시 동기화 서비스를 1회 기동한다(밀린 pending_ops 플러시 — §5.3). keepAlive
     // 프로바이더라 이후에도 유지된다. 미구성 시에는 원격 대상이 없어 즉시 no-op이 된다.
     ref.read(syncServiceProvider);
+
+    // 게스트 전용 출시(AppConfig.personalDataSyncEnabled == false): 동기화가 켜져 있던
+    // 이전 버전에서 올라온 설치본에는 아직 전송되지 않은 pending_ops 가 남아 있을 수 있다.
+    // 이제 이 큐를 비울 주체가 없으므로 여기서 폐기한다 — 큐는 로컬 기록의 발신용 사본일
+    // 뿐이라(개인기록 원본은 Drift 에 그대로) 이용자가 잃는 데이터는 없다.
+    if (!AppConfig.personalDataSyncEnabled) {
+      unawaited(ref.read(pendingOpsDaoProvider).clear());
+    }
 
     // 마스터 데이터 캐시 동기화 기동(§5.3): 서버 매니페스트로 로컬 Drift 캐시를
     // 채우고 realtime로 재검증한다. 미구성 시 no-op(픽스처 데모).

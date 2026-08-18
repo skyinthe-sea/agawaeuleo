@@ -280,7 +280,12 @@ enum AppCardEmphasis { flat, raised, hero }
    - **2위 이하 행**: `AppCard(flat, 패딩 12)` + 썸네일 76 + 제목 `body` 2줄 + 잉크 도트 3dp + 한 줄 설명 1줄 + 우측 32dp `accentWash` 원(`arrow_outward` 16).
    - **순위 배지**: 22dp 라운드 사각(`brXs`) + 톤 사다리 — 1위 `amberWash`/amber · 2위 `accentWash`/accent · 3위 `sageWash`/sage · 4위 이하 `paperRaised`/`ink500`, 보더는 각 톤 α.35. 숫자는 `data`체 + `FittedBox`(두 자리·큰 textScaler 방어).
    - **썸네일 프레임**: `paperBg` + `line` 헤어라인 + 클립("옴폭한 종이 우물"). 사진 없음/로드 실패 시 그레인 종이 + `accentWash` 원 플레이스홀더.
-   - **모션**(전부 reduce-motion 대체): 뷰포트 진입 시 카드 계단식 등장(`ScrollReveal`, 상승 16 + scale .97 + 50ms 스태거·6단 상한) · 사진 패럴랙스(`ScrollParallax`, 프레임 3.5% — **확대분만큼 사진이 잘리므로 상향 금지**) · 히어로 사진 호흡(shimmer×3) · CTA 화살표 4dp 넛지(shimmer) · 사진 로드 크로스페이드(base). 스켈레톤도 히어로/행 형태를 그대로 따라간다(§5.5).
+   - **모션**(전부 reduce-motion 대체) — *한 번만 보이는 등장은 확실하게, 상시 반복은 은은하게*가 원칙:
+     - **등장**(`ScrollReveal`, slow×1.6 = 640ms): 카드 상단이 화면 아래 14% 지점까지 올라오면 재생. 상승 24 + scale .94(스프링, 끝에서 살짝 넘겼다 앉음) + 페이드. 헤더 → 대가성 배지 → 카드 순으로 90ms 계단, **상한 3단(270ms)** — 지연은 뷰포트 진입 후부터 세므로 상한을 키우면 천천히 스크롤할 때 빈 자리가 오래 남아 로딩 지연처럼 보인다.
+     - **내부 시퀀싱**(`ScrollRevealScope` + `RevealMotion`): 카드가 앉는 동안 순위 배지가 1.7배에서 도장 찍히듯(0.4~0.85, 스프링) 앉고, 사진은 1.1배에서 제자리로 줌-세틀(~0.9), CTA 알약은 16dp 아래에서 밀려 올라온다(0.55~). 스탬프가 잘리지 않도록 썸네일 `Stack`은 `Clip.none`.
+     - **상시**: 히어로 사진 호흡(shimmer×3) · CTA 화살표 6dp 넛지(shimmer) — 값을 더 키우지 말 것(반복 모션은 피로·배터리).
+     - **로딩**: 사진 크로스페이드(base), 스켈레톤도 히어로/행 형태를 그대로 따라간다(§5.5).
+     - **패럴랙스**(`ScrollParallax`): 프레임 3.5% — **확대분만큼 사진이 잘리므로 상향 금지**.
 7. 응급 카드: 현행 유지(이미 잘 만들어짐). Scaffold body `PaperBackground`.
 
 ### 7.4 즐겨찾기 (`features/favorites/`)

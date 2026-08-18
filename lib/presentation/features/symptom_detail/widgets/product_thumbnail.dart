@@ -1,5 +1,6 @@
 import 'package:agawaeuleo/config/theme/theme.dart';
 import 'package:agawaeuleo/presentation/widgets/animated/scroll_parallax.dart';
+import 'package:agawaeuleo/presentation/widgets/animated/scroll_reveal.dart';
 import 'package:agawaeuleo/presentation/widgets/animated/shimmer_skeleton.dart';
 import 'package:agawaeuleo/presentation/widgets/surfaces/paper_background.dart';
 import 'package:flutter/material.dart';
@@ -106,9 +107,15 @@ class ProductThumbnail extends StatelessWidget {
 
       content = ScrollParallax(
         maxOffset: size * _parallaxRatio,
-        child: Transform.scale(
-          scale: 1 + _parallaxRatio * 2,
-          child: _maybeBreathe(context, image),
+        // 카드가 등장하는 동안 사진이 살짝 확대된 채로 들어와 제자리에 앉는다
+        // (프레임이 클리핑하므로 확대분이 밖으로 새지 않는다).
+        child: RevealMotion(
+          end: 0.9,
+          scaleFrom: 1.1,
+          child: Transform.scale(
+            scale: 1 + _parallaxRatio * 2,
+            child: _maybeBreathe(context, image),
+          ),
         ),
       );
     }

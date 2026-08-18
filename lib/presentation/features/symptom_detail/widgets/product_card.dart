@@ -2,6 +2,7 @@ import 'package:agawaeuleo/config/theme/theme.dart';
 import 'package:agawaeuleo/domain/entities/entities.dart';
 import 'package:agawaeuleo/presentation/features/symptom_detail/external_launcher.dart';
 import 'package:agawaeuleo/presentation/features/symptom_detail/widgets/product_thumbnail.dart';
+import 'package:agawaeuleo/presentation/widgets/animated/scroll_reveal.dart';
 import 'package:agawaeuleo/presentation/widgets/cards/app_card.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
@@ -106,7 +107,13 @@ class ProductHeroCard extends StatelessWidget {
             child: const SizedBox(height: 1, width: double.infinity),
           ),
           const SizedBox(height: AppSpacing.x16),
-          const _CtaPill(),
+          // 카드가 앉은 뒤(0.55~) CTA가 밀려 올라오며 마지막에 자리를 잡는다.
+          const RevealMotion(
+            begin: 0.55,
+            rise: AppSpacing.x16,
+            fade: true,
+            child: _CtaPill(),
+          ),
         ],
       ),
     );
@@ -136,6 +143,9 @@ class ProductCard extends StatelessWidget {
       child: Row(
         children: [
           Stack(
+            // 순위 배지가 스탬프처럼 크게 들어왔다 앉으므로(RevealMotion) 기본
+            // hardEdge 클립을 끄지 않으면 등장 순간 배지 모서리가 잘린다.
+            clipBehavior: Clip.none,
             children: [
               ProductThumbnail(imageUrl: product.imageUrl, size: 76),
               Positioned(
@@ -187,20 +197,28 @@ class _RankBadge extends StatelessWidget {
     final texts = context.texts;
     final tone = _rankTone(colors, rank);
 
-    return Container(
-      width: _size,
-      height: _size,
-      alignment: Alignment.center,
-      decoration: BoxDecoration(
-        color: tone.wash,
-        borderRadius: AppRadius.brXs,
-        border: Border.all(color: tone.fg.withValues(alpha: 0.35)),
-      ),
-      child: FittedBox(
-        fit: BoxFit.scaleDown,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.x2),
-          child: Text('$rank', style: texts.data.copyWith(color: tone.fg)),
+    // 카드가 앉는 동안(0.4~0.85) 도장 찍히듯 크게 들어와 제자리에 앉는다.
+    return RevealMotion(
+      begin: 0.4,
+      end: 0.85,
+      curve: AppMotion.spring,
+      scaleFrom: 1.7,
+      fade: true,
+      child: Container(
+        width: _size,
+        height: _size,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: tone.wash,
+          borderRadius: AppRadius.brXs,
+          border: Border.all(color: tone.fg.withValues(alpha: 0.35)),
+        ),
+        child: FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.x2),
+            child: Text('$rank', style: texts.data.copyWith(color: tone.fg)),
+          ),
         ),
       ),
     );
@@ -293,14 +311,14 @@ class _CtaPill extends StatelessWidget {
           if (context.reduceMotion)
             arrow
           else
-            // 모션 토큰 파생값(shimmer 1200ms) — 4dp 왕복 넛지로 "나간다"는 신호.
+            // 모션 토큰 파생값(shimmer 1200ms) — 6dp 왕복 넛지로 "나간다"는 신호.
             arrow
                 .animate(
                   onPlay: (controller) => controller.repeat(reverse: true),
                 )
                 .moveX(
                   begin: 0,
-                  end: 4,
+                  end: 6,
                   duration: AppMotion.shimmer,
                   curve: AppMotion.standard,
                 ),

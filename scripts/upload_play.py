@@ -12,6 +12,7 @@ bundles().upload → tracks().update → commit)를 그대로 따르되, **빌�
 사용:
     python3 scripts/upload_play.py
     python3 scripts/upload_play.py --track internal --sa /path/to/sa.json
+    python3 scripts/upload_play.py --notes "이번 빌드 변경 요약"
 """
 
 from __future__ import annotations
@@ -41,7 +42,23 @@ def read_version() -> tuple[str, int]:
     return m.group(1), int(m.group(2))
 
 
-def upload(sa_json: Path, track: str, version_name: str, build_num: int) -> None:
+# 내부 테스터가 마지막으로 받은 빌드(versionCode 2) 이후의 변경 요약.
+# 릴리스마다 갱신하거나 `--notes`로 덮어쓸 것 — 지난 빌드 문구가 그대로 올라가면
+# 테스터가 무엇이 바뀌었는지 알 수 없다.
+DEFAULT_NOTES = (
+    "증상 상세의 추천 용품 영역을 새로 단장했어요. "
+    "1위 제품을 큰 카드로 보여주고, 모든 제품에 순위와 한 줄 설명을 함께 표시합니다. "
+    "또한 육아 기록은 기기 안에만 저장되며 서버로 전송되지 않습니다."
+)
+
+
+def upload(
+    sa_json: Path,
+    track: str,
+    version_name: str,
+    build_num: int,
+    notes: str,
+) -> None:
     if not AAB.exists():
         sys.exit(
             f"AAB가 없습니다: {AAB}\n"
@@ -85,15 +102,7 @@ def upload(sa_json: Path, track: str, version_name: str, build_num: int) -> None
                     "name": f"{version_name} ({build_num})",
                     "versionCodes": [str(vc)],
                     "status": "completed",
-                    "releaseNotes": [
-                        {
-                            "language": "ko-KR",
-                            "text": (
-                                "제품 카드에서 가격 대신 한 줄 설명을 보여주고, "
-                                "추천 순위 번호를 모든 카드에 표시합니다."
-                            ),
-                        }
-                    ],
+                    "releaseNotes": [{"language": "ko-KR", "text": notes}],
                 }
             ],
         },
@@ -107,7 +116,8 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--track", default="internal")
     parser.add_argument("--sa", type=Path, default=DEFAULT_SA)
+    parser.add_argument("--notes", default=DEFAULT_NOTES)
     args = parser.parse_args()
 
     name, num = read_version()
-    upload(args.sa, args.track, name, num)
+    upload(args.sa, args.track, name, num, args.notes)

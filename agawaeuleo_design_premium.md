@@ -275,7 +275,12 @@ enum AppCardEmphasis { flat, raised, hero }
 3. **정보 아코디언**: 섹션 성격별 라인 아이콘 20dp(원인=`help_outline`, 관리법=`spa_outlined`/`healing`, 주의·병원=`error_outline` 등 Material 아이콘 허용) + 펼침 시 아이콘·제목 색 `ink700`→`accent` 트윈(fast).
 4. **정보 → 제품 전환점**: `BrushDivider.section` + 32dp 간격(§6.4).
 5. **의학 면책**: 문구 **원문 불변**. `line` 1px 보더 박스(r.sm, 패딩 12) + `info_outline` 16(ink500) — 격은 낮게, 존재감만.
-6. **제품 섹션**: 헤더 → `SectionHeader`(trailing = "N개" data체). 1위 카드에만 좌상단 순위 배지(`amberWash` 바탕 + amber `data`체 "1", 20dp 원) + `lineStrong` 보더. 대가성 배지는 신규 `amberWash` 토큰 사용, 문구 원문 불변.
+6. **제품 섹션** (v2.1 개정 — "에디토리얼 랭킹 보드"): 헤더 → `SectionHeader`(trailing = "N개" data체 알약). 대가성 배지는 `amberWash` 토큰 + `paperRaised` 원형 아이콘, **문구 원문 불변**. 리스트는 균일 카드 나열이 아니라 **1위 히어로 + 2위 이하 랭킹 행**으로 위계를 나눈다.
+   - **1위 히어로**: `AppCard(emphasis: hero)` + 리본(순위 배지 + `BEST PICK` overline + `workspace_premium` 18, 전부 amber) + 썸네일 104(`brMd`) + 제목 `bodyL` 3줄 + 한 줄 설명 2줄 + `line` 헤어라인 + CTA 알약("쿠팡에서 보기" `label`/`accentDeep`, `accentWash` 바탕 + accent α.22 보더, 최소 높이 44). CTA는 어피던스일 뿐이며 실제 오픈은 카드 탭(§13.1).
+   - **2위 이하 행**: `AppCard(flat, 패딩 12)` + 썸네일 76 + 제목 `body` 2줄 + 잉크 도트 3dp + 한 줄 설명 1줄 + 우측 32dp `accentWash` 원(`arrow_outward` 16).
+   - **순위 배지**: 22dp 라운드 사각(`brXs`) + 톤 사다리 — 1위 `amberWash`/amber · 2위 `accentWash`/accent · 3위 `sageWash`/sage · 4위 이하 `paperRaised`/`ink500`, 보더는 각 톤 α.35. 숫자는 `data`체 + `FittedBox`(두 자리·큰 textScaler 방어).
+   - **썸네일 프레임**: `paperBg` + `line` 헤어라인 + 클립("옴폭한 종이 우물"). 사진 없음/로드 실패 시 그레인 종이 + `accentWash` 원 플레이스홀더.
+   - **모션**(전부 reduce-motion 대체): 뷰포트 진입 시 카드 계단식 등장(`ScrollReveal`, 상승 16 + scale .97 + 50ms 스태거·6단 상한) · 사진 패럴랙스(`ScrollParallax`, 프레임 3.5% — **확대분만큼 사진이 잘리므로 상향 금지**) · 히어로 사진 호흡(shimmer×3) · CTA 화살표 4dp 넛지(shimmer) · 사진 로드 크로스페이드(base). 스켈레톤도 히어로/행 형태를 그대로 따라간다(§5.5).
 7. 응급 카드: 현행 유지(이미 잘 만들어짐). Scaffold body `PaperBackground`.
 
 ### 7.4 즐겨찾기 (`features/favorites/`)

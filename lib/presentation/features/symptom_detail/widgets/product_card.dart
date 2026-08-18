@@ -1,22 +1,120 @@
 import 'package:agawaeuleo/config/theme/theme.dart';
 import 'package:agawaeuleo/domain/entities/entities.dart';
 import 'package:agawaeuleo/presentation/features/symptom_detail/external_launcher.dart';
+import 'package:agawaeuleo/presentation/features/symptom_detail/widgets/product_thumbnail.dart';
 import 'package:agawaeuleo/presentation/widgets/cards/app_card.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 
-/// §11.9-6 추천 제품 카드.
+/// §11.9-6 추천 제품 카드(DESIGN v2 §7.3-6 확장 — "에디토리얼 랭킹 보드").
 ///
-/// 높이 ~96, radius `r.md`, e1. 좌측 썸네일 72×72 `r.sm`, 우측 제목 body 2줄
-/// (말줄임) + 한 줄 설명 caption `ink.500`. 우측 끝 외부링크 아이콘 16 `ink.300`.
-/// 탭 → 딥링크 외부 오픈 + 스프링/눌림 그림자 + 라이트 햅틱(AppCard가 처리).
+/// 1위는 [ProductHeroCard](겹친 한지 hero 격 + 큰 썸네일 + CTA)로, 2위 이하는
+/// 이 [ProductCard] 행으로 그린다. 두 카드 모두 제목과 한 줄 설명(`blurb`)을
+/// 노출하며, 가격·평점은 표시하지 않는다 — 파트너스 API 승인 전까지 어드민
+/// 수동 입력값이라 시세를 따라가지 못한다(마이그레이션 0011). 엔티티 필드는
+/// 보존되므로 승인 후 되살릴 수 있다.
 ///
-/// 좌상단에 20dp 순위 배지를 **모든 카드에** 얹는다([rank], 1부터). 1위는
-/// DESIGN v2 §7.3-6에 따라 `amberWash`/`amber` 배지 + `lineStrong` 보더로
-/// 승격하고, 2위 이하는 `paperBg`/`line`/`ink.500`의 중립 배지를 쓴다.
+/// 순위 배지는 §7.3-6의 "1위만 amber"를 **포디엄 톤 사다리**로 확장한다 —
+/// 1위 amber · 2위 accent · 3위 sage · 4위 이하 중립(`paperRaised`/`ink500`).
+/// 전부 기존 토큰 조합이며 새 색을 만들지 않는다.
 ///
-/// 가격·평점은 노출하지 않는다 — 파트너스 API 승인 전까지 어드민 수동 입력값
-/// 이라 시세를 따라가지 못한다(마이그레이션 0011). 엔티티 필드는 보존되며,
-/// 대신 어드민이 쓴 `blurb`(한 줄 설명)를 보여준다.
+/// 탭 → 딥링크 외부 오픈(§13.1) + 스프링/눌림 그림자 + 잉크 워시(AppCard 처리).
+
+/// 순위별 배지 톤(전경/배경). 4위부터는 사진 위에서도 읽히도록 불투명
+/// `paperRaised` + `ink500`을 쓴다.
+({Color fg, Color wash}) _rankTone(AppColors colors, int rank) =>
+    switch (rank) {
+      1 => (fg: colors.amber, wash: colors.amberWash),
+      2 => (fg: colors.accent, wash: colors.accentWash),
+      3 => (fg: colors.sage, wash: colors.sageWash),
+      _ => (fg: colors.ink500, wash: colors.paperRaised),
+    };
+
+/// 1위 전용 히어로 쇼케이스 카드.
+///
+/// 구조: 상단 리본(`1` 배지 + `BEST PICK` 오버라인 + 왕관) → 큰 썸네일 104
+/// (느린 호흡 모션) + 제목 `bodyL` 3줄 + 한 줄 설명 → 헤어라인 → CTA 알약
+/// ("쿠팡에서 보기" + 화살표 넛지). 카드 격은 `AppCardEmphasis.hero`
+/// (`paperRaised` + e2 + 겹친 한지 아랫장 + 그레인).
+class ProductHeroCard extends StatelessWidget {
+  const ProductHeroCard({required this.product, super.key});
+
+  final Product product;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.colors;
+    final texts = context.texts;
+    final blurb = product.blurb?.trim() ?? '';
+    final tone = _rankTone(colors, 1);
+
+    return AppCard(
+      emphasis: AppCardEmphasis.hero,
+      onTap: () => ExternalLauncher.openDeeplink(product.deeplink),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              const _RankBadge(rank: 1),
+              const SizedBox(width: AppSpacing.iconTextGap),
+              Expanded(
+                child: Text(
+                  'BEST PICK',
+                  style: texts.overline.copyWith(color: tone.fg),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              Icon(Icons.workspace_premium_rounded, size: 18, color: tone.fg),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.x16),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              ProductThumbnail(
+                imageUrl: product.imageUrl,
+                size: 104,
+                radius: AppRadius.brMd,
+                breathe: true,
+              ),
+              const SizedBox(width: AppSpacing.x16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      product.title,
+                      maxLines: 3,
+                      overflow: TextOverflow.ellipsis,
+                      style: texts.bodyL.copyWith(color: colors.ink900),
+                    ),
+                    if (blurb.isNotEmpty) ...[
+                      const SizedBox(height: AppSpacing.x8),
+                      _BlurbLine(blurb: blurb, maxLines: 2),
+                    ],
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.x16),
+          ColoredBox(
+            color: colors.line,
+            child: const SizedBox(height: 1, width: double.infinity),
+          ),
+          const SizedBox(height: AppSpacing.x16),
+          const _CtaPill(),
+        ],
+      ),
+    );
+  }
+}
+
+/// 2위 이하 행 카드 — 썸네일 76(좌상단 순위 배지) + 제목 2줄 + 한 줄 설명 +
+/// 우측 원형 외부링크 어피던스.
 class ProductCard extends StatelessWidget {
   const ProductCard({required this.product, required this.rank, super.key});
 
@@ -25,168 +123,209 @@ class ProductCard extends StatelessWidget {
   /// 증상 내 노출 순위(1부터). 배지에 그대로 표시된다.
   final int rank;
 
-  /// 1위 강조(`amberWash` 배지 + `lineStrong` 보더) 적용 여부.
-  bool get _topRanked => rank == 1;
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.colors;
+    final texts = context.texts;
+    // 어드민이 설명을 비워둘 수 있다 → 빈 값이면 설명 줄을 아예 그리지 않는다.
+    final blurb = product.blurb?.trim() ?? '';
+
+    return AppCard(
+      padding: const EdgeInsets.all(AppSpacing.x12),
+      onTap: () => ExternalLauncher.openDeeplink(product.deeplink),
+      child: Row(
+        children: [
+          Stack(
+            children: [
+              ProductThumbnail(imageUrl: product.imageUrl, size: 76),
+              Positioned(
+                top: AppSpacing.x4,
+                left: AppSpacing.x4,
+                child: _RankBadge(rank: rank),
+              ),
+            ],
+          ),
+          const SizedBox(width: AppSpacing.x12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  product.title,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: texts.body.copyWith(color: colors.ink900),
+                ),
+                if (blurb.isNotEmpty) ...[
+                  const SizedBox(height: AppSpacing.x4),
+                  _BlurbLine(blurb: blurb, maxLines: 1, dot: true),
+                ],
+              ],
+            ),
+          ),
+          const SizedBox(width: AppSpacing.x8),
+          const _OpenAffordance(),
+        ],
+      ),
+    );
+  }
+}
+
+/// 순위 배지(1부터). 포디엄 톤 사다리 + 톤 헤어라인. 두 자리 순위·큰 textScaler
+/// 에서도 넘치지 않도록 [FittedBox]로 축소한다.
+class _RankBadge extends StatelessWidget {
+  const _RankBadge({required this.rank});
+
+  final int rank;
+
+  static const double _size = 22;
 
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
     final texts = context.texts;
-    // 어드민이 설명을 비워둘 수 있다 → 빈 값이면 설명 줄을 아예 그리지 않고,
-    // 제목만 고정 높이 안에서 세로 중앙에 놓는다.
-    final blurb = product.blurb?.trim() ?? '';
+    final tone = _rankTone(colors, rank);
 
-    final card = AppCard(
-      padding: const EdgeInsets.all(AppSpacing.x12),
-      // 1위는 아래 외곽 lineStrong 보더로 대체하므로 AppCard 자체 헤어라인은 끈다.
-      showBorder: !_topRanked,
-      onTap: () => ExternalLauncher.openDeeplink(product.deeplink),
-      child: SizedBox(
-        height: 72,
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _Thumbnail(imageUrl: product.imageUrl),
-            const SizedBox(width: AppSpacing.x12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: blurb.isEmpty
-                    ? MainAxisAlignment.center
-                    : MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    product.title,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: texts.body.copyWith(color: colors.ink900),
-                  ),
-                  if (blurb.isNotEmpty) _Blurb(blurb: blurb),
-                ],
-              ),
-            ),
-            const SizedBox(width: AppSpacing.x8),
-            Icon(Icons.open_in_new_rounded, size: 16, color: colors.ink300),
-          ],
+    return Container(
+      width: _size,
+      height: _size,
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        color: tone.wash,
+        borderRadius: AppRadius.brXs,
+        border: Border.all(color: tone.fg.withValues(alpha: 0.35)),
+      ),
+      child: FittedBox(
+        fit: BoxFit.scaleDown,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.x2),
+          child: Text('$rank', style: texts.data.copyWith(color: tone.fg)),
         ),
       ),
     );
+  }
+}
 
-    // §7.3-6: 균일색 Border.all + radius이므로 app_card.dart:54-66의
-    // 비균일-보더 assert 위험이 없다(단일 색 전체 보더). `Container`(가
-    // `DecoratedBox`와 달리 border 두께만큼 child에 암묵적 padding을 더해줌)를
-    // 써야 보더가 내부의 불투명한 AppCard에 완전히 가려지지 않는다.
-    return Stack(
-      clipBehavior: Clip.none,
+/// 제목 아래 한 줄 설명(`products.blurb` — 어드민 수동 입력, 0011의 가격 대체).
+/// [dot]이면 앞에 3dp 잉크 점을 찍어 제목과 시각적으로 분리한다.
+class _BlurbLine extends StatelessWidget {
+  const _BlurbLine({
+    required this.blurb,
+    required this.maxLines,
+    this.dot = false,
+  });
+
+  final String blurb;
+  final int maxLines;
+  final bool dot;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.colors;
+    final texts = context.texts;
+    final text = Text(
+      blurb,
+      maxLines: maxLines,
+      overflow: TextOverflow.ellipsis,
+      style: texts.caption.copyWith(color: colors.ink500),
+    );
+    if (!dot) return text;
+
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        if (_topRanked)
-          Container(
-            decoration: BoxDecoration(
-              borderRadius: AppRadius.brMd,
-              border: Border.all(color: colors.lineStrong),
-            ),
-            child: card,
-          )
-        else
-          card,
-        Positioned(
-          top: 6,
-          left: 6,
-          child: _RankBadge(rank: rank, highlighted: _topRanked),
+        Container(
+          width: 3,
+          height: 3,
+          decoration: BoxDecoration(
+            color: colors.ink300,
+            shape: BoxShape.circle,
+          ),
         ),
+        const SizedBox(width: AppSpacing.x4),
+        Expanded(child: text),
       ],
     );
   }
 }
 
-/// 좌상단 순위 배지. 1위만 `amberWash`/`amber`로 강조하고, 2위 이하는 썸네일
-/// 사진 위에서도 읽히도록 불투명 `paperBg` + `line` 헤어라인을 쓴다.
-class _RankBadge extends StatelessWidget {
-  const _RankBadge({required this.rank, required this.highlighted});
-
-  final int rank;
-  final bool highlighted;
+/// 히어로 카드 하단 CTA 알약. 카드 전체가 이미 탭 대상이므로 제스처는 갖지
+/// 않고 **어피던스만** 담당한다(§13.1 외부 오픈은 카드 탭이 수행).
+class _CtaPill extends StatelessWidget {
+  const _CtaPill();
 
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
     final texts = context.texts;
+
+    final arrow = Icon(
+      Icons.arrow_forward_rounded,
+      size: 18,
+      color: colors.accentDeep,
+    );
+
     return Container(
-      width: AppSpacing.x20,
-      height: AppSpacing.x20,
-      alignment: Alignment.center,
-      decoration: BoxDecoration(
-        color: highlighted ? colors.amberWash : colors.paperBg,
-        shape: BoxShape.circle,
-        border: highlighted ? null : Border.all(color: colors.line),
+      // 고정 높이 대신 최소 높이 — 큰 textScaler에서도 라벨이 잘리지 않는다.
+      constraints: const BoxConstraints(minHeight: 44),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.x12,
+        vertical: AppSpacing.x8,
       ),
-      // 두 자리 순위(10위 이상)·큰 textScaler에서도 배지를 넘치지 않게 축소.
-      child: FittedBox(
-        fit: BoxFit.scaleDown,
-        child: Text(
-          '$rank',
-          style: texts.data.copyWith(
-            color: highlighted ? colors.amber : colors.ink500,
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-/// 제목 아래 한 줄 설명(`products.blurb`). 어드민이 직접 쓴 값이며, 비어 있으면
-/// 호출부에서 아예 렌더하지 않는다(§0011 — 가격 표시 대체).
-class _Blurb extends StatelessWidget {
-  const _Blurb({required this.blurb});
-
-  final String blurb;
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = context.colors;
-    final texts = context.texts;
-    return Text(
-      blurb,
-      maxLines: 1,
-      overflow: TextOverflow.ellipsis,
-      style: texts.caption.copyWith(color: colors.ink500),
-    );
-  }
-}
-
-class _Thumbnail extends StatelessWidget {
-  const _Thumbnail({required this.imageUrl});
-
-  final String? imageUrl;
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = context.colors;
-    final placeholder = DecoratedBox(
       decoration: BoxDecoration(
         color: colors.accentWash,
         borderRadius: AppRadius.brSm,
+        border: Border.all(color: colors.accent.withValues(alpha: 0.22)),
       ),
-      child: Icon(Icons.shopping_bag_outlined, size: 28, color: colors.ink300),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Flexible(
+            child: Text(
+              '쿠팡에서 보기',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: texts.label.copyWith(color: colors.accentDeep),
+            ),
+          ),
+          const SizedBox(width: AppSpacing.iconTextGap),
+          if (context.reduceMotion)
+            arrow
+          else
+            // 모션 토큰 파생값(shimmer 1200ms) — 4dp 왕복 넛지로 "나간다"는 신호.
+            arrow
+                .animate(
+                  onPlay: (controller) => controller.repeat(reverse: true),
+                )
+                .moveX(
+                  begin: 0,
+                  end: 4,
+                  duration: AppMotion.shimmer,
+                  curve: AppMotion.standard,
+                ),
+        ],
+      ),
     );
+  }
+}
 
-    final url = imageUrl;
-    if (url == null || url.isEmpty) {
-      return SizedBox(width: 72, height: 72, child: placeholder);
-    }
-    return SizedBox(
-      width: 72,
-      height: 72,
-      child: ClipRRect(
-        borderRadius: AppRadius.brSm,
-        child: Image.network(
-          url,
-          fit: BoxFit.cover,
-          errorBuilder: (context, error, stackTrace) => placeholder,
-          loadingBuilder: (context, child, progress) =>
-              progress == null ? child : placeholder,
-        ),
+/// 행 카드 우측 원형 외부링크 어피던스(32dp 워시 원 + 대각 화살표).
+class _OpenAffordance extends StatelessWidget {
+  const _OpenAffordance();
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.colors;
+    return Container(
+      width: 32,
+      height: 32,
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        color: colors.accentWash,
+        shape: BoxShape.circle,
       ),
+      child: Icon(Icons.arrow_outward_rounded, size: 16, color: colors.accent),
     );
   }
 }

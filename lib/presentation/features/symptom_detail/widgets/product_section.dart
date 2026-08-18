@@ -18,9 +18,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 /// DESIGN v2 §7.3-6 확장 — 리스트를 "1위 히어로 쇼케이스 + 2위 이하 랭킹 행"의
 /// 에디토리얼 보드로 재구성하고, 각 카드는 **뷰포트에 들어오는 순간** 계단식으로
 /// 등장한다([ScrollReveal], reduce-motion 시 정지).
-/// 계단식 등장 한 단계 — 모션 토큰 파생값(fast 180ms ÷ 2 = 90ms).
-/// 값을 더 줄이면 카드들이 사실상 동시에 떠서 "차례로 올라오는" 인상이 사라진다.
-final Duration _staggerStep = AppMotion.fast ~/ 2;
+/// 계단식 등장 한 단계 — 모션 토큰 파생값(fast 180ms ÷ 3 = 60ms).
+/// 더 줄이면 카드들이 사실상 동시에 떠서 "차례로 올라오는" 인상이 사라지고,
+/// 더 키우면 목록이 늦게 뜨는 것처럼 보인다.
+final Duration _staggerStep = AppMotion.fast ~/ 3;
 
 class ProductSection extends ConsumerWidget {
   const ProductSection({required this.symptomId, super.key});
@@ -159,9 +160,9 @@ class _ProductShowcase extends StatelessWidget {
   ///
   /// 지연은 **카드가 뷰포트에 들어온 뒤**부터 세므로, 상한을 높게 잡으면 천천히
   /// 스크롤할 때 뒤쪽 카드가 한참 빈 자리로 남는다(등장이 아니라 로딩 지연처럼
-  /// 보임). 한 화면에 여러 장이 동시에 들어올 때의 계단 느낌만 살리고 3단계
-  /// (270ms)에서 멈춘다.
-  Duration _stagger(int step) => _staggerStep * step.clamp(0, 3);
+  /// 보임). 한 화면에 여러 장이 동시에 들어올 때의 계단 느낌만 살리고 2단계
+  /// (120ms)에서 멈춘다.
+  Duration _stagger(int step) => _staggerStep * step.clamp(0, 2);
 
   @override
   Widget build(BuildContext context) {

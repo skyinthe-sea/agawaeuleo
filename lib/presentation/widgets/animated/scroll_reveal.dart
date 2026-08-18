@@ -29,7 +29,7 @@ class ScrollReveal extends StatefulWidget {
     this.delay = Duration.zero,
     this.rise = AppSpacing.x24,
     this.scaleFrom = 0.94,
-    this.visibleFraction = 0.14,
+    this.visibleFraction = 0.1,
   });
 
   final Widget child;
@@ -44,13 +44,19 @@ class ScrollReveal extends StatefulWidget {
   final double scaleFrom;
 
   /// 위젯 상단이 화면 높이의 `(1 - 이 값)` 지점까지 올라오면 재생한다.
-  /// 값이 클수록 **더 화면 안쪽에서** 시작해 등장이 눈에 잘 들어온다.
+  ///
+  /// 너무 작으면 화면 밖에서 시작해 다 끝난 뒤에 보이고(체감 0), 너무 크면
+  /// 이미 보일 자리가 한동안 비어 있어 늦게 뜨는 것처럼 보인다. 0.1 전후가
+  /// "들어오면서 뜬다"에 해당한다.
   final double visibleFraction;
 
   /// 카드 자체의 페이즈 — 불투명도/이동/스케일이 각각 이 구간에서 끝난다.
   /// 남은 뒤쪽 구간은 자손([RevealMotion])이 따라 들어올 여유로 남겨 둔다.
-  static const double _fadeEnd = 0.55;
-  static const double _moveEnd = 0.7;
+  ///
+  /// 불투명도를 이동보다 먼저 끝내야 "빠릿하게 떴고, 마지막에 살짝 앉는다"로
+  /// 읽힌다. 이 둘을 뒤로 미루면 카드가 늦게 뜨는 인상이 된다.
+  static const double _fadeEnd = 0.45;
+  static const double _moveEnd = 0.6;
 
   @override
   State<ScrollReveal> createState() => _ScrollRevealState();
@@ -168,9 +174,10 @@ class _ScrollRevealState extends State<ScrollReveal>
   void initState() {
     super.initState();
     // 내부 시퀀싱(배지 스탬프 → CTA)이 따라 들어올 여유까지 포함한 길이.
+    // 이보다 늘리면 카드가 "늦게 뜬다"는 인상이 된다(발주자 피드백).
     _controller = AnimationController(
       vsync: this,
-      duration: AppMotion.slow * 1.6,
+      duration: AppMotion.slow * 1.1,
     );
     // 첫 레이아웃 직후 1회 판정 — 이미 화면 안이면 바로 재생한다.
     WidgetsBinding.instance.addPostFrameCallback((_) => _maybeStart());

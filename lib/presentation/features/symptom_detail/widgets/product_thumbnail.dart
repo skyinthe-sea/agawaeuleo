@@ -110,8 +110,8 @@ class ProductThumbnail extends StatelessWidget {
         // 카드가 등장하는 동안 사진이 살짝 확대된 채로 들어와 제자리에 앉는다
         // (프레임이 클리핑하므로 확대분이 밖으로 새지 않는다).
         child: RevealMotion(
-          end: 0.9,
-          scaleFrom: 1.1,
+          end: 0.8,
+          scaleFrom: 1.06,
           child: Transform.scale(
             scale: 1 + _parallaxRatio * 2,
             child: _maybeBreathe(context, image),

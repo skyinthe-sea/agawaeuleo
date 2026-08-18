@@ -107,9 +107,10 @@ class ProductHeroCard extends StatelessWidget {
             child: const SizedBox(height: 1, width: double.infinity),
           ),
           const SizedBox(height: AppSpacing.x16),
-          // 카드가 앉은 뒤(0.55~) CTA가 밀려 올라오며 마지막에 자리를 잡는다.
+          // 카드가 앉는 동안(0.45~0.9) CTA가 밀려 올라오며 자리를 잡는다.
           const RevealMotion(
-            begin: 0.55,
+            begin: 0.45,
+            end: 0.9,
             rise: AppSpacing.x16,
             fade: true,
             child: _CtaPill(),
@@ -197,10 +198,10 @@ class _RankBadge extends StatelessWidget {
     final texts = context.texts;
     final tone = _rankTone(colors, rank);
 
-    // 카드가 앉는 동안(0.4~0.85) 도장 찍히듯 크게 들어와 제자리에 앉는다.
+    // 카드가 앉는 동안(0.3~0.75) 도장 찍히듯 크게 들어와 제자리에 앉는다.
     return RevealMotion(
-      begin: 0.4,
-      end: 0.85,
+      begin: 0.3,
+      end: 0.75,
       curve: AppMotion.spring,
       scaleFrom: 1.7,
       fade: true,

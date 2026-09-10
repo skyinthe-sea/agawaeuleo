@@ -1,0 +1,24 @@
+name: aga_admin
+description: "아가왜울어 어드민 — 쿠팡 제품 관리(별도 APK)"
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.12.0
+
+dependencies:
+  flutter:
+    sdk: flutter
+  cupertino_icons: ^1.0.8
+  # Supabase: SupabaseClient 를 service_role 키로 직접 생성해 RLS 우회 CRUD.
+  supabase_flutter: ^2.16.0
+  # 썸네일 이미지 선택(갤러리/카메라) → Storage 업로드.
+  image_picker: ^1.1.2
+  # URL + service_role 키를 기기에 1회 저장(APK/깃에 시크릿 미포함).
+  shared_preferences: ^2.3.2
+
+dev_dependencies:
+  flutter_lints: ^5.0.0
+
+flutter:
+  uses-material-design: true

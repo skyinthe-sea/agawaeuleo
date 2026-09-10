@@ -52,10 +52,13 @@ lib/config/env.g.dart
 supabase/.temp/
 supabase/.branches/
 
-# Claude Code session state (machine-local)
-.claude/state/
-.claude/sessions/
+# Claude Code session state (machine-local — admin/ 등 하위 프로젝트 포함)
+**/.claude/state/
+**/.claude/sessions/
 .claude/memory/session-log.md
+
+# 로컬 빌드 산출 APK (배포 바이너리 — 커밋 금지)
+*.apk
 
 # Xcode SwiftPM workspace state (Flutter 3.44 SPM integration)
 ios/Runner.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/

@@ -11,6 +11,8 @@
            android/app/src/main/res/mipmap-*/ic_launcher_foreground.png (적응형 전경)
            android/app/src/main/res/mipmap-*/ic_launcher_monochrome.png (테마 아이콘)
            (배경색·adaptive xml·colors.xml 은 리포에 고정 — 이 스크립트는 PNG만 생성)
+  - Store: store/play_store_icon_512.png (구글 플레이 등록정보용 512x512 32-bit PNG,
+           풀블리드·불투명·라운드 없음 — 구글이 자체 마스킹 적용. iOS 1024와 동일 구도)
 
 실행: python3 tool/app_icon/generate_app_icon.py
 미리보기: python3 tool/app_icon/generate_app_icon.py --preview /tmp/preview.png
@@ -241,7 +243,17 @@ def main() -> None:
     for name, sz in ios_targets.items():
         save(render_full(sz, rounded=False, opaque=True), ios / name)
 
+    # --- 구글 플레이 스토어 등록정보 아이콘(512x512, 32-bit PNG, 불투명) ---
+    # 런처 아이콘(mipmap)은 AAB에 포함되지만, 스토어 그래픽 아이콘은 콘솔에
+    # 별도 업로드해야 함. rounded=False로 풀스퀘어를 주면 구글이 자체 라운딩.
+    # opaque=False 경로는 배경이 알파 255로 꽉 찬 RGBA(=32-bit) 이미지를 반환.
+    print("Google Play 스토어 아이콘:")
+    save(render_full(512, rounded=False, opaque=False),
+         ROOT / "store/play_store_icon_512.png")
+
     print("\n완료. Android는 mipmap-anydpi-v26/ic_launcher.xml(적응형) 우선 적용됨.")
+    print("스토어 아이콘 store/play_store_icon_512.png 을 플레이 콘솔 "
+          "'스토어 등록정보 → 그래픽 → 앱 아이콘'에 업로드하세요.")
 
 
 if __name__ == "__main__":

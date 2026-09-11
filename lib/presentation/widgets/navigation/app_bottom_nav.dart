@@ -1,25 +1,28 @@
-import 'dart:math' as math;
+import 'dart:ui' show lerpDouble;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../../config/theme/theme.dart';
 
-/// §11.0 하단 탭바 (DESIGN v2 — 플로팅 페이퍼 독 + 모핑 잉크 알약).
+/// §11.0 하단 탭바 (DESIGN v2.3 — 먹 캡슐, 2026-09-11).
 ///
-/// 화면 하단에 붙지 않고 좌우 `x16`·하단 `x12`만큼 떠 있는 **독**(paperRaised
-/// 바탕 + `line` 헤어라인 보더 + 오버레이 음영 `e4`, 스타디움 라운드)이다. 상단
-/// 헤어라인 시그니처는 독 전체를 두르는 보더가 승계한다(그라디언트·블러 없음 —
-/// 페이퍼잉크 계약).
+/// 화면 폭을 가로지르던 독 대신, 가운데에 떠 있는 **작은 캡슐**(paperRaised +
+/// `line` 헤어라인 + 오버레이 음영 `e4`)이다. 탭이 둘뿐이라 넓은 독은 휑했고, 홈 덱
+/// 아래 레일과도 무게가 겹쳤다.
 ///
-/// 활성 탭은 `accentWash` 알약이 아이콘에서 라벨 방향으로 **펼쳐지며**(morph)
-/// 아이콘/라벨이 `accent`로 물든다(spring, reduce-motion 시 0ms·linear). 비활성은
-/// 라벨 없이 외곽선 아이콘 단독(`ink500`)이라, 시각 라벨이 없는 상태의 스크린리더
-/// 접근성은 `Semantics` 라벨로 보강한다.
+/// 활성 표시는 `ink900` 먹 알약이다. 탭을 바꾸면 알약이 **먹이 번지듯** 흐른다 —
+/// 가는 방향의 앞 가장자리가 먼저 뻗고 뒤 가장자리가 늦게 따라와 잠깐 늘어났다가
+/// 새 칸에 맞춰 앉는다. 칸 줄을 두 겹(먹색 바탕 / 알약 모양으로 자른 종이색·채운
+/// 아이콘)으로 그려, 알약 가장자리가 지나가는 자리에서 글자가 정확히 뒤집힌다.
+/// 다크 모드는 `ink900`이 밝은 먹이라 알약·글자 대비가 자동으로 뒤집힌다.
+/// 그라데이션·블러 없음(페이퍼잉크 계약).
 ///
-/// 탭 시 `selectionClick` 햅틱. 큰 시스템 글자에서 라벨은 배율 상한(1.3)+FittedBox
-/// scaleDown으로 방어한다. 탭 전환 페이지 fade-through는 셸(app_router)이 담당한다.
-class AppBottomNav extends StatelessWidget {
+/// 두 탭 모두 라벨을 늘 보여 준다(아이콘 단독의 모호함 제거). 탭 시 `selectionClick`
+/// 햅틱, 칸 높이 48(최소 터치 타깃), 큰 시스템 글자는 배율 상한 1.3 + FittedBox
+/// 축소로 방어, reduce-motion이면 알약이 즉시 옮겨 앉는다. 탭 전환 페이지
+/// fade-through는 셸(app_router)이 담당한다.
+class AppBottomNav extends StatefulWidget {
   const AppBottomNav({
     required this.currentIndex,
     required this.onTap,
@@ -46,45 +49,149 @@ class AppBottomNav extends StatelessWidget {
     ),
   ];
 
+  /// 칸 한 개의 폭·높이와 캡슐 안쪽 여백.
+  static const double _cellWidth = 112;
+  static const double _cellHeight = AppSpacing.x48;
+  static const double _inset = AppSpacing.x4;
+
+  @override
+  State<AppBottomNav> createState() => _AppBottomNavState();
+}
+
+class _AppBottomNavState extends State<AppBottomNav>
+    with SingleTickerProviderStateMixin {
+  /// 먹 알약이 흐르는 시간 — 앞 가장자리는 이 중 앞부분에, 뒤 가장자리는 늦게 끝난다.
+  late final AnimationController _flow = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 460),
+    value: 1,
+  );
+
+  /// 흐름 시작 시점의 알약 좌·우 가장자리(칸 단위 — 칸 i는 [i, i+1]).
+  late double _fromLeft = widget.currentIndex.toDouble();
+  late double _fromRight = widget.currentIndex + 1.0;
+
+  static const Curve _leadCurve = Interval(0, 0.62, curve: Curves.easeOutCubic);
+  static const Curve _trailCurve = Interval(
+    0.18,
+    1,
+    curve: Curves.easeInOutCubic,
+  );
+
+  @override
+  void didUpdateWidget(AppBottomNav oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.currentIndex == widget.currentIndex) return;
+    // 흐르는 도중에 또 바뀌어도 지금 보이는 자리에서 이어서 흐른다.
+    final (left, right) = _edges(oldWidget.currentIndex);
+    _fromLeft = left;
+    _fromRight = right;
+    if (AppMotion.reduceMotion(context)) {
+      _flow.value = 1;
+    } else {
+      _flow.forward(from: 0);
+    }
+  }
+
+  @override
+  void dispose() {
+    _flow.dispose();
+    super.dispose();
+  }
+
+  /// 현재 알약 좌·우 가장자리(칸 단위). [previousTarget]은 흐름의 목적지 계산용.
+  (double, double) _edges([int? previousTarget]) {
+    final target = previousTarget ?? widget.currentIndex;
+    final t = _flow.value;
+    final toLeft = target.toDouble();
+    final toRight = target + 1.0;
+    final movingRight = toLeft >= _fromLeft;
+    // 가는 방향의 가장자리가 앞장선다.
+    final leftT = (movingRight ? _trailCurve : _leadCurve).transform(t);
+    final rightT = (movingRight ? _leadCurve : _trailCurve).transform(t);
+    return (
+      lerpDouble(_fromLeft, toLeft, leftT)!,
+      lerpDouble(_fromRight, toRight, rightT)!,
+    );
+  }
+
+  void _select(int index) {
+    HapticFeedback.selectionClick();
+    widget.onTap(index);
+  }
+
   @override
   Widget build(BuildContext context) {
     final c = context.colors;
+    const items = AppBottomNav._items;
+    const cell = AppBottomNav._cellWidth;
+
     return SafeArea(
       top: false,
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(
-          AppSpacing.x16,
-          0,
-          AppSpacing.x16,
-          AppSpacing.x12,
-        ),
-        child: Container(
-          padding: const EdgeInsets.all(AppSpacing.x8),
-          decoration: BoxDecoration(
-            color: c.paperRaised,
-            borderRadius: AppRadius.brFull,
-            border: Border.all(color: c.line),
-            boxShadow: context.shadows.e4,
-          ),
-          // 아이템 시각 높이 x48로 Row를 고정 → 독 총 높이 48+패딩16 = 64. (없으면
-          // 아이템의 Center가 세로로 늘어나 bottomNavigationBar 슬롯 전체를 채워
-          // 본문이 0높이로 눌리며 오버플로가 난다.)
-          child: SizedBox(
-            height: AppSpacing.x48,
-            child: Row(
-              children: [
-                for (var i = 0; i < _items.length; i++)
-                  Expanded(
-                    child: _NavItem(
-                      data: _items[i],
-                      selected: i == currentIndex,
-                      onTap: () {
-                        HapticFeedback.selectionClick();
-                        onTap(i);
-                      },
-                    ),
-                  ),
-              ],
+        padding: const EdgeInsets.only(bottom: AppSpacing.x12),
+        child: Center(
+          heightFactor: 1,
+          child: Container(
+            padding: const EdgeInsets.all(AppBottomNav._inset),
+            decoration: BoxDecoration(
+              color: c.paperRaised,
+              borderRadius: AppRadius.brFull,
+              border: Border.all(color: c.line),
+              boxShadow: context.shadows.e4,
+            ),
+            child: SizedBox(
+              width: cell * items.length,
+              height: AppBottomNav._cellHeight,
+              child: AnimatedBuilder(
+                animation: _flow,
+                // 두 겹의 칸 줄은 애니메이션과 무관하므로 한 번만 만든다.
+                child: _NavRow(
+                  items: items,
+                  currentIndex: widget.currentIndex,
+                  inked: false,
+                  onTap: _select,
+                ),
+                builder: (context, baseRow) {
+                  final (left, right) = _edges();
+                  final pill = RRect.fromLTRBR(
+                    left * cell,
+                    0,
+                    right * cell,
+                    AppBottomNav._cellHeight,
+                    const Radius.circular(AppBottomNav._cellHeight / 2),
+                  );
+                  return Stack(
+                    children: [
+                      Positioned.fromRect(
+                        rect: pill.outerRect,
+                        child: DecoratedBox(
+                          decoration: BoxDecoration(
+                            color: c.ink900,
+                            borderRadius: AppRadius.brFull,
+                          ),
+                        ),
+                      ),
+                      // 바탕 글자(먹색) — 탭·스크린리더를 맡는다.
+                      baseRow!,
+                      // 알약 안 글자(종이색·채운 아이콘) — 알약 모양으로 잘라, 먹이
+                      // 지나가는 가장자리에서 글자가 정확히 뒤집힌다.
+                      IgnorePointer(
+                        child: ExcludeSemantics(
+                          child: ClipPath(
+                            clipper: _PillClipper(pill),
+                            child: _NavRow(
+                              items: items,
+                              currentIndex: widget.currentIndex,
+                              inked: true,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  );
+                },
+              ),
             ),
           ),
         ),
@@ -93,27 +200,109 @@ class AppBottomNav extends StatelessWidget {
   }
 }
 
-class _NavItem extends StatelessWidget {
-  const _NavItem({
+/// 알약 모양 클리퍼(흐르는 동안 매 프레임 모양이 바뀐다).
+class _PillClipper extends CustomClipper<Path> {
+  const _PillClipper(this.pill);
+
+  final RRect pill;
+
+  @override
+  Path getClip(Size size) => Path()..addRRect(pill);
+
+  @override
+  bool shouldReclip(_PillClipper oldClipper) => oldClipper.pill != pill;
+}
+
+/// 칸 줄 한 겹. [inked]면 알약 안쪽 모습(종이색 + 채운 아이콘)이다.
+class _NavRow extends StatelessWidget {
+  const _NavRow({
+    required this.items,
+    required this.currentIndex,
+    required this.inked,
+    this.onTap,
+  });
+
+  final List<_NavItemData> items;
+  final int currentIndex;
+  final bool inked;
+  final ValueChanged<int>? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        for (var i = 0; i < items.length; i++)
+          _NavCell(
+            data: items[i],
+            selected: i == currentIndex,
+            inked: inked,
+            onTap: onTap == null ? null : () => onTap!(i),
+          ),
+      ],
+    );
+  }
+}
+
+class _NavCell extends StatelessWidget {
+  const _NavCell({
     required this.data,
     required this.selected,
-    required this.onTap,
+    required this.inked,
+    this.onTap,
   });
 
   final _NavItemData data;
   final bool selected;
-  final VoidCallback onTap;
 
-  /// DESIGN v2 알약 치수. 비활성 시 아이콘(24)+좌우 패딩(12·12)=48로 최소 탭 타깃 충족.
-  static const double _pillHeight = AppSpacing.x48; // 48
-  static const double _iconSize = 24;
+  /// 알약 안쪽 겹(종이색 + 채운 아이콘)인지.
+  final bool inked;
+
+  /// null이면 장식 겹(탭·시맨틱스 없음).
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
     final c = context.colors;
+    final color = inked ? c.paperRaised : c.ink500;
 
-    // 시각 라벨이 비활성 시 사라지므로 스크린리더용 라벨/상태는 Semantics로 보강한다.
-    // excludeSemantics로 GestureDetector 의미론이 가려지므로 onTap도 여기 연결한다.
+    final content = SizedBox(
+      width: AppBottomNav._cellWidth,
+      height: AppBottomNav._cellHeight,
+      child: Center(
+        child: FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.x12),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  inked ? data.activeIcon : data.icon,
+                  size: 22,
+                  color: color,
+                ),
+                const SizedBox(width: AppSpacing.x8),
+                Text(
+                  data.label,
+                  maxLines: 1,
+                  style: context.texts.body.copyWith(
+                    color: color,
+                    fontWeight: FontWeight.w700,
+                    height: 1.2,
+                  ),
+                  // 큰 시스템 글자에서도 캡슐이 과도하게 늘지 않도록 상한.
+                  textScaler: MediaQuery.textScalerOf(
+                    context,
+                  ).clamp(maxScaleFactor: 1.3),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+
+    if (onTap == null) return content;
     return Semantics(
       container: true,
       button: true,
@@ -124,85 +313,7 @@ class _NavItem extends StatelessWidget {
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,
         onTap: onTap,
-        child: Center(
-          child: TweenAnimationBuilder<double>(
-            // end만 지정 — 첫 빌드에선 애니메이션 없이 target에 안착하고, 선택이 바뀔
-            // 때만 재생된다(불필요한 초기 모션 방지).
-            tween: Tween<double>(end: selected ? 1.0 : 0.0),
-            duration: AppMotion.resolve(context, AppMotion.base),
-            curve: AppMotion.resolveCurve(context, AppMotion.spring),
-            builder: (context, raw, _) {
-              // 색·알파용은 clamp(spring 오버슈트/역재생 방어), 라벨 폭 리빌용 wf는
-              // 음수만 차단(0 초과 오버슈트는 그대로 둬 자연스러운 펼침 유지).
-              final tc = raw.clamp(0.0, 1.0);
-              final wf = math.max(0.0, raw);
-              return Container(
-                height: _pillHeight,
-                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.x12),
-                decoration: BoxDecoration(
-                  color: c.accentWash.withValues(alpha: tc),
-                  borderRadius: AppRadius.brFull,
-                  // 다크모드에서 accentWash 알약이 paperRaised와 거의 겹쳐 흐릿해지므로
-                  // accent 톤 헤어라인(브랜드 시그니처)으로 활성 가독성을 보강한다.
-                  border: Border.all(
-                    color: c.accent.withValues(alpha: tc * 0.22),
-                  ),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      selected ? data.activeIcon : data.icon,
-                      size: _iconSize,
-                      // 비활성 아이콘은 라벨 없이 단독이라 ink300보다 진한 ink500 사용.
-                      color: Color.lerp(c.ink500, c.accent, tc),
-                    ),
-                    // 라벨이 아이콘 오른쪽으로 "펼쳐지는" 모핑. 아이콘·라벨 간격(x8)을
-                    // 리빌 영역 안에 둬서 비활성 시 폭이 완전히 0이 되게 한다.
-                    // 완전 접힘(tc==0) 상태에선 Offstage로 라벨을 무대 밖에 두어
-                    // 서브트리는 유지하되(재확장 시 재생성 없음) 시맨틱/파인더에서
-                    // 빠지게 한다 — 비활성 시각 라벨의 접근성은 상위 Semantics가 담당.
-                    Flexible(
-                      child: Offstage(
-                        offstage: tc == 0,
-                        child: ClipRect(
-                          child: Align(
-                            alignment: Alignment.centerLeft,
-                            widthFactor: wf,
-                            heightFactor: 1,
-                            child: Opacity(
-                              opacity: tc,
-                              child: Padding(
-                                padding: const EdgeInsets.only(
-                                  left: AppSpacing.x8,
-                                ),
-                                child: FittedBox(
-                                  fit: BoxFit.scaleDown,
-                                  child: Text(
-                                    data.label,
-                                    style: context.texts.caption.copyWith(
-                                      color: c.accent,
-                                    ),
-                                    maxLines: 1,
-                                    // 큰 시스템 글자에서도 알약이 과도하게 늘지 않도록
-                                    // 배율 상한을 둔다(하단 탭 관례).
-                                    textScaler: MediaQuery.textScalerOf(
-                                      context,
-                                    ).clamp(maxScaleFactor: 1.3),
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              );
-            },
-          ),
-        ),
+        child: content,
       ),
     );
   }

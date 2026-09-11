@@ -203,15 +203,16 @@ enum AppCardEmphasis { flat, raised, hero }
 - `scrolled == false`에도 **하단 헤어라인 `line` 상시** 표시(현재는 완전 무경계). `scrolled == true` 시 헤어라인 유지 + e2 추가(현행).
 - 옵션 `subtitle`(caption, ink500) 슬롯 추가 — 타이틀 아래 2dp.
 
-### 5.3 `AppBottomNav` — 플로팅 페이퍼 독 + 모핑 잉크 알약 (`widgets/navigation/app_bottom_nav.dart`)
+### 5.3 `AppBottomNav` — 먹 캡슐 (`widgets/navigation/app_bottom_nav.dart`)
 
-> 개정 이력: 먹점 인디케이터 → 잉크워시 알약 → **플로팅 독 + 모핑 알약(2026-07-13, 현행)**.
+> 개정 이력: 먹점 인디케이터 → 잉크워시 알약 → 플로팅 독 + 모핑 알약(2026-07-13) → **먹 캡슐(2026-09-11, 현행)**.
 >
-> **2026-09-11 — 탭 2개(홈·내 정보)**: 제품 추천 집중으로 기록 탭을 숨겼다(주석 — 삭제 아님). 탭 인덱스 = 셸 브랜치 순서라 `app_router.dart`의 기록 브랜치도 함께 주석이며, 두 곳을 같이 해제하면 복원된다.
+> **탭 2개(홈·내 정보)**: 제품 추천 집중으로 기록 탭을 숨겼다(주석 — 삭제 아님). 탭 인덱스 = 셸 브랜치 순서라 `app_router.dart`의 기록 브랜치도 함께 주석이며, 두 곳을 같이 해제하면 복원된다(캡슐은 칸 수만큼 넓어진다).
 
-- **독**: 화면 하단에 붙지 않고 좌우 16dp·하단 12dp(+세이프에어리어) 부양. `paperRaised` + `line` 헤어라인 **전체 보더**(기존 상단 헤어라인 시그니처를 승계) + **e4**(§6.1 오버레이 레벨) + 스타디움 라운드(`brFull`). 총 높이 64(아이템 48 + 패딩 8×2). 그라디언트·블러 금지(페이퍼잉크 계약).
-- **활성 탭**: `accentWash` 알약이 아이콘에서 라벨 방향으로 **펼쳐지는 모핑**(base 260ms·spring, reduce-motion 시 0ms·linear). 아이콘(filled)·라벨(caption) `accent`, 다크 가독성용 accent 헤어라인(α 0.22). **비활성 탭**: 외곽선 아이콘 단독 `ink500`(라벨 없음) — 시각 라벨 부재는 `Semantics`(button/selected/label)로 보강.
-- 햅틱 `selectionClick`·라벨 배율 상한 1.3(+FittedBox scaleDown 오버플로 방어) 유지. 탭 전환 fade-through는 셸 담당(현행).
+- **캡슐**: 화면 폭을 가로지르던 독 대신 **가운데 떠 있는 작은 캡슐** — `paperRaised` + `line` 헤어라인 + e4, 스타디움, 안쪽 여백 4, 칸 112×48(최소 터치 타깃), 하단 12(+세이프에어리어). 탭이 둘뿐이라 넓은 독은 휑했고 홈 덱 레일과 무게가 겹쳤다.
+- **먹 알약**: 활성 표시는 `ink900` 알약. 탭을 바꾸면 **먹이 번지듯 흐른다** — 가는 방향의 앞 가장자리가 먼저(0~62%, easeOutCubic) 뻗고 뒤 가장자리가 늦게(18~100%, easeInOutCubic) 따라와 잠깐 늘어났다 새 칸에 앉는다(460ms). 흐르는 도중 또 바뀌면 보이는 자리에서 이어서 흐른다.
+- **글자 뒤집힘**: 칸 줄을 두 겹(바탕 `ink500` 외곽선 아이콘 / 알약 모양으로 자른 `paperRaised` 채운 아이콘)으로 그려 알약 가장자리에서 글자·아이콘이 정확히 뒤집힌다. 다크는 `ink900`이 밝은 먹이라 대비가 자동으로 뒤집힘. 그라데이션·블러 없음.
+- 라벨은 두 탭 모두 **늘 노출**(body 700). 탭·시맨틱스(button/selected/label)는 바탕 겹이 맡고 알약 안 겹은 장식. `selectionClick` 햅틱, 라벨 배율 상한 1.3 + FittedBox 축소, reduce-motion은 즉시 이동. 탭 전환 fade-through는 셸 담당(현행).
 
 ### 5.4 상태 위젯 (`widgets/states/`)
 
@@ -239,7 +240,7 @@ enum AppCardEmphasis { flat, raised, hero }
 | e1 | 정지 카드(그리드 카드, 정보 카드, 리스트 카드) = `AppCard.flat` |
 | e2 | **강조·상승 표면**: hero/raised 카드, 스크롤된 앱바·고정 검색바, 슬라이딩 인디케이터, 프로필 아바타, 버튼(현행) |
 | e3 | 시트·다이얼로그 (`AppSheetShell`/`AppDialogShell`) |
-| e4 | FAB·스낵바·스탬프 오버레이·플로팅 하단 독(§5.3) |
+| e4 | FAB·스낵바·스탬프 오버레이·하단 먹 캡슐(§5.3)·홈 덱/온보딩 떠 있는 조각 |
 
 ### 6.2 증상 카테고리 톤 — `SymptomTone` (`widgets/symptom/symptom_tone.dart` 신규)
 
@@ -366,7 +367,7 @@ enum AppCardEmphasis { flat, raised, hero }
 
 ### 7.8 전역
 
-- 3탭 셸: `AppBottomNav` 플로팅 독+모핑 알약(§5.3).
+- 셸: `AppBottomNav` 먹 캡슐(§5.3) — 현재 2탭(기록 숨김).
 - 모든 화면의 앱바: §5.2 상시 헤어라인(위젯 수정만으로 전파).
 - 라우터 전환·기존 모션 값: **변경 금지**(이미 완성도 높음).
 

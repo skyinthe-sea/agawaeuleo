@@ -5,7 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import '_widget_harness.dart';
 
 void main() {
-  testWidgets('활성 탭 라벨만 보이고, 두 탭(홈·내 정보)은 접근성 라벨로 존재한다', (tester) async {
+  testWidgets('먹 캡슐: 두 탭(홈·내 정보) 라벨이 늘 보이고 선택이 시맨틱스에 반영된다', (tester) async {
     var index = 0;
     await pumpWidgetWithTheme(
       tester,
@@ -17,24 +17,31 @@ void main() {
       ),
     );
 
-    // 활성 탭(홈) 라벨만 시각적으로 렌더되고, 나머지 라벨은 아이콘 단독이라 없다.
-    expect(find.text('홈'), findsOneWidget);
-    expect(find.text('내 정보'), findsNothing);
+    // 라벨은 바탕 겹 + 알약 안 겹(장식) 두 번 그려진다 — 둘 다 늘 보인다.
+    expect(find.text('홈'), findsNWidgets(2));
+    expect(find.text('내 정보'), findsNWidgets(2));
 
-    // 라벨이 시각적으로 숨어도 탭은 스크린리더 라벨로 존재한다.
+    // 스크린리더에는 탭마다 하나씩, 선택 상태와 함께 노출된다.
     // 기록 탭은 발주자 요청으로 숨김(주석) — 라벨 자체가 없어야 한다.
     final handle = tester.ensureSemantics();
     expect(find.bySemanticsLabel('홈'), findsOneWidget);
     expect(find.bySemanticsLabel('내 정보'), findsOneWidget);
     expect(find.bySemanticsLabel('기록'), findsNothing);
-    handle.dispose();
+    expect(
+      tester.getSemantics(find.bySemanticsLabel('홈')),
+      isSemantics(isButton: true, isSelected: true),
+    );
 
-    // 비활성 아이콘(내 정보)을 탭하면 활성 라벨이 '내 정보'로 모핑되고 예외가 없다.
-    await tester.tap(find.byIcon(Icons.person_outline));
+    // 내 정보를 누르면 먹 알약이 흘러가 선택이 옮겨지고 예외가 없다.
+    await tester.tap(find.bySemanticsLabel('내 정보'));
     await tester.pumpAndSettle();
 
-    expect(find.text('내 정보'), findsOneWidget);
-    expect(find.text('홈'), findsNothing);
+    expect(index, 1);
+    expect(
+      tester.getSemantics(find.bySemanticsLabel('내 정보')),
+      isSemantics(isButton: true, isSelected: true),
+    );
+    handle.dispose();
     expect(tester.takeException(), isNull);
   });
 }

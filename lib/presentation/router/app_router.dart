@@ -19,9 +19,10 @@ import '../features/settings/account_screen.dart';
 import '../features/settings/settings_screen.dart';
 import '../features/settings/terms_viewer_screen.dart';
 import '../features/symptom_detail/symptom_detail_screen.dart';
-import '../features/tracking/tracking_entry_screen.dart';
-import '../features/tracking/tracking_screen.dart';
-import '../features/tracking/tracking_summary_screen.dart';
+// 기록 기능 숨김 — 아래 기록 브랜치 주석과 함께 되살릴 것.
+// import '../features/tracking/tracking_entry_screen.dart';
+// import '../features/tracking/tracking_screen.dart';
+// import '../features/tracking/tracking_summary_screen.dart';
 import '../widgets/navigation/app_bottom_nav.dart';
 import '../widgets/states/offline_banner.dart';
 import 'routes.dart';
@@ -32,8 +33,9 @@ final GlobalKey<NavigatorState> rootNavigatorKey = GlobalKey<NavigatorState>(
 final GlobalKey<NavigatorState> _homeNavigatorKey = GlobalKey<NavigatorState>(
   debugLabel: 'home',
 );
-final GlobalKey<NavigatorState> _trackingNavigatorKey =
-    GlobalKey<NavigatorState>(debugLabel: 'tracking');
+// 기록 기능 숨김 — 기록 브랜치와 함께 되살릴 것.
+// final GlobalKey<NavigatorState> _trackingNavigatorKey =
+//     GlobalKey<NavigatorState>(debugLabel: 'tracking');
 final GlobalKey<NavigatorState> _profileNavigatorKey =
     GlobalKey<NavigatorState>(debugLabel: 'profile');
 
@@ -114,37 +116,40 @@ GoRouter createAppRouter() {
               ),
             ],
           ),
-          StatefulShellBranch(
-            navigatorKey: _trackingNavigatorKey,
-            routes: [
-              GoRoute(
-                path: RoutePaths.tracking,
-                name: Routes.tracking,
-                builder: (context, state) => const TrackingScreen(),
-                routes: [
-                  GoRoute(
-                    // §11.11 기록 입력은 라우트가 아니라 showModalBottomSheet로
-                    // 연다(홈 FAB/빠른 알약/타임라인에서 직접 호출). 딥링크가
-                    // 죽은 플레이스홀더에 착지하지 않도록 기록 홈으로 리다이렉트.
-                    path: RoutePaths.trackingEntrySegment,
-                    name: Routes.trackingEntry,
-                    redirect: (context, state) => RoutePaths.tracking,
-                    pageBuilder: (context, state) =>
-                        _pushPage(context, state, const TrackingEntryScreen()),
-                  ),
-                  GoRoute(
-                    path: RoutePaths.trackingSummarySegment,
-                    name: Routes.trackingSummary,
-                    pageBuilder: (context, state) => _pushPage(
-                      context,
-                      state,
-                      const TrackingSummaryScreen(),
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
+          // 기록 기능 숨김(2026-09-11 발주자 요청 — 제품 추천 집중). 탭 인덱스가
+          // 브랜치 순서와 1:1이라 하단 탭 항목(app_bottom_nav.dart)과 함께 주석 처리했다.
+          // 화면·데이터 코드는 그대로 두었으니 두 곳의 주석만 해제하면 복원된다.
+          // StatefulShellBranch(
+          //   navigatorKey: _trackingNavigatorKey,
+          //   routes: [
+          //     GoRoute(
+          //       path: RoutePaths.tracking,
+          //       name: Routes.tracking,
+          //       builder: (context, state) => const TrackingScreen(),
+          //       routes: [
+          //         GoRoute(
+          //           // §11.11 기록 입력은 라우트가 아니라 showModalBottomSheet로
+          //           // 연다(홈 FAB/빠른 알약/타임라인에서 직접 호출). 딥링크가
+          //           // 죽은 플레이스홀더에 착지하지 않도록 기록 홈으로 리다이렉트.
+          //           path: RoutePaths.trackingEntrySegment,
+          //           name: Routes.trackingEntry,
+          //           redirect: (context, state) => RoutePaths.tracking,
+          //           pageBuilder: (context, state) =>
+          //               _pushPage(context, state, const TrackingEntryScreen()),
+          //         ),
+          //         GoRoute(
+          //           path: RoutePaths.trackingSummarySegment,
+          //           name: Routes.trackingSummary,
+          //           pageBuilder: (context, state) => _pushPage(
+          //             context,
+          //             state,
+          //             const TrackingSummaryScreen(),
+          //           ),
+          //         ),
+          //       ],
+          //     ),
+          //   ],
+          // ),
           StatefulShellBranch(
             navigatorKey: _profileNavigatorKey,
             routes: [

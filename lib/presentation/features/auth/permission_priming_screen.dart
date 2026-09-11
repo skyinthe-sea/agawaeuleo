@@ -114,15 +114,19 @@ class _PermissionPrimingScreenState
                 ),
               ),
               const SizedBox(height: AppSpacing.x32),
+              // 기록 기능 숨김(2026-09-11): 설정의 알림 안내에서 이 화면으로 들어오므로
+              // 수유·기록 약속을 뺀 문구로 바꿨다. 기록 복원 시 원문으로 되돌릴 것 —
+              // 제목 '밤중에도 놓치지 않게' / 본문 '다음 수유 예상 시각과 기록 리마인더를
+              // 알림으로 보내드려요. 새벽에도 타이밍을 놓치지 않도록 도와드릴게요.'
               Text(
-                '밤중에도 놓치지 않게',
+                '중요한 안내를 놓치지 않게',
                 textAlign: TextAlign.center,
                 style: texts.title.copyWith(color: colors.ink900),
               ),
               const SizedBox(height: AppSpacing.x12),
               Text(
-                '다음 수유 예상 시각과 기록 리마인더를 알림으로 보내드려요. '
-                '새벽에도 타이밍을 놓치지 않도록 도와드릴게요.',
+                '앱 공지와 꼭 알아야 할 안내를 알림으로 보내드려요. '
+                '알림은 설정에서 언제든 끌 수 있어요.',
                 textAlign: TextAlign.center,
                 style: texts.body.copyWith(color: colors.ink500),
               ),

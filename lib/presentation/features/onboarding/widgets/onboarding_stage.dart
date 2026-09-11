@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
 import '../../../../config/theme/theme.dart';
+import '../../../widgets/stage/paper_blob_painter.dart';
 import '../../../widgets/symptom/symptom_illustration.dart';
 import 'onboarding_float_cards.dart';
 import 'onboarding_illustration_data.dart';
@@ -17,7 +18,8 @@ import 'onboarding_page_data.dart';
 /// 여기서는 세 장면을 한 무대에 항상 올려 두고(빌드 지연 없음), 페이지 컨트롤러의
 /// 연속 값으로 레이어마다 이동·페이드·기울기를 **손가락에 1:1로** 연동한다.
 /// 깊이감은 레이어별 이동 배율로 만든다(일러스트 < 앞 카드 < 맨 앞 카드).
-/// 공유 배경(종이 오림 블롭 + 궤도)은 장면 사이에서 모양과 색이 모핑된다.
+/// 공유 배경([PaperBlobPainter] — 종이 오림 블롭 + 궤도)은 장면 사이에서 모양과
+/// 색이 모핑된다.
 class OnboardingStage extends StatefulWidget {
   const OnboardingStage({
     required this.controller,
@@ -130,13 +132,15 @@ class _OnboardingStageState extends State<OnboardingStage>
                         child: Transform.scale(
                           scale: 0.92 + 0.08 * backdropIn,
                           child: CustomPaint(
-                            painter: _BackdropPainter(
+                            // 행성 시작각·속도는 세 장면 모두에서 떠 있는 카드와
+                            // 겹치지 않는 자리(공용 기본값) — 카드를 옮기면 재확인.
+                            painter: PaperBlobPainter(
                               page: page,
                               breath: breath,
                               washes: [
                                 colors.accentWash,
                                 colors.amberWash,
-                                colors.sageWash,
+                                colors.coralWash,
                               ],
                               under: colors.paperStack,
                               orbit: colors.lineStrong,
@@ -288,12 +292,13 @@ class _SceneParts {
         // 왼쪽 아래를 덮는 랭킹 카드만큼 가방을 오른쪽으로 비켜 라벨을 살린다.
         illustrationDx: 16,
       ),
-      OnboardingScene.tracking => _SceneParts(
+      // 병원 신호 — 구름 위 잠(차분히 확인하고 안심하는 밤)과 짝지은 장면.
+      OnboardingScene.safety => _SceneParts(
         illustration: illo(onboardingSleepShapes),
-        back: OnboardingTimerChip(active: active),
+        back: OnboardingAlertChip(active: active),
         backAnchor: const _Anchor.left(4, 24),
-        front: OnboardingTimelineCard(active: active),
-        frontAnchor: const _Anchor.right(0, 250),
+        front: OnboardingSignalCard(active: active),
+        frontAnchor: const _Anchor.right(0, 222),
       ),
     };
   }
@@ -309,132 +314,4 @@ class _SceneParts {
 
   /// 장면별 일러스트 가로 보정(카드와 겹치는 쪽을 피한다).
   final double illustrationDx;
-}
-
-/// 공유 배경 — 종이를 오려 붙인 블롭(아랫장 겹침) + 점선 궤도와 행성 3개.
-///
-/// 장면마다 블롭 윤곽(8점 반경 배율)과 워시 색이 정해져 있고, 페이지 값으로 그
-/// 사이를 보간한다. 그라데이션 없이 단색 면만 쓴다(DESIGN v2 §0 불변 조항).
-class _BackdropPainter extends CustomPainter {
-  const _BackdropPainter({
-    required this.page,
-    required this.breath,
-    required this.washes,
-    required this.under,
-    required this.orbit,
-    required this.rim,
-    required this.planets,
-  });
-
-  final double page;
-  final double breath;
-  final List<Color> washes;
-  final Color under;
-  final Color orbit;
-  final Color rim;
-  final List<Color> planets;
-
-  static const List<List<double>> _outlines = <List<double>>[
-    <double>[1.00, 0.93, 1.05, 0.95, 1.02, 0.92, 1.06, 0.96],
-    <double>[0.94, 1.06, 0.92, 1.03, 0.97, 1.07, 0.93, 1.01],
-    <double>[1.05, 0.96, 1.00, 1.07, 0.92, 1.01, 0.96, 1.05],
-  ];
-
-  static const double _radius = 136;
-  static const Offset _center = Offset(170, 190);
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final last = washes.length - 1;
-    final clamped = page.clamp(0.0, last.toDouble());
-    final i0 = clamped.floor().clamp(0, last);
-    final i1 = math.min(i0 + 1, last);
-    final f = clamped - i0;
-
-    // ── 블롭 윤곽: 장면 윤곽 보간 + 아주 느린 호흡 + 페이지에 따른 회전.
-    final rotation = clamped * 0.55;
-    final points = <Offset>[];
-    for (var k = 0; k < 8; k++) {
-      final r0 = _outlines[i0 % _outlines.length][k];
-      final r1 = _outlines[i1 % _outlines.length][k];
-      final wobble = 1 + 0.014 * math.sin((breath + k / 8) * 2 * math.pi);
-      final r = _radius * (r0 + (r1 - r0) * f) * wobble;
-      final angle = rotation + k * math.pi / 4;
-      points.add(_center + Offset(math.cos(angle), math.sin(angle)) * r);
-    }
-    final blob = _smoothClosed(points);
-
-    canvas
-      ..drawPath(blob.shift(const Offset(8, 10)), Paint()..color = under)
-      ..drawPath(blob, Paint()..color = Color.lerp(washes[i0], washes[i1], f)!);
-
-    // ── 점선 궤도.
-    final orbitRadius = _radius * 1.1;
-    final orbitRect = Rect.fromCircle(center: _center, radius: orbitRadius);
-    final orbitPaint = Paint()
-      ..color = orbit
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.2
-      ..strokeCap = StrokeCap.round;
-    const dashes = 56;
-    const sweep = 2 * math.pi / dashes;
-    final dashOffset = clamped * 0.3;
-    for (var d = 0; d < dashes; d++) {
-      canvas.drawArc(
-        orbitRect,
-        dashOffset + d * sweep,
-        sweep * 0.45,
-        false,
-        orbitPaint,
-      );
-    }
-
-    // ── 궤도 위 행성 — 스와이프에 따라 궤도를 돈다. 시작각·속도는 세 장면 모두에서
-    // 떠 있는 카드와 겹치지 않는 자리로 골랐다(카드 위치를 옮기면 함께 재확인).
-    const bases = <double>[0.15, 3.35, 5.6];
-    const speeds = <double>[0.9, 0.9, 0.4];
-    const radii = <double>[5.5, 4, 4.5];
-    for (var k = 0; k < planets.length; k++) {
-      final angle = bases[k] + clamped * speeds[k];
-      final c =
-          _center + Offset(math.cos(angle), math.sin(angle)) * orbitRadius;
-      canvas
-        ..drawCircle(c, radii[k] + 2.5, Paint()..color = rim)
-        ..drawCircle(c, radii[k], Paint()..color = planets[k]);
-    }
-  }
-
-  /// 닫힌 Catmull-Rom 스플라인 → 큐빅 베지어.
-  static Path _smoothClosed(List<Offset> p) {
-    final n = p.length;
-    final path = Path()..moveTo(p[0].dx, p[0].dy);
-    for (var i = 0; i < n; i++) {
-      final p0 = p[(i - 1 + n) % n];
-      final p1 = p[i];
-      final p2 = p[(i + 1) % n];
-      final p3 = p[(i + 2) % n];
-      final c1 = p1 + (p2 - p0) / 6;
-      final c2 = p2 - (p3 - p1) / 6;
-      path.cubicTo(c1.dx, c1.dy, c2.dx, c2.dy, p2.dx, p2.dy);
-    }
-    return path..close();
-  }
-
-  @override
-  bool shouldRepaint(_BackdropPainter old) =>
-      old.page != page ||
-      old.breath != breath ||
-      old.under != under ||
-      old.orbit != orbit ||
-      old.rim != rim ||
-      !_sameColors(old.washes, washes) ||
-      !_sameColors(old.planets, planets);
-
-  static bool _sameColors(List<Color> a, List<Color> b) {
-    if (a.length != b.length) return false;
-    for (var i = 0; i < a.length; i++) {
-      if (a[i] != b[i]) return false;
-    }
-    return true;
-  }
 }

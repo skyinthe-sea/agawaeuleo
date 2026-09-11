@@ -71,7 +71,7 @@ void main() {
 
     await tester.tap(find.text('다음'));
     await tester.pumpAndSettle();
-    expect(find.text('탭 한 번에 기록해요'), findsOneWidget);
+    expect(find.text('미리 알아 두세요'), findsOneWidget);
     expect(find.text('시작하기'), findsOneWidget);
 
     // 마지막 장의 건너뛰기는 CTA와 같은 동작이라 숨기고 탭도 막는다.
@@ -105,9 +105,21 @@ void main() {
     expect(find.text('아기가 왜 우는지'), findsNothing);
   });
 
-  testWidgets('모션 켠 상태: 타이핑·타이머가 돌고 해제 시 타이머가 남지 않는다', (
-    tester,
-  ) async {
+  testWidgets('마지막 장은 기록이 아니라 병원 신호를 소개한다', (tester) async {
+    await _pumpOnboarding(tester);
+
+    await tester.tap(find.text('다음'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('다음'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('병원 신호'), findsWidgets);
+    expect(find.text('이럴 땐 병원에'), findsWidgets);
+    expect(find.byType(OnboardingSignalCard), findsOneWidget);
+    expect(find.textContaining('기록'), findsNothing);
+  });
+
+  testWidgets('모션 켠 상태: 타이핑·신호 연출이 돌고 해제 시 타이머가 남지 않는다', (tester) async {
     await _pumpOnboarding(tester, reduceMotion: false);
 
     // 첫 진입 대기 + 자모 8타가 끝나면 검색어가 완성된다.
@@ -121,11 +133,9 @@ void main() {
     controller.jumpToPage(2);
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
-    expect(find.text('01:24:08'), findsOneWidget);
-
-    await tester.pump(const Duration(seconds: 2));
-    expect(find.text('01:24:10'), findsOneWidget);
-    expect(find.byType(OnboardingTimelineCard), findsOneWidget);
+    await tester.pump(const Duration(milliseconds: 1200));
+    expect(find.text('가까운 병원 찾기'), findsOneWidget);
+    expect(find.byType(OnboardingAlertChip), findsOneWidget);
 
     await tester.pumpWidget(const SizedBox.shrink());
     await tester.pump(const Duration(seconds: 2));

@@ -66,7 +66,9 @@ void main() {
       // 진입 시 종 아이콘 흔들림 트리거(postFrame setState) 소진.
       await tester.pump();
 
-      expect(find.text('밤중에도 놓치지 않게'), findsOneWidget);
+      // 기록 기능 숨김(2026-09-11) — 수유·기록 약속을 뺀 문구.
+      expect(find.text('중요한 안내를 놓치지 않게'), findsOneWidget);
+      expect(find.textContaining('수유'), findsNothing);
       expect(find.text('알림 켜기'), findsOneWidget);
       expect(find.text('나중에'), findsOneWidget);
 

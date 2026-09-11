@@ -1,16 +1,15 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 
 import '../../../../config/theme/theme.dart';
+import '../../../../core/utils/hangul_typing.dart';
 import '../../../widgets/symptom/symptom_illustration.dart';
 
-/// 온보딩 스테이지의 "떠 있는 UI 조각" — 실제 앱 화면(검색·제품 랭킹·기록)을
+/// 온보딩 스테이지의 "떠 있는 UI 조각" — 실제 앱 화면(검색·제품 랭킹·병원 신호)을
 /// 축소한 미리보기. 추상 아이콘 대신 제품의 진짜 모습을 보여 주는 게 목적이라
 /// 표면·배지·타이포는 본 화면 컴포넌트의 토큰 문법을 그대로 따른다.
 ///
 /// 전부 장식(스테이지가 ExcludeSemantics로 감싼다). [active]는 해당 장면이
-/// 화면에 안착했는지 — 타이핑·스탬프·타이머 같은 1회성 마이크로 인터랙션을
+/// 화면에 안착했는지 — 타이핑·스탬프·신호 내려앉기 같은 1회성 마이크로 인터랙션을
 /// 그때 재생하고, reduce-motion이면 완료 상태로 바로 그린다.
 class OnboardingFloatSurface extends StatelessWidget {
   const OnboardingFloatSurface({
@@ -51,16 +50,7 @@ class OnboardingSearchPill extends StatefulWidget {
   final bool active;
 
   /// ㅂ → 배 → 뱅 → 배아 → … 조합 중 받침이 다음 음절로 넘어가는 순간까지 재현.
-  static const List<String> typingSteps = <String>[
-    'ㅂ',
-    '배',
-    '뱅',
-    '배아',
-    '배알',
-    '배앓',
-    '배앓ㅇ',
-    '배앓이',
-  ];
+  static final List<String> typingSteps = hangulTypingSteps('배앓이');
 
   @override
   State<OnboardingSearchPill> createState() => _OnboardingSearchPillState();
@@ -126,7 +116,7 @@ class _OnboardingSearchPillState extends State<OnboardingSearchPill>
   Widget build(BuildContext context) {
     final colors = context.colors;
     final texts = context.texts;
-    const steps = OnboardingSearchPill.typingSteps;
+    final steps = OnboardingSearchPill.typingSteps;
 
     return OnboardingFloatSurface(
       width: 204,
@@ -412,27 +402,22 @@ class _OnboardingBestPickCardState extends State<OnboardingBestPickCard>
   }
 }
 
-/// ③ 진행 중 수면 타이머 칩 — 장면이 안착해 있는 동안 1초씩 흐르고, 점이 숨쉰다.
-class OnboardingTimerChip extends StatefulWidget {
-  const OnboardingTimerChip({required this.active, super.key});
+/// ③ "배앓이 병원 신호" 칩 — 장면이 안착해 있는 동안 인주색 점이 숨쉰다.
+class OnboardingAlertChip extends StatefulWidget {
+  const OnboardingAlertChip({required this.active, super.key});
 
   final bool active;
 
-  /// 표시 시작값 01:24:08.
-  static const int startSeconds = 5048;
-
   @override
-  State<OnboardingTimerChip> createState() => _OnboardingTimerChipState();
+  State<OnboardingAlertChip> createState() => _OnboardingAlertChipState();
 }
 
-class _OnboardingTimerChipState extends State<OnboardingTimerChip>
+class _OnboardingAlertChipState extends State<OnboardingAlertChip>
     with SingleTickerProviderStateMixin {
   late final AnimationController _pulse = AnimationController(
     vsync: this,
     duration: const Duration(milliseconds: 1600),
   );
-  Timer? _timer;
-  int _seconds = OnboardingTimerChip.startSeconds;
 
   @override
   void initState() {
@@ -443,42 +428,25 @@ class _OnboardingTimerChipState extends State<OnboardingTimerChip>
   }
 
   @override
-  void didUpdateWidget(OnboardingTimerChip oldWidget) {
+  void didUpdateWidget(OnboardingAlertChip oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (widget.active && !oldWidget.active) _start();
-    if (!widget.active && oldWidget.active) _stop();
+    if (!widget.active && oldWidget.active) {
+      _pulse
+        ..stop()
+        ..value = 0;
+    }
   }
 
   void _start() {
     if (!mounted || context.reduceMotion) return;
-    _timer?.cancel();
-    _timer = Timer.periodic(const Duration(seconds: 1), (_) {
-      if (mounted) setState(() => _seconds++);
-    });
     _pulse.repeat();
-  }
-
-  void _stop() {
-    _timer?.cancel();
-    _timer = null;
-    _pulse
-      ..stop()
-      ..value = 0;
   }
 
   @override
   void dispose() {
-    _timer?.cancel();
     _pulse.dispose();
     super.dispose();
-  }
-
-  String get _label {
-    String two(int v) => v.toString().padLeft(2, '0');
-    final h = _seconds ~/ 3600;
-    final m = (_seconds % 3600) ~/ 60;
-    final s = _seconds % 60;
-    return '${two(h)}:${two(m)}:${two(s)}';
   }
 
   @override
@@ -512,7 +480,7 @@ class _OnboardingTimerChipState extends State<OnboardingTimerChip>
                         height: 8,
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
-                          color: colors.sage.withValues(alpha: 0.4 * (1 - v)),
+                          color: colors.coral.withValues(alpha: 0.4 * (1 - v)),
                         ),
                       ),
                     ),
@@ -521,7 +489,7 @@ class _OnboardingTimerChipState extends State<OnboardingTimerChip>
                       height: 8,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        color: colors.sage,
+                        color: colors.coral,
                       ),
                     ),
                   ],
@@ -530,64 +498,84 @@ class _OnboardingTimerChipState extends State<OnboardingTimerChip>
             ),
           ),
           const SizedBox(width: AppSpacing.x4),
-          Icon(Icons.bedtime_rounded, size: 16, color: colors.sage),
-          const SizedBox(width: AppSpacing.x4),
           Text(
-            '수면 중',
+            '배앓이',
             style: texts.caption.copyWith(
-              color: colors.ink700,
+              color: colors.ink900,
               fontWeight: FontWeight.w600,
             ),
           ),
+          const SizedBox(width: AppSpacing.x4),
+          Text('병원 신호', style: texts.caption.copyWith(color: colors.ink500)),
           const SizedBox(width: AppSpacing.x8),
-          Text(_label, style: texts.data.copyWith(color: colors.ink900)),
+          Text('4', style: texts.data.copyWith(color: colors.coral)),
         ],
       ),
     );
   }
 }
 
-/// ③ 오늘의 기록 타임라인 — 장면이 안착하면 맨 위 "방금" 행이 기록되듯 내려앉는다.
-class OnboardingTimelineCard extends StatefulWidget {
-  const OnboardingTimelineCard({required this.active, super.key});
+/// ③ 응급 카드 미리보기 — 상세 '병원 신호' 장의 `EmergencyCard` 축약판.
+/// 장면이 안착하면 신호 두 줄이 차례로 내려앉고, 병원 찾기 버튼이 톡 튀어 오른다.
+class OnboardingSignalCard extends StatefulWidget {
+  const OnboardingSignalCard({required this.active, super.key});
 
   final bool active;
 
   @override
-  State<OnboardingTimelineCard> createState() => _OnboardingTimelineCardState();
+  State<OnboardingSignalCard> createState() => _OnboardingSignalCardState();
 }
 
-class _OnboardingTimelineCardState extends State<OnboardingTimelineCard>
+class _OnboardingSignalCardState extends State<OnboardingSignalCard>
     with SingleTickerProviderStateMixin {
-  late final AnimationController _drop = AnimationController(
+  late final AnimationController _seq = AnimationController(
     vsync: this,
-    duration: const Duration(milliseconds: 620),
+    duration: const Duration(milliseconds: 1100),
   );
 
   @override
   void initState() {
     super.initState();
-    _drop.value = 1;
+    _seq.value = 1;
     if (widget.active) {
       WidgetsBinding.instance.addPostFrameCallback((_) => _play());
     }
   }
 
   @override
-  void didUpdateWidget(OnboardingTimelineCard oldWidget) {
+  void didUpdateWidget(OnboardingSignalCard oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (widget.active && !oldWidget.active) _play();
   }
 
   void _play() {
     if (!mounted || context.reduceMotion) return;
-    _drop.forward(from: 0);
+    _seq.forward(from: 0);
   }
 
   @override
   void dispose() {
-    _drop.dispose();
+    _seq.dispose();
     super.dispose();
+  }
+
+  /// 전체 시퀀스 중 [begin]~[end] 구간에서 위에서 살짝 떨어지며 나타난다.
+  Widget _drop(double begin, double end, Widget child) {
+    return AnimatedBuilder(
+      animation: _seq,
+      child: child,
+      builder: (context, child) {
+        final v = Interval(begin, end).transform(_seq.value);
+        final eased = Curves.easeOutBack.transform(v);
+        return Opacity(
+          opacity: const Interval(0, 0.5).transform(v),
+          child: Transform.translate(
+            offset: Offset(0, -8 * (1 - eased)),
+            child: child,
+          ),
+        );
+      },
+    );
   }
 
   @override
@@ -595,113 +583,105 @@ class _OnboardingTimelineCardState extends State<OnboardingTimelineCard>
     final colors = context.colors;
     final texts = context.texts;
 
-    final freshRow = AnimatedBuilder(
-      animation: _drop,
+    final button = AnimatedBuilder(
+      animation: _seq,
       builder: (context, child) {
-        final v = const Interval(0.3, 1).transform(_drop.value);
-        final eased = Curves.easeOutBack.transform(v);
-        return Opacity(
-          opacity: const Interval(0, 0.5).transform(v),
-          child: Transform.translate(
-            offset: Offset(0, -10 * (1 - eased)),
+        final v = const Interval(0.62, 1).transform(_seq.value);
+        return Transform.scale(
+          scale: 0.86 + 0.14 * Curves.easeOutBack.transform(v),
+          child: Opacity(
+            opacity: const Interval(0, 0.4).transform(v),
             child: child,
           ),
         );
       },
-      child: _TimelineRow(
-        icon: Icons.local_drink_rounded,
-        fg: colors.accent,
-        wash: colors.accentWash,
-        label: '수유',
-        detail: '분유 120ml',
-        time: '방금',
-        highlight: true,
+      child: Container(
+        height: 32,
+        decoration: BoxDecoration(
+          color: colors.coral,
+          borderRadius: AppRadius.brSm,
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.location_on_rounded,
+              size: 14,
+              color: colors.paperRaised,
+            ),
+            const SizedBox(width: AppSpacing.x4),
+            Text(
+              '가까운 병원 찾기',
+              style: texts.caption.copyWith(
+                color: colors.paperRaised,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ),
       ),
     );
 
     return OnboardingFloatSurface(
       width: 206,
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text('오늘의 기록', style: texts.overline.copyWith(color: colors.ink500)),
-          const SizedBox(height: AppSpacing.x8),
-          freshRow,
-          const SizedBox(height: AppSpacing.x8),
-          _TimelineRow(
-            icon: Icons.child_care_rounded,
-            fg: colors.amber,
-            wash: colors.amberWash,
-            label: '기저귀',
-            detail: '소변',
-            time: '08:40',
+          Row(
+            children: [
+              Icon(Icons.local_hospital_rounded, size: 16, color: colors.coral),
+              const SizedBox(width: AppSpacing.x4),
+              Text(
+                '이럴 땐 병원에',
+                style: texts.body.copyWith(
+                  color: colors.ink900,
+                  fontWeight: FontWeight.w600,
+                  height: 1.3,
+                ),
+              ),
+            ],
           ),
+          const SizedBox(height: AppSpacing.x8),
+          _drop(0.1, 0.45, const _SignalRow(label: '축 처지고 잘 먹지 않아요')),
+          const SizedBox(height: AppSpacing.x4),
+          _drop(0.3, 0.65, const _SignalRow(label: '숨쉬기 힘들어 보여요')),
+          const SizedBox(height: AppSpacing.x8),
+          button,
         ],
       ),
     );
   }
 }
 
-class _TimelineRow extends StatelessWidget {
-  const _TimelineRow({
-    required this.icon,
-    required this.fg,
-    required this.wash,
-    required this.label,
-    required this.detail,
-    required this.time,
-    this.highlight = false,
-  });
+class _SignalRow extends StatelessWidget {
+  const _SignalRow({required this.label});
 
-  final IconData icon;
-  final Color fg;
-  final Color wash;
   final String label;
-  final String detail;
-  final String time;
-  final bool highlight;
 
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
-    final texts = context.texts;
     return Row(
       children: [
         Container(
-          width: 30,
-          height: 30,
-          decoration: BoxDecoration(color: wash, shape: BoxShape.circle),
-          child: Icon(icon, size: 16, color: fg),
+          width: 6,
+          height: 6,
+          decoration: BoxDecoration(
+            color: colors.coral,
+            shape: BoxShape.circle,
+          ),
         ),
         const SizedBox(width: AppSpacing.x8),
         Expanded(
-          child: Text.rich(
-            TextSpan(
-              children: [
-                TextSpan(
-                  text: label,
-                  style: texts.body.copyWith(
-                    color: colors.ink900,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                TextSpan(
-                  text: '  $detail',
-                  style: texts.caption.copyWith(color: colors.ink500),
-                ),
-              ],
-            ),
+          child: Text(
+            label,
             maxLines: 1,
             overflow: TextOverflow.clip,
-          ),
-        ),
-        Text(
-          time,
-          style: texts.caption.copyWith(
-            color: highlight ? colors.accent : colors.ink500,
-            fontWeight: highlight ? FontWeight.w600 : null,
-            fontFamily: highlight ? null : AppFontFamily.mono,
+            style: context.texts.caption.copyWith(
+              color: colors.ink700,
+              letterSpacing: 0,
+            ),
           ),
         ),
       ],

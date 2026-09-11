@@ -1,7 +1,5 @@
-import '../../../../config/app_config.dart';
-
 /// 온보딩 장면 종류 — 스테이지가 장면별 일러스트·떠 있는 UI 조각을 고른다.
-enum OnboardingScene { search, products, tracking }
+enum OnboardingScene { search, products, safety }
 
 /// §11.2 온보딩 한 장의 콘텐츠.
 ///
@@ -28,7 +26,10 @@ class OnboardingPageData {
 }
 
 /// §11.2 온보딩 3장 — ① 증상으로 빠르게 찾기 ② 필요한 육아용품 바로 보기
-/// ③ 수유·수면 기록까지. 장면 서사는 우는 아기 → 케어 → 편안한 잠.
+/// ③ 병원에 가야 할 신호. 장면 서사는 우는 아기 → 케어 → 안심하고 잠든 밤.
+///
+/// 2026-09-11 개정: 기록 기능을 숨기면서(제품 추천 집중) ③을 "육아 기록"에서
+/// "병원 신호"로 바꿨다. 증상 상세의 '병원 신호' 장과 같은 약속이다.
 const List<OnboardingPageData> onboardingPages = <OnboardingPageData>[
   OnboardingPageData(
     scene: OnboardingScene.search,
@@ -43,14 +44,9 @@ const List<OnboardingPageData> onboardingPages = <OnboardingPageData>[
     body: '증상마다 도움이 되는 육아용품을 순위로 정리했어요. 이것저것 비교하는 시간을 줄여 보세요.',
   ),
   OnboardingPageData(
-    scene: OnboardingScene.tracking,
-    overline: '육아 기록',
-    titleLines: <String>['수유·수면·기저귀', '탭 한 번에 기록해요'],
-    // "기기에만 저장" 약속은 개인기록 동기화가 꺼져 있을 때만 사실이다
-    // (AppConfig.personalDataSyncEnabled 주석 참조) — 스위치와 문구를 묶어 둔다.
-    body: AppConfig.personalDataSyncEnabled
-        ? '하루 흐름과 패턴을 한눈에 확인해요. 필요한 순간에 바로 꺼내 보세요.'
-        // "이 기기에만" 사이는 줄이 갈리지 않게 NBSP(U+00A0).
-        : '하루 흐름과 패턴을 한눈에 확인해요. 기록은 이\u00A0기기에만 안전하게 저장돼요.',
+    scene: OnboardingScene.safety,
+    overline: '병원 신호',
+    titleLines: <String>['이럴 땐 병원에', '미리 알아 두세요'],
+    body: '증상마다 병원에 가 봐야 할 신호를 따로 정리했어요. 급할 땐 가까운 병원 찾기와 119 전화로 바로 이어져요.',
   ),
 ];

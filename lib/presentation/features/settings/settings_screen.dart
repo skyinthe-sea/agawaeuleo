@@ -139,19 +139,21 @@ class SettingsScreen extends ConsumerWidget {
               useSelectionHaptic: true,
               onTap: () => controller.setMaster(!settings.masterEnabled),
             ),
-            SettingsTile(
-              label: '수유 리마인더',
-              icon: Icons.access_time_rounded,
-              trailing: AppSwitch(
-                value: settings.feedingReminderEnabled,
-                enabled: settings.masterEnabled,
-              ),
-              enabled: settings.masterEnabled,
-              useSelectionHaptic: true,
-              onTap: () => controller.setFeedingReminder(
-                !settings.feedingReminderEnabled,
-              ),
-            ),
+            // 기록 기능 숨김(2026-09-11 발주자 요청): 수유 리마인더는 최근 수유 기록으로
+            // 다음 알림을 잡는 기능이라 기록 탭과 함께 숨긴다(주석 해제로 복원).
+            // SettingsTile(
+            //   label: '수유 리마인더',
+            //   icon: Icons.access_time_rounded,
+            //   trailing: AppSwitch(
+            //     value: settings.feedingReminderEnabled,
+            //     enabled: settings.masterEnabled,
+            //   ),
+            //   enabled: settings.masterEnabled,
+            //   useSelectionHaptic: true,
+            //   onTap: () => controller.setFeedingReminder(
+            //     !settings.feedingReminderEnabled,
+            //   ),
+            // ),
             SettingsTile(
               label: '공지사항',
               icon: Icons.campaign_outlined,

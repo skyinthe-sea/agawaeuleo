@@ -57,8 +57,10 @@ class ProfileHeader extends StatelessWidget {
                 if (isGuest)
                   // 게스트 전용 모드: 계정 연결 유도 문구 대신 로컬 저장 안내만 노출.
                   // (원문 "계정을 연결하면 기록이 안전하게 보관돼요" — 계정 기능 복원 시 되돌릴 것)
+                  // 기록 기능 숨김(2026-09-11): 기록 대신 남아 있는 로컬 데이터(즐겨찾기)로
+                  // 안내한다. 기록 복원 시 원문 '기록은 이 기기에 안전하게 저장돼요'로 되돌릴 것.
                   Text(
-                    '기록은 이 기기에 안전하게 저장돼요',
+                    '즐겨찾기는 이 기기에 안전하게 저장돼요',
                     style: texts.caption.copyWith(color: colors.ink500),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,

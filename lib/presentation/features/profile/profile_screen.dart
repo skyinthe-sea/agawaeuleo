@@ -51,21 +51,24 @@ class ProfileScreen extends ConsumerWidget {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    ProfileMenuTile(
-                      icon: Icons.child_care_outlined,
-                      label: '아기 프로필',
-                      washColor: colors.accentWash,
-                      iconColor: colors.accent,
-                      index: 0,
-                      onTap: () => context.pushNamed(Routes.babyProfile),
-                    ),
-                    Divider(height: 1, thickness: 1, color: colors.line),
+                    // 기록 기능 숨김(2026-09-11 발주자 요청): 아기 프로필은 기록을
+                    // 아기별로 나누기 위한 메뉴라 기록 탭과 함께 숨긴다. 라우트
+                    // (`Routes.babyProfile`)와 화면은 그대로라 주석만 해제하면 된다.
+                    // ProfileMenuTile(
+                    //   icon: Icons.child_care_outlined,
+                    //   label: '아기 프로필',
+                    //   washColor: colors.accentWash,
+                    //   iconColor: colors.accent,
+                    //   index: 0,
+                    //   onTap: () => context.pushNamed(Routes.babyProfile),
+                    // ),
+                    // Divider(height: 1, thickness: 1, color: colors.line),
                     ProfileMenuTile(
                       icon: Icons.star_outline_rounded,
                       label: '즐겨찾기',
                       washColor: colors.amberWash,
                       iconColor: colors.amber,
-                      index: 1,
+                      index: 0,
                       onTap: () => context.pushNamed(Routes.favorites),
                     ),
                     Divider(height: 1, thickness: 1, color: colors.line),
@@ -75,7 +78,7 @@ class ProfileScreen extends ConsumerWidget {
                       washColor: colors.paperCard,
                       iconColor: colors.ink700,
                       borderColor: colors.line,
-                      index: 2,
+                      index: 1,
                       onTap: () => context.pushNamed(Routes.settings),
                     ),
                     Divider(height: 1, thickness: 1, color: colors.line),
@@ -84,7 +87,7 @@ class ProfileScreen extends ConsumerWidget {
                       label: '문의',
                       washColor: colors.sageWash,
                       iconColor: colors.sage,
-                      index: 3,
+                      index: 2,
                       onTap: () => launchSupportEmail(context),
                     ),
                   ],

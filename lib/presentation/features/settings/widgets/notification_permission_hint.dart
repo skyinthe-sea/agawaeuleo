@@ -40,8 +40,10 @@ class NotificationPermissionHint extends StatelessWidget {
     final colors = context.colors;
     // OfflineBanner와 동일하게 다크 모드에서는 전경색을 amber로 올려 대비를 확보한다.
     final foreground = context.isDark ? colors.amber : colors.ink700;
+    // 기록 기능 숨김(2026-09-11): 원문 '알림을 켜면 다음 수유 예상 시각과 기록
+    // 리마인더를 받을 수 있어요'는 기록 복원 시 되돌릴 것.
     final message = _isNotDetermined
-        ? '알림을 켜면 다음 수유 예상 시각과 기록 리마인더를 받을 수 있어요'
+        ? '알림을 켜면 새 소식과 공지를 받아볼 수 있어요'
         : '기기 알림 권한이 꺼져 있어 알림을 받을 수 없어요';
     return Padding(
       padding: const EdgeInsets.only(top: AppSpacing.x12),

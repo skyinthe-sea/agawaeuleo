@@ -29,13 +29,16 @@ class AppBottomNav extends StatelessWidget {
   final int currentIndex;
   final ValueChanged<int> onTap;
 
+  /// 탭 순서 = 셸 브랜치 순서(app_router). 항목을 되살리면 브랜치도 함께 되살릴 것.
   static const List<_NavItemData> _items = <_NavItemData>[
     _NavItemData(label: '홈', icon: Icons.home_outlined, activeIcon: Icons.home),
-    _NavItemData(
-      label: '기록',
-      icon: Icons.assignment_outlined,
-      activeIcon: Icons.assignment,
-    ),
+    // 기록 기능 숨김(2026-09-11 발주자 요청 — 제품 추천 집중). 삭제가 아니라 주석:
+    // 되살릴 때는 이 항목과 app_router.dart의 기록 브랜치 주석을 함께 해제한다.
+    // _NavItemData(
+    //   label: '기록',
+    //   icon: Icons.assignment_outlined,
+    //   activeIcon: Icons.assignment,
+    // ),
     _NavItemData(
       label: '내 정보',
       icon: Icons.person_outline,

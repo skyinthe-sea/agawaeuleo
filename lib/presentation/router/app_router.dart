@@ -109,6 +109,9 @@ GoRouter createAppRouter() {
                       state,
                       SymptomDetailScreen(
                         slug: state.pathParameters[RouteParams.slug]!,
+                        // 홈 덱의 BEST PICK 카드처럼 특정 장으로 바로 여는 진입점.
+                        initialChapter:
+                            state.uri.queryParameters[RouteParams.chapter],
                       ),
                     ),
                   ),

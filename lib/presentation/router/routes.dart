@@ -32,6 +32,10 @@ abstract final class RouteParams {
 
   static const slug = 'slug';
   static const doc = 'doc';
+
+  /// 증상 상세를 특정 장(`overview`·`emergency`·`guide`·`products`)으로 여는
+  /// 쿼리 파라미터. 없거나 모르는 값이면 첫 장.
+  static const chapter = 'chapter';
 }
 
 /// 절대 경로(top-level·브랜치 루트·딥링크)와 중첩 라우트용 상대 세그먼트.

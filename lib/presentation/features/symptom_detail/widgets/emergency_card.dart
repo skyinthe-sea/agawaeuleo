@@ -13,9 +13,14 @@ import 'package:flutter/material.dart';
 /// 제목 "이럴 땐 병원에", 본문 응급신호 + "가까운 병원 찾기" 버튼(지도/전화 외부).
 /// 등장 시 1회 미세 흔들림 + 좌측 바 펄스 2회(§10.2, opacity .5↔1 ×2).
 class EmergencyCard extends StatefulWidget {
-  const EmergencyCard({required this.signs, super.key});
+  const EmergencyCard({required this.signs, super.key, this.active = true});
 
   final List<EmergencySign> signs;
+
+  /// 등장 연출(흔들림·바 펄스)을 재생해도 되는지. 케어 노트처럼 미리 빌드되는
+  /// 대기 장에서는 `false`로 두었다가 장이 화면에 들어올 때 `true`로 바꾸면 그때
+  /// 1회 재생한다.
+  final bool active;
 
   @override
   State<EmergencyCard> createState() => _EmergencyCardState();
@@ -31,15 +36,29 @@ class _EmergencyCardState extends State<EmergencyCard>
 
   // Shake 킷의 트리거. 등장 후 1회만 값이 바뀌어 흔들림을 1회 재생한다.
   int _shakeTrigger = 0;
+  bool _played = false;
 
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted || AppMotion.reduceMotion(context)) return;
-      _pulse.forward(from: 0);
-      setState(() => _shakeTrigger = 1);
-    });
+    if (widget.active) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => _play());
+    }
+  }
+
+  @override
+  void didUpdateWidget(EmergencyCard oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.active && !oldWidget.active) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => _play());
+    }
+  }
+
+  void _play() {
+    if (_played || !mounted || AppMotion.reduceMotion(context)) return;
+    _played = true;
+    _pulse.forward(from: 0);
+    setState(() => _shakeTrigger = 1);
   }
 
   @override

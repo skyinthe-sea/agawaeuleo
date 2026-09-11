@@ -1,19 +1,18 @@
 import 'package:agawaeuleo/application/providers.dart';
 import 'package:agawaeuleo/domain/entities/symptom.dart';
 import 'package:agawaeuleo/domain/repositories/symptom_repository.dart';
-import 'package:agawaeuleo/presentation/features/home/widgets/symptom_card.dart';
+import 'package:agawaeuleo/presentation/features/home/widgets/deck/deck_scene.dart';
 import 'package:agawaeuleo/presentation/router/routes.dart';
-import 'package:agawaeuleo/presentation/widgets/headers/section_header.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import '_app_harness.dart';
 
 /// §11.7 개정(홈 2그룹) + §13.3 개정(면책 audience 분기) 검증.
 ///
-/// mom 카드 유무에 따른 홈 그룹핑과, 상세 의학 면책 문구의 audience 분기
+/// mom 카드 유무에 따른 홈 덱 그룹 탭과, 상세 의학 면책 문구의 audience 분기
 /// (baby 원문 바이트 불변 / mom 산부인과 안내)를 확인한다.
 void main() {
-  testWidgets('홈: mom 카드가 있으면 아기 돌봄/엄마 돌봄 2그룹으로 렌더한다', (tester) async {
+  testWidgets('홈: mom 카드가 있으면 덱에 아기 돌봄/엄마 돌봄 그룹 탭이 생기고 전환된다', (tester) async {
     await pumpBootedApp(
       tester,
       overrides: [
@@ -32,16 +31,23 @@ void main() {
       ],
     );
 
-    expect(find.text('아기 돌봄'), findsOneWidget);
-    expect(find.text('엄마 돌봄'), findsOneWidget);
-    expect(find.byType(SectionHeader), findsNWidgets(2));
-    expect(find.byType(SymptomCard), findsNWidgets(3));
-    expect(find.text('오로'), findsOneWidget);
+    expect(find.bySemanticsLabel('아기 돌봄 2개'), findsOneWidget);
+    expect(find.bySemanticsLabel('엄마 돌봄 1개'), findsOneWidget);
+    expect(find.byType(DeckScene), findsWidgets);
+    expect(find.text('오로'), findsNothing);
+
+    await tester.tap(find.bySemanticsLabel('엄마 돌봄 1개'));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.descendant(of: find.byType(DeckScene), matching: find.text('오로')),
+      findsOneWidget,
+    );
 
     await disposeApp(tester);
   });
 
-  testWidgets('홈: mom 카드가 없으면 그룹 헤더 없이 기존 단일 그리드', (tester) async {
+  testWidgets('홈: mom 카드가 없으면 엄마 돌봄 탭 없이 아기 돌봄 덱 하나', (tester) async {
     await pumpBootedApp(
       tester,
       overrides: [
@@ -54,10 +60,9 @@ void main() {
       ],
     );
 
-    expect(find.text('아기 돌봄'), findsNothing);
-    expect(find.text('엄마 돌봄'), findsNothing);
-    expect(find.byType(SectionHeader), findsNothing);
-    expect(find.byType(SymptomCard), findsNWidgets(2));
+    expect(find.bySemanticsLabel('아기 돌봄 2개'), findsOneWidget);
+    expect(find.bySemanticsLabel(RegExp('^엄마 돌봄')), findsNothing);
+    expect(find.byType(DeckScene), findsWidgets);
 
     await disposeApp(tester);
   });

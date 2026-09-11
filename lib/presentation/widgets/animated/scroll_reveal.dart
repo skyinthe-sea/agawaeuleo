@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:ui' show lerpDouble;
 
+import 'package:flutter/foundation.dart' show ValueListenable;
 import 'package:flutter/material.dart';
 
 import '../../../config/theme/theme.dart';
@@ -60,6 +61,29 @@ class ScrollReveal extends StatefulWidget {
 
   @override
   State<ScrollReveal> createState() => _ScrollRevealState();
+}
+
+/// [ScrollReveal] 재생을 **보류**하는 관문.
+///
+/// 가로 페이저(상세 케어 노트)는 옆 장을 미리 빌드해 두는데, 그 안의 리빌은
+/// 세로 위치만 보고 화면 밖에서 재생을 끝내 버린다. 대기 장을 이 관문으로 감싸
+/// [open]이 `false`인 동안은 시작하지 않다가, 장이 화면으로 들어오는 순간(값이
+/// `true`가 되는 순간) 평소 규칙대로 판정·재생한다. 관문이 없으면 늘 열린 것으로 본다.
+class RevealGate extends InheritedNotifier<ValueListenable<bool>> {
+  const RevealGate({
+    required ValueListenable<bool> open,
+    required super.child,
+    super.key,
+  }) : super(notifier: open);
+
+  /// 가장 가까운 관문이 열려 있는지(없으면 `true`). 의존성을 등록하므로 값이
+  /// 바뀌면 `didChangeDependencies`가 다시 불린다.
+  static bool isOpen(BuildContext context) =>
+      context
+          .dependOnInheritedWidgetOfExactType<RevealGate>()
+          ?.notifier
+          ?.value ??
+      true;
 }
 
 /// [ScrollReveal]의 선형 진행도(0→1)를 자손에게 내려주는 스코프.
@@ -170,6 +194,12 @@ class _ScrollRevealState extends State<ScrollReveal>
   /// 의존성 변경 시점(회전·크기 변화 포함)에만 갱신한다.
   double _screenHeight = 0;
 
+  /// 조상 [RevealGate]가 열려 있는지(없으면 늘 열림).
+  bool _gateOpen = true;
+
+  /// 이번 프레임 뒤 판정을 이미 예약했는지.
+  bool _checkScheduled = false;
+
   @override
   void initState() {
     super.initState();
@@ -187,7 +217,13 @@ class _ScrollRevealState extends State<ScrollReveal>
   void didChangeDependencies() {
     super.didChangeDependencies();
     _screenHeight = MediaQuery.sizeOf(context).height;
+    final wasOpen = _gateOpen;
+    _gateOpen = RevealGate.isOpen(context);
     if (_started) return;
+    // 관문이 방금 열렸으면(대기 장이 화면으로 들어옴) 다음 프레임에 바로 판정한다.
+    if (_gateOpen && !wasOpen) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => _maybeStart());
+    }
     // reduce-motion이면 어차피 build가 child를 그대로 반환하므로 구독하지 않는다.
     if (AppMotion.reduceMotion(context)) {
       _detach();
@@ -196,17 +232,29 @@ class _ScrollRevealState extends State<ScrollReveal>
     final position = Scrollable.maybeOf(context)?.position;
     if (identical(position, _position)) return;
     _detach();
-    _position = position?..addListener(_maybeStart);
+    _position = position?..addListener(_onScroll);
   }
 
   void _detach() {
-    _position?.removeListener(_maybeStart);
+    _position?.removeListener(_onScroll);
     _position = null;
+  }
+
+  /// 스크롤 위치가 바뀐 순간에는 아직 레이아웃 전이라 위젯 좌표가 이전 프레임
+  /// 값이다. 그대로 판정하면 한 번에 크게 넘긴 스크롤(짧은 드래그가 멈춘 자리)에서
+  /// 들어온 위젯이 끝내 시작하지 못한다 → 레이아웃이 끝난 프레임 뒤에 판정한다.
+  void _onScroll() {
+    if (_checkScheduled || _started) return;
+    _checkScheduled = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _checkScheduled = false;
+      _maybeStart();
+    });
   }
 
   /// 뷰포트 판정 후 재생. 스크롤 프레임마다 호출되므로 계산은 최소로 유지한다.
   void _maybeStart() {
-    if (_started || !mounted) return;
+    if (_started || !mounted || !_gateOpen) return;
     // reduce-motion이면 build가 child를 그대로 반환하므로 컨트롤러/지연 타이머를
     // 아예 만들지 않는다(테스트의 pending timer 검사도 여기서 함께 막힌다).
     if (AppMotion.reduceMotion(context)) return;

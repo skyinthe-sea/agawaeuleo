@@ -1,15 +1,18 @@
 import 'package:agawaeuleo/config/theme/theme.dart';
 import 'package:agawaeuleo/core/haptics/app_haptics.dart';
 import 'package:agawaeuleo/domain/entities/entities.dart';
+import 'package:agawaeuleo/presentation/widgets/animated/scroll_reveal.dart';
 import 'package:agawaeuleo/presentation/widgets/cards/app_card.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 
 /// §11.9-4 정보 섹션 아코디언 리스트.
 ///
 /// 각 섹션은 heading 18 + 타입별 본문([InfoSection] 유니온 — text/steps/
-/// checklist/table/qa/tips). 펼침/접힘 높이 트윈 260ms(§11.9), 진입 stagger
-/// fadeIn(§10.2). 첫 섹션은 기본 펼침.
+/// checklist/table/qa/tips). 펼침/접힘 높이 트윈 260ms(§11.9). 첫 섹션은 기본 펼침.
+///
+/// 진입 모션은 빌드 시점이 아니라 **화면에 들어오는 순간** 재생한다([ScrollReveal]
+/// — 계단 60ms·상한 2단). 케어 노트는 옆 장을 미리 빌드하므로 빌드 시점 stagger는
+/// 사용자가 그 장에 도착하기 전에 끝나 버린다(대기 장은 [RevealGate]가 붙잡는다).
 class InfoAccordionList extends StatelessWidget {
   const InfoAccordionList({required this.sections, super.key});
 
@@ -17,7 +20,7 @@ class InfoAccordionList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final reduce = context.reduceMotion;
+    final step = AppMotion.fast ~/ 3;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -26,10 +29,8 @@ class InfoAccordionList extends StatelessWidget {
             padding: EdgeInsets.only(
               bottom: index == sections.length - 1 ? 0 : AppSpacing.x12,
             ),
-            child: _staggered(
-              context,
-              reduce: reduce,
-              index: index,
+            child: ScrollReveal(
+              delay: step * index.clamp(0, 2),
               child: _InfoAccordion(
                 section: section,
                 initiallyExpanded: index == 0,
@@ -38,23 +39,6 @@ class InfoAccordionList extends StatelessWidget {
           ),
       ],
     );
-  }
-
-  Widget _staggered(
-    BuildContext context, {
-    required bool reduce,
-    required int index,
-    required Widget child,
-  }) {
-    if (reduce) return child;
-    return child
-        .animate()
-        .fadeIn(
-          delay: Duration(milliseconds: 60 * index),
-          duration: AppMotion.base,
-          curve: AppMotion.enter,
-        )
-        .slideY(begin: 0.06, end: 0, curve: AppMotion.enter);
   }
 }
 

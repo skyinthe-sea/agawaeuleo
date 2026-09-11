@@ -14,20 +14,19 @@ import 'package:shared_preferences/shared_preferences.dart';
 /// 리포지토리 프로바이더(전부 keepAlive)는 `lib/application/providers.dart`의
 /// 것을 watch 한다. 데이터 소스는 Supabase 미구성 시 픽스처가 자동 공급한다.
 
-/// 홈 증상 그리드 스트림(활성 증상, `order_index` 순 — §11.7).
+/// 홈 케어 덱 스트림(활성 증상, `order_index` 순 — §11.7).
 ///
 /// pull-to-refresh는 `ref.refresh(homeSymptomsProvider.future)`로 재조회한다.
 final homeSymptomsProvider = StreamProvider<List<Symptom>>((ref) {
   return ref.watch(symptomRepositoryProvider).watchAll();
 });
 
-/// §10.2 "첫 로드 stagger" 1회 계약 — 세션 내 홈 그리드 등장 애니메이션을
-/// 이미 재생했는지.
+/// §10.2 "첫 로드 등장" 1회 계약 — 세션 내 홈 케어 덱의 등장 연출(배경 → 일러스트
+/// → 떠 있는 조각)과 넘기기 힌트를 이미 재생했는지.
 ///
-/// 스크롤로 카드가 재마운트되거나 상세에서 복귀할 때 재생을 반복하면, 라우트
-/// 전환과 겹치는 순간 fadeIn이 중간 불투명도로 얼어붙은 채 남을 수 있다
-/// (카드가 눌린 것처럼 어둡게 고착 — 실기기 재현 버그). 최초 1회만 재생하고
-/// 이후에는 정적으로 렌더한다.
+/// 상세에서 복귀하거나 덱이 다시 만들어질 때 재생을 반복하면, 라우트 전환과 겹치는
+/// 순간 중간 불투명도로 얼어붙은 채 남을 수 있다(옛 그리드에서 실기기로 재현된
+/// 버그). 최초 1회만 재생하고 이후에는 정적으로 렌더한다.
 final homeIntroPlayedProvider = NotifierProvider<HomeIntroPlayedNotifier, bool>(
   HomeIntroPlayedNotifier.new,
 );
@@ -111,8 +110,9 @@ final selectedBabyProvider = Provider<Baby?>((ref) {
 
 /// 최근 본 증상 slug 목록(로컬 저장, 최신 우선 — §11.7 선택 항목).
 ///
-/// `shared_preferences`에 직접 저장한다. 증상 카드/칩 탭 시 [RecentSymptomsNotifier.record]로
-/// 갱신한다. 통합 시 증상 상세 화면 진입에서도 record를 호출하면 상세 열람까지 반영된다.
+/// `shared_preferences`에 직접 저장한다. 홈 덱에서 증상을 열 때
+/// [RecentSymptomsNotifier.record]로 갱신한다(2026-09-11 개편으로 홈의 최근 칩
+/// 줄은 없어졌고, 기록은 이후 개인화에 쓰도록 유지한다).
 final recentSymptomsProvider =
     NotifierProvider<RecentSymptomsNotifier, List<String>>(
       RecentSymptomsNotifier.new,

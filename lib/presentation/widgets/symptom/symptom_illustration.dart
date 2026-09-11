@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
@@ -70,6 +71,7 @@ class SymptomIllustration extends StatelessWidget {
     required this.illustrationKey,
     required this.size,
     super.key,
+    this.holdInkWeight = false,
   });
 
   /// [SymptomIllustrations]에 등록된 `emoji_or_icon` 키.
@@ -78,11 +80,19 @@ class SymptomIllustration extends StatelessWidget {
   /// 렌더 한 변 길이(dp). 페인터는 120 뷰박스를 이 크기로 스케일한다.
   final double size;
 
+  /// 큰 히어로에서 먹선·도트가 비례대로 뭉툭해지지 않게 붙잡는다
+  /// ([InkIllustration.holdInkWeight]).
+  final bool holdInkWeight;
+
   @override
   Widget build(BuildContext context) {
     final shapes = symptomIllustrationShapes[illustrationKey];
     if (shapes == null) return SizedBox.square(dimension: size);
-    return InkIllustration(shapes: shapes, size: size);
+    return InkIllustration(
+      shapes: shapes,
+      size: size,
+      holdInkWeight: holdInkWeight,
+    );
   }
 }
 
@@ -97,6 +107,7 @@ class InkIllustration extends StatelessWidget {
     required this.size,
     super.key,
     this.viewBox = 120,
+    this.holdInkWeight = false,
   });
 
   final List<IllustrationShape> shapes;
@@ -106,6 +117,14 @@ class InkIllustration extends StatelessWidget {
 
   /// 셰이프 좌표계 한 변(증상 일러스트 120).
   final double viewBox;
+
+  /// 뷰박스보다 크게 그릴 때 선 두께·도트 크기를 크기 비례보다 덜 키운다.
+  ///
+  /// 증상 일러스트(120)를 홈 덱·상세 헤더처럼 크게 띄우면 먹선 3.0이 5dp를
+  /// 넘어 뭉툭해진다. 켜면 배율 `s`에 대해 잉크가 `s^0.25`만큼만 커져, 카드와 같은
+  /// 결을 유지한다. 페인트 시점의 실제 크기로 계산하므로 Hero 비행 중에도
+  /// 두께가 끊기지 않고 이어진다. 뷰박스 이하 크기에는 영향이 없다.
+  final bool holdInkWeight;
 
   @override
   Widget build(BuildContext context) {
@@ -118,6 +137,7 @@ class InkIllustration extends StatelessWidget {
           painter: _IllustrationPainter(
             shapes: shapes,
             viewBox: viewBox,
+            holdInkWeight: holdInkWeight,
             ink: colors.ink900,
             paper: colors.paperRaised,
             dot: colors.accent,
@@ -133,6 +153,7 @@ class _IllustrationPainter extends CustomPainter {
   const _IllustrationPainter({
     required this.shapes,
     required this.viewBox,
+    required this.holdInkWeight,
     required this.ink,
     required this.paper,
     required this.dot,
@@ -142,6 +163,7 @@ class _IllustrationPainter extends CustomPainter {
 
   /// 원본 좌표계(뷰박스) 한 변.
   final double viewBox;
+  final bool holdInkWeight;
 
   /// 외곽 먹선(라이트: 진먹, 다크: 미색 — `ink900`).
   final Color ink;
@@ -201,23 +223,28 @@ class _IllustrationPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
+    final scale = size.shortestSide / viewBox;
+    // holdInkWeight: 화면상 잉크 = 원래 두께 × scale × weight = 원래 × scale^0.25.
+    final weight = holdInkWeight && scale > 1
+        ? math.pow(scale, -0.75).toDouble()
+        : 1.0;
     canvas
       ..save()
-      ..scale(size.shortestSide / viewBox);
+      ..scale(scale);
 
     for (final shape in shapes) {
       final path = _pathOf(shape);
       if (shape.fill != IllustrationFill.none) {
         canvas.drawPath(path, Paint()..color = _fillColor(shape.fill));
       }
-      if (shape.dots) _paintHalftone(canvas, shape, path);
+      if (shape.dots) _paintHalftone(canvas, shape, path, weight);
       if (shape.strokeWidth > 0) {
         canvas.drawPath(
           path,
           Paint()
             ..color = ink
             ..style = PaintingStyle.stroke
-            ..strokeWidth = shape.strokeWidth
+            ..strokeWidth = shape.strokeWidth * weight
             ..strokeCap = shape.sharp ? StrokeCap.butt : StrokeCap.round
             ..strokeJoin = shape.sharp ? StrokeJoin.miter : StrokeJoin.round,
         );
@@ -232,19 +259,27 @@ class _IllustrationPainter extends CustomPainter {
   ///
   /// 도트는 둥근 캡 점 묶음 한 번의 `drawPoints`로 그린다 — 원을 하나씩 그리면
   /// 큰 히어로(온보딩)에서 수백~천여 번의 드로우 콜이 스와이프 프레임마다 쌓인다.
-  void _paintHalftone(Canvas canvas, IllustrationShape shape, Path path) {
+  void _paintHalftone(
+    Canvas canvas,
+    IllustrationShape shape,
+    Path path,
+    double weight,
+  ) {
     canvas
       ..save()
       ..clipPath(path);
+    // 도트 반지름과 간격을 같은 비율로 줄여 화면상 밀도(결)를 유지한다.
+    final radius = _dotRadius * weight;
+    final step = _dotStep * weight;
     final b = shape.dotBounds;
     final bounds =
         (b != null ? Rect.fromLTRB(b[0], b[1], b[2], b[3]) : path.getBounds())
-            .inflate(_dotRadius);
+            .inflate(radius);
     final points = <Offset>[];
     var row = 0;
-    for (var y = bounds.top; y <= bounds.bottom; y += _dotStep, row++) {
-      final x0 = bounds.left + (row.isOdd ? _dotStep / 2 : 0);
-      for (var x = x0; x <= bounds.right; x += _dotStep) {
+    for (var y = bounds.top; y <= bounds.bottom; y += step, row++) {
+      final x0 = bounds.left + (row.isOdd ? step / 2 : 0);
+      for (var x = x0; x <= bounds.right; x += step) {
         points.add(Offset(x, y));
       }
     }
@@ -254,7 +289,7 @@ class _IllustrationPainter extends CustomPainter {
         points,
         Paint()
           ..color = dot
-          ..strokeWidth = _dotRadius * 2
+          ..strokeWidth = radius * 2
           ..strokeCap = StrokeCap.round,
       )
       ..restore();
@@ -264,6 +299,7 @@ class _IllustrationPainter extends CustomPainter {
   bool shouldRepaint(_IllustrationPainter oldDelegate) =>
       oldDelegate.shapes != shapes ||
       oldDelegate.viewBox != viewBox ||
+      oldDelegate.holdInkWeight != holdInkWeight ||
       oldDelegate.ink != ink ||
       oldDelegate.paper != paper ||
       oldDelegate.dot != dot;

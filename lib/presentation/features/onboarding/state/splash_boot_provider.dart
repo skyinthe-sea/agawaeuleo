@@ -14,7 +14,8 @@ enum SplashDestination {
 
 /// §11.1 스플래시 부팅 로직(수동 Riverpod — 코드젠 없음, autoDispose).
 ///
-/// - 최소 표시 600ms를 보장(깜빡임 방지)하면서, 병렬로:
+/// - 최소 표시 1150ms를 보장(브랜드 스테이지 연출이 끝나는 길이 — 2026-09-11 600ms에서
+///   상향, `splash_screen.dart` `_introDuration`과 같은 값)하면서, 병렬로:
 ///   - `onboarding.done`(shared_preferences) 플래그로 첫 실행 여부를 판정.
 ///   - [AuthRepository.ensureSignedIn]으로 게스트(익명) 세션을 자동 생성(§4.1) — 인증을
 ///     강제하지 않는다(§2-8). 오프라인 등으로 실패해도 로컬 폴백이 있어 부팅을 막지 않는다.
@@ -24,7 +25,7 @@ enum SplashDestination {
 final splashBootProvider = FutureProvider.autoDispose<SplashDestination>((
   ref,
 ) async {
-  const minDisplay = Duration(milliseconds: 600);
+  const minDisplay = Duration(milliseconds: 1150);
   final auth = ref.watch(authRepositoryProvider);
   final cacheService = ref.watch(masterDataCacheServiceProvider);
 

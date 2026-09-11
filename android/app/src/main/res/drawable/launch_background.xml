@@ -1,12 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Modify this file to customize your launch splash screen -->
+<!-- 런치 화면(API 30 이하): 종이색 바탕 + 가운데 인주 도장 배지(160dp).
+     배지는 tool/app_icon/generate_app_icon.py 의 splash 옵션으로 생성 — Flutter 스플래시 첫 프레임과 같은 자리·크기. -->
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
-    <item android:drawable="@android:color/white" />
-
-    <!-- You can insert your own image assets here -->
-    <!-- <item>
+    <item android:drawable="@color/splash_background" />
+    <item>
         <bitmap
             android:gravity="center"
-            android:src="@mipmap/launch_image" />
-    </item> -->
+            android:src="@drawable/splash_badge" />
+    </item>
 </layer-list>

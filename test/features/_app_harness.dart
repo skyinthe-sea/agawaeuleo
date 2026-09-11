@@ -72,10 +72,10 @@ Future<GoRouter> pumpBootedApp(
       ),
     ),
   );
-  // §11.1 스플래시는 최소 노출 600ms(Future.delayed) 후 목적지로 분기한다. 대기 중인
+  // §11.1 스플래시는 최소 노출 1150ms(Future.delayed) 후 목적지로 분기한다. 대기 중인
   // 타이머는 프레임을 스케줄하지 않아 pumpAndSettle이 건너뛰므로, 명시적으로 시간을
   // 진행시켜 부팅 타이머를 소진(→ 테스트 종료 시 pending timer 방지)한다.
-  await tester.pump(const Duration(milliseconds: 800));
+  await tester.pump(const Duration(milliseconds: 1300));
   await tester.pumpAndSettle();
   // 스플래시 분기 결과와 무관하게 검증 대상인 홈 셸로 이동한다.
   router.go(RoutePaths.home);

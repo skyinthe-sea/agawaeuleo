@@ -23,6 +23,7 @@
   - **상세 = 케어 노트**(`features/symptom_detail/widgets/note/`): 장(요약·병원 신호·돌보는 법·추천 용품)을 **겹쳐 올리는 시트**로 넘기는 페이저 + 떠 있는 접히는 머리(무대·장 탭). 홈 덱(옆으로 늘어선 무대)과 메커니즘을 일부러 다르게 함. §13.3 면책은 **모든 장 끝**, §13.2 배지는 추천 용품 장 목록 위(원문 불변). 라우트 쿼리 `RouteParams.chapter`.
   - 공용 프리미티브 개정: `RevealGate`(미리 빌드된 대기 장의 `ScrollReveal` 보류) + `ScrollReveal` 판정을 레이아웃 뒤 프레임으로(짧은 드래그가 멈춘 자리의 위젯이 시작 못 하던 잠복 버그), `EmergencyCard.active`, 아코디언 등장은 빌드 시점 stagger → 화면 진입 리빌.
   - 검증: `test/features/home_screen_test.dart`·`symptom_detail_screen_test.dart`·`care_audience_test.dart`·`home_note_motion_test.dart`(모션 켠 스모크), `test/core/utils/hangul_typing_test.dart`. 스와이프 중간 프레임은 골든 미리보기로 확인(커밋 안 함).
+- **스플래시 개편(2026-09-11)**: 네이티브 런치 화면(iOS 스토리보드·안드로이드 런치 테마, 라이트/다크)을 종이색 + 인주 도장 배지로 바꿔 흰 화면 번쩍임을 없애고, Flutter 스플래시가 **같은 배지에서 이어받아** 우는 아기가 방긋 웃는 브랜드 연출(블롭·궤도 번짐 + 명조 워드마크)을 한다. 배지 에셋은 **`tool/app_icon/generate_app_icon.py --splash`에서만** 생성(마크 지오메트리는 `splash_mark.dart`와 1:1). 부팅 최소 노출 600→**1150ms**(연출 길이와 동일, 테스트 하네스 대기 1300ms). DESIGN §7.6-1.
 - 검증 그린: `flutter analyze` 0 이슈, 테스트 전체 통과(2026-09-11 기준 178개), `flutter build apk --debug` ✓, iOS 시뮬레이터 실행 ✓(제품 섹션 개편 후 재검증 — 실데이터/실이미지 렌더 확인).
 - Supabase 미구성 상태로 개발됨 → 앱은 **픽스처 데모 모드**(카드 32종)로 완전 동작. `.env` 값이 채워지면 실데이터(캐시) 모드(원격 select가 0008 컬럼을 포함하므로 **0008·0010 적용과 앱 배포는 같은 릴리스로**).
 - 남은 것: 발주자 M0 작업(README.md 체크리스트), v1.1 로드맵(스펙 §3.4 — 홈 위젯·Live Activities·울음 분석·프리미엄).

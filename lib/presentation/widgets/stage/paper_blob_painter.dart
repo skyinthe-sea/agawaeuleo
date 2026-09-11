@@ -27,6 +27,9 @@ class PaperBlobPainter extends CustomPainter {
     this.planetBases = const <double>[0.15, 3.35, 5.6],
     this.planetSpeeds = const <double>[0.9, 0.9, 0.4],
     this.planetRadii = const <double>[5.5, 4, 4.5],
+    this.orbitProgress = 1,
+    this.planetScale = 1,
+    this.spin = 0,
   });
 
   /// 연속 페이지 값(0 = 첫 장면).
@@ -60,6 +63,15 @@ class PaperBlobPainter extends CustomPainter {
   final List<double> planetSpeeds;
   final List<double> planetRadii;
 
+  /// 점선 궤도를 몇 %까지 그렸는지(0~1) — 스플래시처럼 궤도가 그려지며 등장할 때.
+  final double orbitProgress;
+
+  /// 행성 크기 배율(0이면 숨김) — 등장 때 톡 튀어나오게.
+  final double planetScale;
+
+  /// 페이지와 무관한 추가 회전(rad) — 페이지가 없는 무대(스플래시)의 느린 흐름.
+  final double spin;
+
   static const List<List<double>> _outlines = <List<double>>[
     <double>[1.00, 0.93, 1.05, 0.95, 1.02, 0.92, 1.06, 0.96],
     <double>[0.94, 1.06, 0.92, 1.03, 0.97, 1.07, 0.93, 1.01],
@@ -76,7 +88,7 @@ class PaperBlobPainter extends CustomPainter {
     final f = clamped - i0;
 
     // ── 블롭 윤곽: 장면 윤곽 보간 + 아주 느린 호흡 + 페이지에 따른 회전.
-    final rotation = clamped * rotationPerPage;
+    final rotation = clamped * rotationPerPage + spin;
     final points = <Offset>[];
     for (var k = 0; k < 8; k++) {
       final r0 = _outlines[i0 % _outlines.length][k];
@@ -102,8 +114,9 @@ class PaperBlobPainter extends CustomPainter {
       ..strokeCap = StrokeCap.round;
     const dashes = 56;
     const sweep = 2 * math.pi / dashes;
-    final dashOffset = clamped * 0.3;
-    for (var d = 0; d < dashes; d++) {
+    final dashOffset = clamped * 0.3 + spin * 0.5;
+    final drawn = (dashes * orbitProgress.clamp(0.0, 1.0)).ceil();
+    for (var d = 0; d < drawn; d++) {
       canvas.drawArc(
         orbitRect,
         dashOffset + d * sweep,
@@ -118,12 +131,13 @@ class PaperBlobPainter extends CustomPainter {
       planets.length,
       math.min(planetBases.length, planetSpeeds.length),
     );
+    if (planetScale <= 0) return;
     for (var k = 0; k < count; k++) {
-      final angle = planetBases[k] + clamped * planetSpeeds[k];
+      final angle = planetBases[k] + clamped * planetSpeeds[k] + spin;
       final c = center + Offset(math.cos(angle), math.sin(angle)) * orbitRadius;
-      final r = k < planetRadii.length ? planetRadii[k] : 4.0;
+      final r = (k < planetRadii.length ? planetRadii[k] : 4.0) * planetScale;
       canvas
-        ..drawCircle(c, r + 2.5, Paint()..color = rim)
+        ..drawCircle(c, r + 2.5 * planetScale, Paint()..color = rim)
         ..drawCircle(c, r, Paint()..color = planets[k]);
     }
   }
@@ -153,6 +167,9 @@ class PaperBlobPainter extends CustomPainter {
       old.rim != rim ||
       old.center != center ||
       old.radius != radius ||
+      old.orbitProgress != orbitProgress ||
+      old.planetScale != planetScale ||
+      old.spin != spin ||
       !_sameColors(old.washes, washes) ||
       !_sameColors(old.planets, planets);
 

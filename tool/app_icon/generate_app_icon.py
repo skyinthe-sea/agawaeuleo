@@ -14,7 +14,16 @@
   - Store: store/play_store_icon_512.png (구글 플레이 등록정보용 512x512 32-bit PNG,
            풀블리드·불투명·라운드 없음 — 구글이 자체 마스킹 적용. iOS 1024와 동일 구도)
 
+  - Splash(`--splash`, 2026-09-11): 네이티브 런치 화면용 **동그란 인주 도장 배지**
+           (인주 원 + 미색 마크, 원 지름 대비 마크 0.78 — 안드로이드 12+ 시스템 스플래시가
+           적응형 아이콘을 160dp 원으로 보여 줄 때와 같은 비율). Flutter 스플래시
+           (`splash_screen.dart`)가 이 배지 160dp에서 연출을 시작하므로 크기·비율을
+           바꾸면 거기 상수도 함께 바꿀 것.
+           iOS  : ios/Runner/Assets.xcassets/LaunchImage.imageset/LaunchImage*.png (160pt)
+           AOS  : android/app/src/main/res/drawable-*/splash_badge.png (160dp, API 30 이하)
+
 실행: python3 tool/app_icon/generate_app_icon.py
+스플래시 배지만: python3 tool/app_icon/generate_app_icon.py --splash
 미리보기: python3 tool/app_icon/generate_app_icon.py --preview /tmp/preview.png
 """
 
@@ -181,9 +190,58 @@ def render_layer(px: int, color) -> Image.Image:
     return img.resize((px, px), Image.LANCZOS)
 
 
-def save(img: Image.Image, path: pathlib.Path) -> None:
+# 스플래시 배지 — 원 지름 대비 마크 박스 비율(적응형 0.52 / 보이는 원 0.667 ≈ 0.78).
+SPLASH_MARK_RATIO = 0.78
+
+
+def render_splash_badge(px: int) -> Image.Image:
+    """네이티브 런치 화면용 동그란 인주 도장(투명 배경 + 평면 인주 원 + 미색 마크).
+
+    Flutter 스플래시는 그라데이션 금지 계약이라 원은 평면색으로 칠해 첫 프레임과
+    이음새 없이 맞춘다(아이콘의 미세 광택 없음).
+    """
+    ss = max(1, min(4, 2048 // max(1, px)))
+    big = px * ss
+    img = Image.new("RGBA", (big, big), (0, 0, 0, 0))
+    ImageDraw.Draw(img).ellipse([0, 0, big - 1, big - 1], fill=(*SEAL, 255))
+    _draw_mark(img, big * SPLASH_MARK_RATIO, CREAM)
+    return img.resize((px, px), Image.LANCZOS)
+
+
+def _srgb_icc() -> bytes:
+    """sRGB ICC 프로파일 — 프로파일 없는 PNG를 iOS가 넓은 색역으로 해석해 인주색이
+    더 짙게 보이던 문제(런치 화면 ↔ Flutter 첫 프레임 색 불일치)를 막는다."""
+    from PIL import ImageCms
+
+    return ImageCms.ImageCmsProfile(ImageCms.createProfile("sRGB")).tobytes()
+
+
+def generate_splash() -> None:
+    icc = _srgb_icc()
+    ios = ROOT / "ios/Runner/Assets.xcassets/LaunchImage.imageset"
+    print("iOS LaunchImage(160pt):")
+    for name, sz in {
+        "LaunchImage.png": 160,
+        "LaunchImage@2x.png": 320,
+        "LaunchImage@3x.png": 480,
+    }.items():
+        save(render_splash_badge(sz), ios / name, icc_profile=icc)
+
+    android = ROOT / "android/app/src/main/res"
+    print("Android splash_badge(160dp):")
+    for dens, sz in {
+        "mdpi": 160, "hdpi": 240, "xhdpi": 320, "xxhdpi": 480, "xxxhdpi": 640,
+    }.items():
+        save(
+            render_splash_badge(sz),
+            android / f"drawable-{dens}/splash_badge.png",
+            icc_profile=icc,
+        )
+
+
+def save(img: Image.Image, path: pathlib.Path, **options) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
-    img.save(path)
+    img.save(path, **options)
     print(f"  ✓ {path.relative_to(ROOT) if path.is_relative_to(ROOT) else path} "
           f"({img.width}x{img.height})")
 
@@ -207,6 +265,9 @@ def preview(out: pathlib.Path) -> None:
 def main() -> None:
     if len(sys.argv) >= 3 and sys.argv[1] == "--preview":
         preview(pathlib.Path(sys.argv[2]))
+        return
+    if len(sys.argv) >= 2 and sys.argv[1] == "--splash":
+        generate_splash()
         return
 
     android = ROOT / "android/app/src/main/res"

@@ -341,7 +341,11 @@ enum AppCardEmphasis { flat, raised, hero }
 
 ### 7.6 인증·온보딩 (`features/auth/`, `features/onboarding/`)
 
-1. **스플래시**: InkDropLogo 아래 명조 워드마크 "아가왜울어"(title, ink900) + 그 아래 `InkSeal.md` stamp-in(로고 페이드 완료 후 지연 200ms). `PaperBackground`.
+1. **스플래시** (v2.3 개정 — "브랜드 스테이지", 2026-09-11. 물방울 로고·낙관 도장 폐기):
+   - **네이티브 런치 화면과 이음새 없이**: iOS `LaunchScreen.storyboard`(배경 `LaunchBackground` 컬러셋 — 라이트 paperBg/다크 paperBg, 가운데 `LaunchImage` 160pt) · 안드로이드 API 30 이하 `launch_background.xml`(`@color/splash_background` + 가운데 `splash_badge` 160dp) · API 31+ `values(-night)-v31/styles.xml`(`windowSplashScreenBackground` = 종이색, 아이콘은 적응형 런처 아이콘 160dp 원). 배지 = **동그란 인주 도장 + 앱 아이콘의 우는 아기 마크**(원 지름 대비 마크 0.78, 평면색, sRGB 프로파일) — `tool/app_icon/generate_app_icon.py --splash`로만 생성. 흰 화면 번쩍임 없음.
+   - **Flutter 첫 프레임 = 네이티브 배지와 같은 자리·크기**(세이프에어리어를 빼지 않은 화면 정중앙 160dp). 도장 색은 앱 아이콘과 같은 브랜드 고정값(`AppColors.light.seal`/`paperBg`) — 다크에서도 네이티브와 같아야 이음새가 안 보인다.
+   - **연출(1150ms, 부팅 최소 노출과 같은 길이)**: 도장이 살짝 눌렸다(0~12%) 스프링으로 112dp까지 작아지며 72dp 올라섬 + 먹 물결 한 겹 · 뒤에서 `PaperBlobPainter`(sealWash, 반경 96, 비껴 둔 윤곽) 번짐 · 점선 궤도가 한 바퀴 그려지고(`orbitProgress`) 행성 3개 톡(`planetScale`) · **우는 아기가 방긋**(`SplashMark` — 눈물이 흘러내려 사라지고, 열린 입이 납작해졌다가 곡선 미소로, 볼터치) · 명조 `displayL` "아가왜울어" 한 글자씩(50ms 계단) · 한 줄 "우는 이유부터 필요한 용품까지"(bodyL ink500). 부팅이 더 걸리면 블롭이 숨쉬고 궤도가 천천히 돈다. reduce-motion은 완성 상태.
+   - 마크 지오메트리는 아이콘 생성기 상수와 1:1(바꾸면 `splash_mark.dart`도 함께).
 2. **로고 통일**: 로그인/가입의 `AuthLogo`(물방울 Material 아이콘) → `InkHaloIcon(size:64, child: InkDropLogo)` — 스플래시와 동일 브랜드 마크.
 3. **폼 카드화**: 이메일/비밀번호 필드 그룹을 `AppCard(emphasis: raised, padding: 20)` 안에. 소셜 버튼 그룹은 카드 밖 유지(위계 분리).
 4. `GoogleGlyph`: 원형 배지(28, `paperRaised` + `line` 보더) 안의 "G"로 정돈(실제 구글 로고 에셋 도입 금지 — 라이선스).

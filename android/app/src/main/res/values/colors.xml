@@ -2,4 +2,6 @@
 <resources>
     <!-- 적응형 런처 아이콘 배경(DESIGN v2 §3.1 colors.seal 인주). tool/app_icon/generate_app_icon.py 와 동일값. -->
     <color name="ic_launcher_background">#A8432C</color>
+    <!-- 런치 화면 배경 = Flutter 스플래시 paperBg(라이트). 흰 화면 번쩍임 없이 이어진다. -->
+    <color name="splash_background">#F0EADB</color>
 </resources>

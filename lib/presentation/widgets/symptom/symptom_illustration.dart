@@ -1,3 +1,5 @@
+import 'dart:ui' as ui;
+
 import 'package:flutter/material.dart';
 
 import '../../../config/theme/theme.dart';
@@ -80,14 +82,42 @@ class SymptomIllustration extends StatelessWidget {
   Widget build(BuildContext context) {
     final shapes = symptomIllustrationShapes[illustrationKey];
     if (shapes == null) return SizedBox.square(dimension: size);
+    return InkIllustration(shapes: shapes, size: size);
+  }
+}
+
+/// 셰이프 목록을 그리는 정사각 벡터 캔버스 — 증상·온보딩 일러스트 공용 진입점.
+///
+/// [viewBox]는 셰이프 좌표계의 한 변이다. 선 두께·하프톤 도트 수치는 뷰박스
+/// 단위라, 큰 히어로(온보딩 240)는 뷰박스를 키워 화면상 먹선 굵기를 카드와
+/// 같은 결로 맞춘다. 장식 요소이므로 시맨틱스에서 제외한다.
+class InkIllustration extends StatelessWidget {
+  const InkIllustration({
+    required this.shapes,
+    required this.size,
+    super.key,
+    this.viewBox = 120,
+  });
+
+  final List<IllustrationShape> shapes;
+
+  /// 렌더 한 변 길이(dp).
+  final double size;
+
+  /// 셰이프 좌표계 한 변(증상 일러스트 120).
+  final double viewBox;
+
+  @override
+  Widget build(BuildContext context) {
     final colors = context.colors;
     return ExcludeSemantics(
-      // 카드 프레스 스케일/리플 애니메이션과 페인트를 분리한다.
+      // 카드 프레스 스케일/리플·스와이프 트랜스폼과 페인트를 분리한다.
       child: RepaintBoundary(
         child: CustomPaint(
           size: Size.square(size),
           painter: _IllustrationPainter(
             shapes: shapes,
+            viewBox: viewBox,
             ink: colors.ink900,
             paper: colors.paperRaised,
             dot: colors.accent,
@@ -102,12 +132,16 @@ class SymptomIllustration extends StatelessWidget {
 class _IllustrationPainter extends CustomPainter {
   const _IllustrationPainter({
     required this.shapes,
+    required this.viewBox,
     required this.ink,
     required this.paper,
     required this.dot,
   });
 
   final List<IllustrationShape> shapes;
+
+  /// 원본 좌표계(뷰박스) 한 변.
+  final double viewBox;
 
   /// 외곽 먹선(라이트: 진먹, 다크: 미색 — `ink900`).
   final Color ink;
@@ -117,9 +151,6 @@ class _IllustrationPainter extends CustomPainter {
 
   /// 하프톤 도트·물방울(`accent`).
   final Color dot;
-
-  /// 원본 좌표계(뷰박스) 한 변.
-  static const double _viewBox = 120;
 
   /// 하프톤 도트 격자 — 반지름/간격(뷰박스 단위). 홀수 행 반 칸 오프셋.
   static const double _dotRadius = 1.35;
@@ -172,7 +203,7 @@ class _IllustrationPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     canvas
       ..save()
-      ..scale(size.shortestSide / _viewBox);
+      ..scale(size.shortestSide / viewBox);
 
     for (final shape in shapes) {
       final path = _pathOf(shape);
@@ -198,28 +229,41 @@ class _IllustrationPainter extends CustomPainter {
 
   /// [path] 내부(또는 [IllustrationShape.dotBounds] 밴드)에 오프셋 격자
   /// 하프톤 도트를 채운다.
+  ///
+  /// 도트는 둥근 캡 점 묶음 한 번의 `drawPoints`로 그린다 — 원을 하나씩 그리면
+  /// 큰 히어로(온보딩)에서 수백~천여 번의 드로우 콜이 스와이프 프레임마다 쌓인다.
   void _paintHalftone(Canvas canvas, IllustrationShape shape, Path path) {
     canvas
       ..save()
       ..clipPath(path);
-    final paint = Paint()..color = dot;
     final b = shape.dotBounds;
     final bounds =
         (b != null ? Rect.fromLTRB(b[0], b[1], b[2], b[3]) : path.getBounds())
             .inflate(_dotRadius);
+    final points = <Offset>[];
     var row = 0;
     for (var y = bounds.top; y <= bounds.bottom; y += _dotStep, row++) {
       final x0 = bounds.left + (row.isOdd ? _dotStep / 2 : 0);
       for (var x = x0; x <= bounds.right; x += _dotStep) {
-        canvas.drawCircle(Offset(x, y), _dotRadius, paint);
+        points.add(Offset(x, y));
       }
     }
-    canvas.restore();
+    canvas
+      ..drawPoints(
+        ui.PointMode.points,
+        points,
+        Paint()
+          ..color = dot
+          ..strokeWidth = _dotRadius * 2
+          ..strokeCap = StrokeCap.round,
+      )
+      ..restore();
   }
 
   @override
   bool shouldRepaint(_IllustrationPainter oldDelegate) =>
       oldDelegate.shapes != shapes ||
+      oldDelegate.viewBox != viewBox ||
       oldDelegate.ink != ink ||
       oldDelegate.paper != paper ||
       oldDelegate.dot != dot;

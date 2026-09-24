@@ -2,9 +2,10 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
-/// §10.1 잉크 워시 리플. 기본 Material 리플 대신 탭 지점에서 accent.wash가 부드럽게
-/// 번지는 수묵 스플래시. InkWell/버튼의 `splashFactory`로 지정해 사용한다.
-/// 색은 위젯/테마의 splashColor(= accent.wash)를 그대로 사용한다.
+/// §10.1 워시 리플(역사적 이름 "잉크 워시"). 기본 Material 리플 대신 탭 지점에서
+/// 딸기 워시(`accentWash`)가 물감처럼 부드럽게 번졌다가 가운데로 모이는 말랑한
+/// 스플래시(DESIGN v3 — 모션은 v2 그대로). InkWell/버튼의 `splashFactory`로 지정해
+/// 사용한다. 색은 위젯/테마의 splashColor(기본 `accentWash`)를 그대로 쓴다.
 class InkWashSplash extends InteractiveInkFeature {
   InkWashSplash({
     required MaterialInkController controller,

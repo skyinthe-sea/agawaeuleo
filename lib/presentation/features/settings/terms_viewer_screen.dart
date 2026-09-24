@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../config/theme/theme.dart';
 import '../../widgets/brand/ink_seal.dart';
+import '../../widgets/cards/app_card.dart';
 import '../../widgets/dividers/brush_divider.dart';
 import '../../widgets/navigation/app_app_bar.dart';
 import 'terms_doc.dart';
@@ -13,10 +14,12 @@ import 'terms_doc.dart';
 /// 개인정보 미수집)에 맞춘 내용이다. 서버/제휴 구성이 바뀌면(계정 연결 도입, 수집
 /// 항목 추가 등) 이 문구도 함께 갱신해야 하며, 스토어 제출 전 발주자의 최종 확인을
 /// 권장한다(§13.4 "개인정보처리방침·이용약관 링크"). 대가성(§13.2)·의학 면책(§13.3)
-/// 문구는 앱 내 다른 표기와 동일한 원문을 사용한다.
+/// 문구는 앱 내 다른 표기와 동일한 원문을 사용한다. **본문은 원문 그대로 — 이 화면의
+/// 변경은 컨테이너 스타일에 한정된다.**
 ///
-/// DESIGN v2 §7.7 — 섹션 제목 앞에 번호 배지(20dp 원, accentWash/accent, data체)를
-/// 붙이고, 문서 말미에 `InkSeal`(watermark) + 시행일로 마무리한다.
+/// DESIGN v3 §6 — 조항 목록을 큰 라운드 카드(`AppCard.raised`)에 담고, 섹션 제목
+/// 앞 번호 배지를 주아체(§3.3 — 순번은 모노 대신 주아체 숫자)로 바꿨다. 문서 말미는
+/// `InkSeal`(watermark) + 시행일로 마무리한다(유지).
 class TermsViewerScreen extends StatelessWidget {
   const TermsViewerScreen({required this.doc, super.key});
 
@@ -45,28 +48,40 @@ class TermsViewerScreen extends StatelessWidget {
               _effectiveDateNotice,
               style: texts.caption.copyWith(color: colors.ink500),
             ),
-            const SizedBox(height: AppSpacing.x24),
-            for (var i = 0; i < sections.length; i++) ...[
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.center,
+            const SizedBox(height: AppSpacing.x20),
+            // DESIGN v3 §6 "cute container" — 조항 전체를 큰 라운드 카드 하나에 담는다.
+            AppCard(
+              emphasis: AppCardEmphasis.raised,
+              padding: const EdgeInsets.all(AppSpacing.x20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _SectionNumberBadge(number: i + 1),
-                  const SizedBox(width: AppSpacing.iconTextGap),
-                  Expanded(
-                    child: Text(
-                      _stripLeadingNumber(sections[i].heading),
-                      style: texts.heading.copyWith(color: colors.ink900),
+                  for (var i = 0; i < sections.length; i++) ...[
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        _SectionNumberBadge(number: i + 1),
+                        const SizedBox(width: AppSpacing.iconTextGap),
+                        Expanded(
+                          child: Text(
+                            _stripLeadingNumber(sections[i].heading),
+                            style: texts.heading.copyWith(color: colors.ink900),
+                          ),
+                        ),
+                      ],
                     ),
-                  ),
+                    const SizedBox(height: AppSpacing.x8),
+                    Text(
+                      sections[i].body,
+                      style: texts.body.copyWith(color: colors.ink700),
+                    ),
+                    if (i != sections.length - 1)
+                      const SizedBox(height: AppSpacing.x24),
+                  ],
                 ],
               ),
-              const SizedBox(height: AppSpacing.x8),
-              Text(
-                sections[i].body,
-                style: texts.body.copyWith(color: colors.ink700),
-              ),
-              const SizedBox(height: AppSpacing.x24),
-            ],
+            ),
+            const SizedBox(height: AppSpacing.x24),
             const BrushDivider.center(),
             const SizedBox(height: AppSpacing.x24),
             Center(
@@ -167,7 +182,8 @@ final RegExp _leadingNumberPattern = RegExp(r'^\d+\.\s*');
 String _stripLeadingNumber(String heading) =>
     heading.replaceFirst(_leadingNumberPattern, '');
 
-/// DESIGN v2 §7.7 섹션 제목 앞 번호 배지 — 20dp 원, accentWash/accent, data체.
+/// DESIGN v3 §3.3/§6 섹션 제목 앞 번호 배지 — 22dp 원, accentWash/accent,
+/// **주아체 숫자**(순번 강조는 모노 대신 `AppFontFamily.display`).
 class _SectionNumberBadge extends StatelessWidget {
   const _SectionNumberBadge({required this.number});
 
@@ -177,8 +193,8 @@ class _SectionNumberBadge extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = context.colors;
     return Container(
-      width: 20,
-      height: 20,
+      width: 22,
+      height: 22,
       alignment: Alignment.center,
       decoration: BoxDecoration(
         color: colors.accentWash,
@@ -186,7 +202,12 @@ class _SectionNumberBadge extends StatelessWidget {
       ),
       child: Text(
         '$number',
-        style: context.texts.data.copyWith(color: colors.accent),
+        style: context.texts.data.copyWith(
+          color: colors.accent,
+          fontFamily: AppFontFamily.display,
+          fontFamilyFallback: AppFontFamily.displayFallback,
+          fontWeight: FontWeight.w400,
+        ),
       ),
     );
   }

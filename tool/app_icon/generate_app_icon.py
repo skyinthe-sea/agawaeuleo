@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
-"""아가왜울어 앱 아이콘 생성기 — 토스풍(단색 라운드 스퀘어 + 단일 심볼).
+"""아가왜울어 앱 아이콘 생성기 — DESIGN v3 "몽글 클레이" 브랜드 마크.
 
-앱 이름 "아가왜울어"를 그대로 형상화한 마크: 인주색(seal) 배경 위에
-한지 미색 아기 얼굴 실루엣(배냇머리 한 가닥) + 감은 눈·우는 입·눈물 한 방울을
-배경색으로 펀치아웃한 2톤 심볼. 색은 DESIGN v2 §3.1 브랜드 토큰 고정.
+앱 이름 "아가왜울어"를 그대로 형상화: 딸기 핑크(seal) 바탕 위에 **클레이 아가 얼굴**
+(배냇머리 한 가닥 + 꼭 감은 눈 + 앙 벌린 입 + 눈물 방울). 얼굴은 일러스트와 같은 엔진
+(`tool/illustrations/clay/`)으로 렌더한 `baby_cry` 장면 그대로라 앱 안 스플래시와 한 몸이다.
+테마 아이콘(모노크롬)만 한 가지 색 실루엣이 필요해 v2의 벡터 마크를 남겨 쓴다.
 
 생성물(직접 편집 금지 — 반드시 이 스크립트로 재생성):
   - iOS  : ios/Runner/Assets.xcassets/AppIcon.appiconset/*.png (풀블리드, 알파 없음)
@@ -14,8 +15,8 @@
   - Store: store/play_store_icon_512.png (구글 플레이 등록정보용 512x512 32-bit PNG,
            풀블리드·불투명·라운드 없음 — 구글이 자체 마스킹 적용. iOS 1024와 동일 구도)
 
-  - Splash(`--splash`, 2026-09-11): 네이티브 런치 화면용 **동그란 인주 도장 배지**
-           (인주 원 + 미색 마크, 원 지름 대비 마크 0.78 — 안드로이드 12+ 시스템 스플래시가
+  - Splash(`--splash`, 2026-09-11 → v3): 네이티브 런치 화면용 **동그란 딸기 핑크 배지**
+           (핑크 원 + 클레이 우는 얼굴, 원 지름 대비 얼굴 박스 0.78 — 안드로이드 12+ 시스템 스플래시가
            적응형 아이콘을 160dp 원으로 보여 줄 때와 같은 비율). Flutter 스플래시
            (`splash_screen.dart`)가 이 배지 160dp에서 연출을 시작하므로 크기·비율을
            바꾸면 거기 상수도 함께 바꿀 것.
@@ -27,18 +28,20 @@
 미리보기: python3 tool/app_icon/generate_app_icon.py --preview /tmp/preview.png
 """
 
+import functools
 import pathlib
 import sys
 
 from PIL import Image, ImageDraw
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(ROOT / "tool/illustrations/clay"))
 
-# DESIGN v2 §3.1 토큰(light) — 아이콘은 라이트 팔레트를 브랜드 기준값으로 쓴다.
-SEAL = (0xA8, 0x43, 0x2C)        # colors.seal — 인주(브랜드)
-SEAL_TOP = (0xB5, 0x4C, 0x34)    # 상단 미세 광원(아주 옅은 톤업)
-CREAM = (0xF0, 0xEA, 0xDB)       # colors.paperBg — 얼굴 실루엣
-INK = (0x26, 0x29, 0x2B)         # colors.ink900 — 내부 헤어라인(저알파)
+# DESIGN v3 §3.1 토큰(light) — 아이콘은 라이트 팔레트를 브랜드 기준값으로 쓴다.
+SEAL = (0xF2, 0x8D, 0xA2)        # colors.seal — 딸기 핑크(브랜드)
+SEAL_TOP = (0xF7, 0xA9, 0xB9)    # 상단 클레이 광택(윗면이 빛을 받은 톤)
+CREAM = (0xFF, 0xF6, 0xEF)       # colors.paperBg — 모노크롬 실루엣 기준색
+INK = (0x4A, 0x35, 0x31)         # colors.ink900 — 내부 헤어라인(저알파)
 
 # 라운드 스퀘어 코너 비율(InkSeal 0.24 계열 — 레거시 아이콘용).
 LEGACY_RADIUS = 0.2237
@@ -129,6 +132,25 @@ def _draw_mark(img: Image.Image, mark_px: float, color) -> None:
     img.alpha_composite(layer)
 
 
+@functools.lru_cache(maxsize=None)
+def _clay_face_master() -> Image.Image:
+    """클레이 우는 얼굴 원본(1024², 얼굴 박스 = 이미지 폭의 0.78, 장밋빛 바닥 그림자)."""
+    from clay import Clay  # noqa: WPS433 — 도구 경로를 위에서 주입
+    import generate_clay_illustrations as gen
+
+    c = Clay(px=2048, ss=2)
+    gen.sc_baby_cry(c)
+    return c.render(shadow=gen.SHADOW_STRENGTH['baby_cry'], shadow_color=gen.BADGE_SHADOW)
+
+
+def _paste_face(img: Image.Image, face_box_px: float) -> None:
+    """얼굴 박스가 [face_box_px]가 되도록 클레이 얼굴을 한가운데 합성."""
+    side = round(face_box_px / 0.78)
+    face = _clay_face_master().convert("RGBa").resize((side, side), Image.LANCZOS).convert("RGBA")
+    off = ((img.width - side) // 2, (img.height - side) // 2)
+    img.alpha_composite(face, off)
+
+
 def _vertical_sheen(size: int) -> Image.Image:
     """상단이 아주 미세하게 밝은 세로 그라디언트(토스풍 은은한 입체). 거의 평면."""
     grad = Image.new("RGB", (1, size))
@@ -172,7 +194,7 @@ def render_full(px: int, *, rounded: bool, opaque: bool) -> Image.Image:
     else:
         img = base.convert("RGBA")
 
-    _draw_mark(img, big * MARK_RATIO_FULL, CREAM)
+    _paste_face(img, big * MARK_RATIO_FULL)
     img = img.resize((px, px), Image.LANCZOS)
     if opaque:
         flat = Image.new("RGB", (px, px), SEAL)
@@ -182,7 +204,7 @@ def render_full(px: int, *, rounded: bool, opaque: bool) -> Image.Image:
 
 
 def render_layer(px: int, color) -> Image.Image:
-    """적응형 전경 / 모노크롬 — 투명 배경에 마크만(108 그리드 세이프존 안착)."""
+    """모노크롬(테마 아이콘) — 투명 배경에 v2 벡터 마크만(108 그리드 세이프존 안착)."""
     ss = max(1, min(4, 2048 // max(1, px)))
     big = px * ss
     img = Image.new("RGBA", (big, big), (0, 0, 0, 0))
@@ -190,22 +212,29 @@ def render_layer(px: int, color) -> Image.Image:
     return img.resize((px, px), Image.LANCZOS)
 
 
+def render_foreground(px: int) -> Image.Image:
+    """적응형 전경 — 투명 배경에 클레이 얼굴(108 그리드 세이프존 안착)."""
+    img = Image.new("RGBA", (px * 2, px * 2), (0, 0, 0, 0))
+    _paste_face(img, px * 2 * MARK_RATIO_ADAPTIVE)
+    return img.convert("RGBa").resize((px, px), Image.LANCZOS).convert("RGBA")
+
+
 # 스플래시 배지 — 원 지름 대비 마크 박스 비율(적응형 0.52 / 보이는 원 0.667 ≈ 0.78).
 SPLASH_MARK_RATIO = 0.78
 
 
 def render_splash_badge(px: int) -> Image.Image:
-    """네이티브 런치 화면용 동그란 인주 도장(투명 배경 + 평면 인주 원 + 미색 마크).
+    """네이티브 런치 화면용 동그란 딸기 핑크 배지(투명 배경 + 평면 핑크 원 + 클레이 얼굴).
 
-    Flutter 스플래시는 그라데이션 금지 계약이라 원은 평면색으로 칠해 첫 프레임과
-    이음새 없이 맞춘다(아이콘의 미세 광택 없음).
+    Flutter 스플래시(`SplashMark`)가 같은 평면 원 + 같은 `baby_cry` 에셋을 0.78 비율로
+    그려 첫 프레임과 이음새 없이 맞춘다(원에는 광택 없음).
     """
     ss = max(1, min(4, 2048 // max(1, px)))
     big = px * ss
     img = Image.new("RGBA", (big, big), (0, 0, 0, 0))
     ImageDraw.Draw(img).ellipse([0, 0, big - 1, big - 1], fill=(*SEAL, 255))
-    _draw_mark(img, big * SPLASH_MARK_RATIO, CREAM)
-    return img.resize((px, px), Image.LANCZOS)
+    _paste_face(img, big * SPLASH_MARK_RATIO)
+    return img.convert("RGBa").resize((px, px), Image.LANCZOS).convert("RGBA")
 
 
 def _srgb_icc() -> bytes:
@@ -256,6 +285,10 @@ def preview(out: pathlib.Path) -> None:
                 (600, 300))
     mono = Image.new("RGB", (216, 216), (60, 60, 66))
     layer = render_layer(216, (255, 255, 255, 255))
+    fg = render_foreground(216)
+    fgbg = Image.new("RGB", (216, 216), SEAL)
+    fgbg.paste(fg, (0, 0), fg)
+    sheet.paste(fgbg, (840, 320))
     mono.paste(layer, (0, 0), layer)
     sheet.paste(mono, (840, 64))
     sheet.save(out)
@@ -284,7 +317,7 @@ def main() -> None:
     fg = {"mdpi": 108, "hdpi": 162, "xhdpi": 216, "xxhdpi": 324, "xxxhdpi": 432}
     print("Android 적응형 전경/모노크롬:")
     for dens, sz in fg.items():
-        save(render_layer(sz, CREAM),
+        save(render_foreground(sz),
              android / f"mipmap-{dens}/ic_launcher_foreground.png")
         save(render_layer(sz, (255, 255, 255, 255)),
              android / f"mipmap-{dens}/ic_launcher_monochrome.png")

@@ -6,6 +6,7 @@ import 'package:agawaeuleo/domain/entities/symptom.dart';
 import 'package:agawaeuleo/presentation/router/routes.dart';
 import 'package:agawaeuleo/presentation/widgets/states/empty_state.dart';
 import 'package:agawaeuleo/presentation/widgets/states/error_state.dart';
+import 'package:agawaeuleo/presentation/widgets/symptom/symptom_illustration.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -19,6 +20,9 @@ import 'widgets/search_result_tile.dart';
 /// §11.8 검색 화면. 상단 검색 입력(자동 포커스, Hero `home-search-bar` morph,
 /// 좌 뒤로가기 · 우 X 클리어+재포커스), 200ms 디바운스 → 실시간 결과 리스트.
 /// 입력이 비었을 땐 최근 검색어를 노출한다.
+///
+/// DESIGN v3 "몽글 클레이" §6 — 알약 검색창, 최근 검색은 알약 칩 행, 결과는 클레이
+/// 썸네일 쿠션을 단 둥근 타일, 빈 결과는 클레이 장면(돋보기를 든 아가).
 class SearchScreen extends ConsumerStatefulWidget {
   const SearchScreen({super.key});
 
@@ -126,7 +130,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
   }
 }
 
-/// 좌측 뒤로가기(40 탭타깃, arrow_back 24 ink.900) + Hero 검색 입력 필드.
+/// 좌측 뒤로가기(동그란 버블 40 · 탭타깃 48) + Hero 검색 입력 필드.
 class _TopBar extends StatelessWidget {
   const _TopBar({
     required this.controller,
@@ -147,49 +151,62 @@ class _TopBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
-    // DESIGN v2 §7.2-1 — TopBar 하단 상시 헤어라인(AppAppBar와 같은 표면 경계 문법).
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        border: Border(bottom: BorderSide(color: colors.line)),
+    // DESIGN v3 §5.1 — 헤어라인 경계 대신 여백으로 나눈다(표면은 부드럽게 이어진다).
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.x8,
+        AppSpacing.x8,
+        AppSpacing.screenPadding,
+        AppSpacing.x8,
       ),
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(
-          AppSpacing.x8,
-          AppSpacing.x8,
-          AppSpacing.screenPadding,
-          AppSpacing.x8,
-        ),
-        child: Row(
-          children: [
-            GestureDetector(
+      child: Row(
+        children: [
+          Semantics(
+            button: true,
+            label: '뒤로',
+            child: GestureDetector(
               behavior: HitTestBehavior.opaque,
               onTap: onBack,
               child: SizedBox(
-                width: 40,
-                height: 40,
+                width: 48,
+                height: 48,
                 child: Center(
-                  child: Icon(Icons.arrow_back, size: 24, color: colors.ink900),
+                  child: Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: colors.paperRaised,
+                      shape: BoxShape.circle,
+                      boxShadow: context.shadows.e1,
+                    ),
+                    child: Icon(
+                      Icons.arrow_back_rounded,
+                      size: 22,
+                      color: colors.ink900,
+                    ),
+                  ),
                 ),
               ),
             ),
-            const SizedBox(width: AppSpacing.x4),
-            Expanded(
-              child: SearchFieldBar(
-                controller: controller,
-                focusNode: focusNode,
-                onChanged: onChanged,
-                onSubmitted: onSubmitted,
-                onClear: onClear,
-              ),
+          ),
+          const SizedBox(width: AppSpacing.x4),
+          Expanded(
+            child: SearchFieldBar(
+              controller: controller,
+              focusNode: focusNode,
+              onChanged: onChanged,
+              onSubmitted: onSubmitted,
+              onClear: onClear,
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
 }
 
-/// 디바운스된 질의에 대한 결과 리스트. 항목 fadeIn 120ms, 빈 결과 → EmptyState(1회 흔들림).
+/// 디바운스된 질의에 대한 결과 리스트. 항목 fadeIn 120ms, 빈 결과 → EmptyState(1회 흔들림,
+/// 클레이 장면).
 class _Results extends ConsumerWidget {
   const _Results({required this.query, required this.onOpen});
 
@@ -217,21 +234,20 @@ class _Results extends ConsumerWidget {
           return EmptyState(
             key: ValueKey('empty-$query'),
             icon: Icons.search_off_rounded,
+            illustration: const ClayIllustration(
+              asset: ClayScenes.emptySearch,
+              size: 140,
+            ),
             title: '검색 결과가 없어요',
             message: '다른 이름이나 초성으로 검색해 보세요',
           );
         }
-        // DESIGN v2 §7.2-2 — 카드화하지 않고 행 사이 inset 헤어라인(좌 72dp)으로
-        // 리듬만 부여한다.
+        // DESIGN v3 §6 — 헤어라인 대신 둥근 타일 사이 간격으로 리듬을 준다.
         return ListView.separated(
           padding: const EdgeInsets.symmetric(vertical: AppSpacing.x8),
           itemCount: results.length,
-          separatorBuilder: (context, _) => Divider(
-            height: 1,
-            thickness: 1,
-            indent: SearchResultTile.dividerIndent,
-            color: context.colors.line,
-          ),
+          separatorBuilder: (context, _) =>
+              const SizedBox(height: AppSpacing.x8),
           itemBuilder: (context, index) {
             final symptom = results[index];
             final tile = SearchResultTile(

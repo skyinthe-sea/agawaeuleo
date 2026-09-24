@@ -94,10 +94,21 @@ class ProfileMenuTile extends StatelessWidget {
                     ),
                   ),
                 ),
-                Icon(
-                  Icons.chevron_right_rounded,
-                  size: 22,
-                  color: colors.ink300,
+                // DESIGN v3 §5.4 — chevron을 소프트 원(28dp, paperStack)에 담아
+                // "말랑한" 탭 힌트로 바꾼다.
+                Container(
+                  width: 28,
+                  height: 28,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: colors.paperStack,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    Icons.chevron_right_rounded,
+                    size: 17,
+                    color: colors.ink500,
+                  ),
                 ),
               ],
             ),

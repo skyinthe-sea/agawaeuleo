@@ -2,15 +2,16 @@ import 'package:flutter/material.dart';
 
 import '../../../config/theme/theme.dart';
 import '../../../core/haptics/app_haptics.dart';
+import '../surfaces/clay_sheen.dart';
 
-/// DESIGN v2 §4.7 슬라이딩 세그먼트 — 제네릭 통합 컴포넌트.
+/// 슬라이딩 세그먼트 — 제네릭 통합 컴포넌트(DESIGN v2 §4.7 → v3 §5.3 "말랑 알약").
 ///
 /// `baby_gender_segment`·`segmented_control`·트래킹 `_TypeSegment`/`_RangeTabs`
 /// 등 3곳 이상의 중복 구현을 단일 컴포넌트로 대체한다.
 ///
-/// 트랙: `paperCard` + `line` 1px 보더 + r.sm(10), 높이 44(기본). 인디케이터:
-/// `paperRaised` + e2 + `lineStrong` 헤어라인, `AnimatedAlign`(fast, standard).
-/// 라벨: 선택 `accent` / 비선택 `ink500`. 탭 시 `selectionClick` 햅틱.
+/// 트랙: `paperStack` 알약(윤곽 없음), 높이 44(기본). 썸: `paperRaised` 알약 + e1 +
+/// 클레이 광택([ClaySheen.gradient]), `AnimatedAlign`(fast, standard)로 미끄러진다.
+/// 라벨: 선택 `ink900` / 비선택 `ink500`. 탭 시 `selectionClick` 햅틱.
 class SlidingSegment<T> extends StatelessWidget {
   const SlidingSegment({
     required this.items,
@@ -34,11 +35,10 @@ class SlidingSegment<T> extends StatelessWidget {
 
     return Container(
       height: height,
-      padding: const EdgeInsets.all(3),
+      padding: const EdgeInsets.all(AppSpacing.x4),
       decoration: BoxDecoration(
-        color: colors.paperCard,
-        borderRadius: AppRadius.brSm,
-        border: Border.all(color: colors.line),
+        color: colors.paperStack,
+        borderRadius: AppRadius.brFull,
       ),
       child: LayoutBuilder(
         builder: (context, constraints) {
@@ -57,10 +57,9 @@ class SlidingSegment<T> extends StatelessWidget {
                   width: segmentWidth,
                   height: double.infinity,
                   decoration: BoxDecoration(
-                    color: colors.paperRaised,
-                    borderRadius: AppRadius.brSm,
-                    border: Border.all(color: colors.lineStrong),
-                    boxShadow: context.shadows.e2,
+                    gradient: ClaySheen.gradient(context, colors.paperRaised),
+                    borderRadius: AppRadius.brFull,
+                    boxShadow: context.shadows.e1,
                   ),
                 ),
               ),
@@ -110,7 +109,7 @@ class _SegmentLabel extends StatelessWidget {
           duration: AppMotion.resolve(context, AppMotion.fast),
           curve: AppMotion.standard,
           style: context.texts.label.copyWith(
-            color: selected ? colors.accent : colors.ink500,
+            color: selected ? colors.ink900 : colors.ink500,
           ),
           child: Text(label, maxLines: 1, overflow: TextOverflow.ellipsis),
         ),

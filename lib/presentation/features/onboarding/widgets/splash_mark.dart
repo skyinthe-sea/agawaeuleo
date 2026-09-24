@@ -1,20 +1,28 @@
 import 'dart:math' as math;
-import 'dart:ui' show lerpDouble;
 
 import 'package:flutter/widgets.dart';
 
 import '../../../../config/theme/theme.dart';
+import '../../../widgets/symptom/symptom_illustration.dart';
 
-/// 스플래시 브랜드 도장 — 앱 아이콘의 **우는 아기 마크**를 동그란 인주 도장에 담아,
-/// [smile] 진행도에 따라 방긋 웃는 얼굴로 바뀐다("아가 왜 울어?" → 달래졌다).
+/// 스플래시 브랜드 배지 — DESIGN v3 §6 "딸기 핑크 원형 배지 + 클레이 아가 얼굴".
 ///
-/// 지오메트리는 `tool/app_icon/generate_app_icon.py`의 마크 상수와 **같은 값**이다
-/// (마크 박스 0..1 정규화). 네이티브 런치 화면 배지(같은 스크립트 `--splash`)와
-/// 첫 프레임이 픽셀 단위로 겹치도록 원 지름 대비 마크 비율도 0.78로 맞췄다 — 한쪽을
-/// 바꾸면 다른 쪽도 함께 바꿀 것.
+/// 딸기 핑크(`seal`) 원 안에 클레이 아가 얼굴을 담아, [smile] 진행도에 따라 우는
+/// 얼굴([ClayScenes.babyCry])에서 방긋 웃는 얼굴([ClayScenes.babySmile])로 바뀐다
+/// ("아가 왜 울어?" → 달래졌다). 바뀌는 순간 얼굴이 한 번 말랑하게 눌렸다가(스쿼시)
+/// 쫀득하게 늘어나며(스트레치) 제자리를 찾는다.
 ///
-/// 색은 앱 아이콘과 같은 **브랜드 고정값**(라이트 팔레트 `seal`·`paperBg` 토큰)이다.
-/// 다크 모드에서도 네이티브 런치 아이콘과 같은 색이어야 이음새가 보이지 않는다.
+/// **에셋 계약** — 두 WebP는 같은 정사각 프레이밍(투명 배경, 얼굴 가운데, 귀까지 포함한
+/// 얼굴 폭이 이미지 폭의 약 78%)이라 같은 자리에 겹쳐 크로스페이드한다. 눈물은 에셋에
+/// 굽지 않고 여기서 벡터로 그린다([tear]) — 흘러내려 사라져야 하기 때문이다.
+///
+/// **네이티브 배지 계약** — 원 지름 대비 얼굴 이미지 박스 비율 [markRatio](0.78)는
+/// 네이티브 런치 배지(seal 원 + babyCry 이미지, 벡터 눈물 없음)와 같다. 한쪽을 바꾸면
+/// 다른 쪽도 함께 바꿀 것. 첫 프레임(smile 0 · tear 0)은 벡터 눈물이 아직 맺히기 전이라
+/// 네이티브 배지와 픽셀 단위로 같다.
+///
+/// 색은 앱 아이콘과 같은 **브랜드 고정값**(라이트 팔레트 토큰)이다. 다크 모드에서도
+/// 네이티브 런치 배지와 같은 색이어야 이음새가 보이지 않는다.
 class SplashMark extends StatelessWidget {
   const SplashMark({
     required this.size,
@@ -23,190 +31,207 @@ class SplashMark extends StatelessWidget {
     super.key,
   });
 
-  /// 도장(원) 지름.
+  /// 배지(원) 지름.
   final double size;
 
-  /// 0 = 우는 입(세로로 열린 타원) → 1 = 방긋 웃는 입(곡선) + 볼터치.
+  /// 0 = 우는 얼굴 → 1 = 방긋 웃는 얼굴.
   final double smile;
 
-  /// 0 = 뺨 위 눈물 → 1 = 흘러내려 사라짐.
+  /// 0 = 아직 맺히기 전 → (눈가에 맺혔다가) 뺨을 타고 흘러내려 → 1 = 사라짐.
   final double tear;
 
-  /// 원 지름 대비 마크 박스 비율(네이티브 배지와 동일).
+  /// 원 지름 대비 얼굴 이미지 박스 비율(네이티브 배지와 동일).
   static const double markRatio = 0.78;
+
+  /// 얼굴 이미지를 그리는 고정 설계 크기. 배지가 160 → 112dp로 줄어도 같은
+  /// 해상도로 한 번만 디코드하고(연출 중 재디코드·깜박임 없음) 변환으로만 줄인다.
+  static const double _faceCanvas = 160 * markRatio;
+
+  /// 두 얼굴을 교체하는 창 — 스쿼시가 가장 눌린 직후에 짧게 바꿔 낀다.
+  static const Interval _swap = Interval(0.38, 0.62, curve: Curves.easeInOut);
+
+  /// 우는 얼굴은 웃는 얼굴이 거의 다 덮은 뒤에 걷는다. 투명 가장자리 두 장이 동시에
+  /// 반투명이 되면 배지 핑크가 얼굴 위로 비친다.
+  static const Interval _cryOut = Interval(0.6, 0.8);
+
+  /// 우는 얼굴·웃는 얼굴 이미지 프로바이더(미리 읽기와 그리기가 같은 캐시 키를 쓴다).
+  static const AssetImage _cry = AssetImage(ClayScenes.babyCry);
+  static const AssetImage _smile = AssetImage(ClayScenes.babySmile);
+
+  /// 두 얼굴을 이미지 캐시에 미리 올린다 — 스플래시가 첫 프레임 전에 호출해
+  /// 네이티브 배지 → Flutter 첫 프레임 사이에 빈 배지가 비치지 않게 한다.
+  /// 에셋이 없거나 실패해도 조용히 완료된다.
+  static Future<void> precache(BuildContext context) => Future.wait([
+    precacheImage(_cry, context, onError: (_, _) {}),
+    precacheImage(_smile, context, onError: (_, _) {}),
+  ]);
+
+  /// 스쿼시(+) / 스트레치(−) 양 — 눌렸다가(최대 7%) 늘어나며(최대 5%) 제자리.
+  static double _squash(double smile) {
+    final t = const Interval(0.3, 0.85).transform(smile.clamp(0.0, 1.0));
+    if (t <= 0 || t >= 1) return 0;
+    if (t < 0.4) return 0.07 * math.sin(math.pi * t / 0.4);
+    return -0.05 * math.sin(math.pi * (t - 0.4) / 0.6);
+  }
 
   @override
   Widget build(BuildContext context) {
-    return CustomPaint(
-      size: Size.square(size),
-      painter: _SplashMarkPainter(
-        smile: smile,
-        tear: tear,
-        seal: AppColors.light.seal,
-        cream: AppColors.light.paperBg,
+    final brand = AppColors.light;
+    final s = smile.clamp(0.0, 1.0);
+    final smileIn = _swap.transform(s);
+    final cryOut = _cryOut.transform(s);
+    final squash = _squash(s);
+
+    return SizedBox.square(
+      dimension: size,
+      child: DecoratedBox(
+        decoration: BoxDecoration(color: brand.seal, shape: BoxShape.circle),
+        child: Center(
+          child: SizedBox.square(
+            dimension: size * markRatio,
+            child: FittedBox(
+              child: SizedBox.square(
+                dimension: _faceCanvas,
+                child: Transform(
+                  // 턱 언저리를 바닥 삼아 눌렸다 튄다(부피 보존: 가로 +, 세로 −).
+                  alignment: const Alignment(0, 0.6),
+                  transform: Matrix4.diagonal3Values(1 + squash, 1 - squash, 1),
+                  child: Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      Opacity(opacity: 1 - cryOut, child: const _Face(_cry)),
+                      Opacity(opacity: smileIn, child: const _Face(_smile)),
+                      CustomPaint(
+                        painter: _TearPainter(
+                          tear: tear,
+                          fill: _tearColor(brand),
+                          rim: Color.lerp(brand.sage, brand.lilac, 0.5)!,
+                          glint: brand.paperRaised,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// 눈물색 — 팔레트에 하늘색 토큰이 없어 민트(sage)와 라일락의 중간(푸른 기)을
+  /// 크림 쪽으로 밝힌 이슬빛 파랑. 토큰에서만 파생한다.
+  static Color _tearColor(AppColors c) =>
+      Color.lerp(Color.lerp(c.sage, c.lilac, 0.5), c.paperRaised, 0.38)!;
+}
+
+/// 얼굴 한 장 — 장식이므로 시맨틱스 제외. 에셋이 없으면 빈 자리(배지 원만 보인다).
+class _Face extends StatelessWidget {
+  const _Face(this.image);
+
+  final ImageProvider image;
+
+  @override
+  Widget build(BuildContext context) {
+    return ExcludeSemantics(
+      child: Image(
+        image: image,
+        fit: BoxFit.contain,
+        filterQuality: FilterQuality.medium,
+        gaplessPlayback: true,
+        errorBuilder: (context, error, stackTrace) => const SizedBox.expand(),
       ),
     );
   }
 }
 
-class _SplashMarkPainter extends CustomPainter {
-  const _SplashMarkPainter({
-    required this.smile,
+/// 벡터 눈물 — 오른쪽 눈꼬리에서 맺혀(0~0.22) 뺨을 타고 흘러내리며 작아지고
+/// 옅어진다(0.22~1). 좌표는 얼굴 이미지 박스 0..1 정규화.
+class _TearPainter extends CustomPainter {
+  const _TearPainter({
     required this.tear,
-    required this.seal,
-    required this.cream,
+    required this.fill,
+    required this.rim,
+    required this.glint,
   });
 
-  final double smile;
   final double tear;
-  final Color seal;
-  final Color cream;
+  final Color fill;
+  final Color rim;
+  final Color glint;
 
-  // ── 앱 아이콘 마크 상수(generate_app_icon.py와 동일) ──────────────────────
-  static const Offset _faceC = Offset(0.50, 0.565);
-  static const double _faceR = 0.36;
-  static const Offset _curlC = Offset(0.578, 0.178);
-  static const double _curlR = 0.078;
-  static const double _curlW = 0.042;
-  static const double _curlStartDeg = 145;
-  static const double _curlEndDeg = 330;
-  static const double _eyeY = 0.500;
-  static const double _eyeDx = 0.135;
-  static const double _eyeR = 0.078;
-  static const double _eyeW = 0.038;
-  static const Offset _mouthC = Offset(0.50, 0.690);
-  static const double _mouthRx = 0.088;
-  static const double _mouthRy = 0.082;
-  static const Offset _tearC = Offset(0.695, 0.655);
-  static const double _tearR = 0.048;
-  static const double _tearTipY = 0.568;
+  /// 눈물이 맺히는 자리(오른쪽 눈 바깥 아래 뺨 위)와 흘러내리는 거리.
+  static const Offset _start = Offset(0.70, 0.57);
+  static const double _fall = 0.13;
 
-  static double _rad(double deg) => deg * math.pi / 180;
+  /// 방울 반지름(이미지 폭 대비)과 꼭지 길이(반지름 배수).
+  static const double _radius = 0.036;
+  static const double _tip = 1.95;
 
   @override
   void paint(Canvas canvas, Size size) {
-    final d = size.shortestSide;
-    final center = size.center(Offset.zero);
-    canvas.drawCircle(center, d / 2, Paint()..color = seal);
-
-    final m = d * SplashMark.markRatio;
-    final origin = center - Offset(m / 2, m / 2);
-    Offset p(double x, double y) => origin + Offset(x * m, y * m);
-
-    final creamFill = Paint()..color = cream;
-    final sealFill = Paint()..color = seal;
-
-    // 얼굴 + 배냇머리(PIL 아크는 두께가 안쪽으로 자라므로 중심선 반경 r - w/2).
-    canvas.drawCircle(p(_faceC.dx, _faceC.dy), _faceR * m, creamFill);
-    final curlMid = (_curlR - _curlW / 2) * m;
-    canvas.drawArc(
-      Rect.fromCircle(center: p(_curlC.dx, _curlC.dy), radius: curlMid),
-      _rad(_curlStartDeg),
-      _rad(_curlEndDeg - _curlStartDeg),
-      false,
-      Paint()
-        ..color = cream
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = _curlW * m
-        ..strokeCap = StrokeCap.round,
+    if (tear <= 0 || tear >= 1) return;
+    final swell = Curves.easeOutBack.transform(
+      const Interval(0, 0.22).transform(tear),
     );
+    final fall = Curves.easeInCubic.transform(
+      const Interval(0.22, 1).transform(tear),
+    );
+    final alpha =
+        1 - Curves.easeIn.transform(const Interval(0.5, 1).transform(tear));
+    if (swell <= 0 || alpha <= 0) return;
 
-    // 감은 눈(∩) — 우는 얼굴에서도 웃는 얼굴에서도 그대로 둔다(^^).
-    final eyePaint = Paint()
-      ..color = seal
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = _eyeW * m
-      ..strokeCap = StrokeCap.round;
-    final eyeMid = (_eyeR - _eyeW / 2) * m;
-    for (final sx in const [-1, 1]) {
-      canvas.drawArc(
-        Rect.fromCircle(
-          center: p(_faceC.dx + sx * _eyeDx, _eyeY),
-          radius: eyeMid,
-        ),
-        math.pi,
-        math.pi,
-        false,
-        eyePaint,
-      );
-    }
+    final w = size.width;
+    final r = _radius * w * swell * (1 - 0.45 * fall);
+    final c = Offset(_start.dx * w, (_start.dy + _fall * fall) * size.height);
+    final tipY = c.dy - r * _tip;
 
-    // 볼터치 — 웃음이 반쯤 지나면 번진다.
-    final blush = ((smile - 0.45) / 0.55).clamp(0.0, 1.0);
-    if (blush > 0) {
-      final blushPaint = Paint()..color = seal.withValues(alpha: 0.24 * blush);
-      for (final sx in const [-1, 1]) {
-        canvas.drawCircle(
-          p(0.5 + sx * 0.228, 0.618),
-          0.05 * m * (0.6 + 0.4 * blush),
-          blushPaint,
-        );
-      }
-    }
+    final drop = Path()
+      ..moveTo(c.dx, tipY)
+      ..cubicTo(
+        c.dx + r * 0.35,
+        c.dy - r * _tip * 0.55,
+        c.dx + r,
+        c.dy - r * 0.55,
+        c.dx + r,
+        c.dy,
+      )
+      ..arcToPoint(Offset(c.dx - r, c.dy), radius: Radius.circular(r))
+      ..cubicTo(
+        c.dx - r,
+        c.dy - r * 0.55,
+        c.dx - r * 0.35,
+        c.dy - r * _tip * 0.55,
+        c.dx,
+        tipY,
+      )
+      ..close();
 
-    // 입 — 앞 절반: 열린 타원이 납작하게 닫힌다 / 뒤 절반: 곧은 선이 휘어 웃는다.
-    final close = (smile / 0.5).clamp(0.0, 1.0);
-    final curve = ((smile - 0.5) / 0.5).clamp(0.0, 1.0);
-    if (smile < 0.5) {
-      final eased = Curves.easeInCubic.transform(close);
-      final rx = lerpDouble(_mouthRx, 0.078, eased)! * m;
-      final ry = lerpDouble(_mouthRy, _eyeW / 2, eased)! * m;
-      final c = p(_mouthC.dx, lerpDouble(_mouthC.dy, 0.70, eased)!);
-      canvas.drawOval(
-        Rect.fromCenter(center: c, width: rx * 2, height: ry * 2),
-        sealFill,
-      );
-    } else {
-      final eased = Curves.easeOutBack.transform(curve);
-      final halfWidth = lerpDouble(0.078 - _eyeW / 2, 0.098, eased)!;
-      final depth = lerpDouble(0, 0.062, eased)!;
-      final y0 = lerpDouble(0.70, 0.672, eased)!;
-      final path = Path()
-        ..moveTo(p(0.5 - halfWidth, y0).dx, p(0.5 - halfWidth, y0).dy)
-        ..quadraticBezierTo(
-          p(0.5, y0 + depth * 2).dx,
-          p(0.5, y0 + depth * 2).dy,
-          p(0.5 + halfWidth, y0).dx,
-          p(0.5 + halfWidth, y0).dy,
-        );
-      canvas.drawPath(
-        path,
+    canvas
+      ..drawPath(drop, Paint()..color = fill.withValues(alpha: alpha))
+      ..drawPath(
+        drop,
         Paint()
-          ..color = seal
+          ..color = rim.withValues(alpha: 0.35 * alpha)
           ..style = PaintingStyle.stroke
-          ..strokeWidth = _eyeW * m
-          ..strokeCap = StrokeCap.round,
+          ..strokeWidth = r * 0.14,
+      )
+      // 유리알 반짝임 — 왼쪽 위 작은 타원.
+      ..drawOval(
+        Rect.fromCenter(
+          center: c.translate(-r * 0.36, -r * 0.3),
+          width: r * 0.52,
+          height: r * 0.7,
+        ),
+        Paint()..color = glint.withValues(alpha: 0.85 * alpha),
       );
-    }
-
-    // 눈물 — 뺨을 따라 흘러내리며 작아지고 사라진다.
-    if (tear < 1) {
-      final fall = Curves.easeInCubic.transform(tear);
-      final scale = 1 - 0.55 * fall;
-      final dy = 0.15 * fall;
-      final alpha =
-          1 - Curves.easeIn.transform(((tear - 0.35) / 0.65).clamp(0, 1));
-      final tc = p(_tearC.dx, _tearC.dy + dy);
-      final r = _tearR * m * scale;
-      final tipY = tc.dy - (_tearC.dy - _tearTipY) * m * scale;
-      // 원과 삼각형을 합집합으로 — 서브패스를 겹쳐 그리면 감김 방향이 달라 틈이 생긴다.
-      final drop = Path.combine(
-        PathOperation.union,
-        Path()..addOval(Rect.fromCircle(center: tc, radius: r)),
-        Path()
-          ..moveTo(tc.dx, tipY)
-          ..lineTo(tc.dx - r, tc.dy)
-          ..lineTo(tc.dx + r, tc.dy)
-          ..close(),
-      );
-      canvas.drawPath(drop, Paint()..color = seal.withValues(alpha: alpha));
-    }
   }
 
   @override
-  bool shouldRepaint(_SplashMarkPainter old) =>
-      old.smile != smile ||
+  bool shouldRepaint(_TearPainter old) =>
       old.tear != tear ||
-      old.seal != seal ||
-      old.cream != cream;
+      old.fill != fill ||
+      old.rim != rim ||
+      old.glint != glint;
 }

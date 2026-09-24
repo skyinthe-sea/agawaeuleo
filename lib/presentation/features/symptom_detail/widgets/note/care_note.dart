@@ -20,7 +20,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 /// - 다음 장은 오른쪽에서 **위로 겹쳐** 들어오고, 덮이는 장은 제자리에서 살짝
 ///   물러나며(축소·그늘) 아래로 가라앉는다. 되돌아가면 거꾸로 걷힌다.
 /// - 머리([NoteHeader])는 장 위에 떠 있고, 현재 장을 스크롤하면 히어로 줄이 접힌다.
-///   장 탭의 먹 막대·무대 블롭 색·일러스트 기울기가 전부 페이지 연속 값을 따른다.
+///   장 탭의 젤리 알약·무대 블롭 색·일러스트 기울기가 전부 페이지 연속 값을 따른다.
 /// - 옆 장은 미리 빌드하되, 장 안의 등장 모션은 그 장이 화면에 들어오는 순간
 ///   재생한다([RevealGate]).
 class CareNote extends ConsumerStatefulWidget {
@@ -329,36 +329,84 @@ class _CareNoteState extends ConsumerState<CareNote>
       controller: _scrolls[chapter],
       slivers: [
         const SliverToBoxAdapter(
-          child: SizedBox(height: NoteHeader.maxExtent + AppSpacing.x20),
+          child: SizedBox(height: NoteHeader.maxExtent + AppSpacing.x8),
         ),
         // 장 콘텐츠는 한 덩어리로 빌드한다 — 면책 문구(§13.3)가 스크롤 위치와
         // 무관하게 늘 트리에 있고, 장이 짧아 지연 빌드의 이득도 없다.
-        SliverPadding(
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.screenPadding,
-          ),
-          sliver: SliverToBoxAdapter(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                body,
-                // 요약은 목차가 다음 장 안내를 대신한다.
-                if (next != null && chapter != NoteChapter.overview) ...[
-                  const SizedBox(height: AppSpacing.x32),
-                  NoteNextCard(
-                    number: index + 2,
-                    chapter: next,
-                    onTap: () => _goTo(index + 1),
-                  ),
+        //
+        // DESIGN v3 §6 — 장마다 윗변이 둥근(xl) 크림 시트가 머리 아래에서 솟아
+        // 오른다. 넘기면 다음 시트가 그 위로 겹쳐 올라온다(_NoteSheet).
+        SliverToBoxAdapter(
+          child: _ChapterSurface(
+            top: true,
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(
+                AppSpacing.screenPadding,
+                AppSpacing.x24,
+                AppSpacing.screenPadding,
+                0,
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  body,
+                  // 요약은 목차가 다음 장 안내를 대신한다.
+                  if (next != null && chapter != NoteChapter.overview) ...[
+                    const SizedBox(height: AppSpacing.x32),
+                    NoteNextCard(
+                      number: index + 2,
+                      chapter: next,
+                      onTap: () => _goTo(index + 1),
+                    ),
+                  ],
+                  const SizedBox(height: AppSpacing.x24),
+                  NoteDisclaimer(audience: symptom.audience),
+                  const SizedBox(height: AppSpacing.x40),
                 ],
-                const SizedBox(height: AppSpacing.x24),
-                NoteDisclaimer(audience: symptom.audience),
-                const SizedBox(height: AppSpacing.x40),
-              ],
+              ),
             ),
           ),
         ),
+        // 장이 화면보다 짧아도 시트가 바닥까지 이어진다(당겨도 바탕이 비치지 않게).
+        const SliverFillRemaining(
+          hasScrollBody: false,
+          fillOverscroll: true,
+          child: _ChapterSurface(child: SizedBox.expand()),
+        ),
       ],
+    );
+  }
+}
+
+/// 장 시트의 면 — `paperCard` 크림. [top]이면 윗변을 xl로 둥글리고 위쪽으로
+/// 은은한 장밋빛 그림자를 드리워 머리 아래에서 떠오른 한 장처럼 보이게 한다.
+class _ChapterSurface extends StatelessWidget {
+  const _ChapterSurface({required this.child, this.top = false});
+
+  final Widget child;
+  final bool top;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.colors;
+    if (!top) return ColoredBox(color: colors.paperCard, child: child);
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: colors.paperCard,
+        borderRadius: const BorderRadius.vertical(
+          top: Radius.circular(AppRadius.xl),
+        ),
+        // e2를 위로 뒤집은 그림자(토큰 파생) — 시트 윗변만 부드럽게 뜬다.
+        boxShadow: [
+          for (final s in context.shadows.e2)
+            BoxShadow(
+              color: s.color,
+              blurRadius: s.blurRadius,
+              offset: Offset(0, -s.offset.dy / 2),
+            ),
+        ],
+      ),
+      child: child,
     );
   }
 }

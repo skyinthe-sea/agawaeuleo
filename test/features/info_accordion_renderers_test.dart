@@ -1,3 +1,4 @@
+import 'package:agawaeuleo/config/theme/theme.dart';
 import 'package:agawaeuleo/domain/entities/symptom_info.dart';
 import 'package:agawaeuleo/presentation/features/symptom_detail/widgets/info_accordion.dart';
 import 'package:flutter/material.dart';
@@ -7,6 +8,9 @@ import '../widgets/_widget_harness.dart';
 
 /// §11.9 개정 — InfoSection 타입별 본문 렌더러(steps/checklist/table/qa/tips)
 /// 위젯 검증. 각 타입을 첫 섹션(기본 펼침)으로 단독 렌더한다.
+///
+/// DESIGN v3 "몽글 클레이" — 번호는 주아체 파스텔 동그라미, 체크는 동그란 민트 버블,
+/// 팁은 버터(amberWash) 메모, Q/A는 주아체 동그라미 표식.
 void main() {
   Future<void> pumpSection(
     WidgetTester tester,
@@ -22,7 +26,7 @@ void main() {
     await tester.pumpAndSettle();
   }
 
-  testWidgets('steps: 번호 원형 칩(1부터) + intro + 본문 행을 렌더한다', (tester) async {
+  testWidgets('steps: 주아체 번호 동그라미(1부터) + intro + 본문 행을 렌더한다', (tester) async {
     await pumpSection(
       tester,
       const InfoSection.steps(
@@ -37,12 +41,17 @@ void main() {
     expect(find.text('1'), findsOneWidget);
     expect(find.text('2'), findsOneWidget);
     expect(find.text('3'), findsOneWidget);
+    // v3 — 숫자 강조는 모노가 아니라 주아체(§3.3).
+    expect(
+      tester.widget<Text>(find.text('1')).style?.fontFamily,
+      AppFontFamily.display,
+    );
     expect(find.text('두 번째 단계'), findsOneWidget);
     expect(find.byIcon(Icons.format_list_numbered_rounded), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('checklist: 체크 아이콘 + 항목 리스트를 렌더한다', (tester) async {
+  testWidgets('checklist: 동그란 체크 + 항목 리스트를 렌더한다', (tester) async {
     await pumpSection(
       tester,
       const InfoSection.checklist(
@@ -105,11 +114,14 @@ void main() {
     expect(find.text('첫 질문인가요?'), findsOneWidget);
     expect(find.text('네, 첫 답변이에요.'), findsOneWidget);
     expect(find.text('두 번째 질문인가요?'), findsOneWidget);
+    // 질문·답 앞 주아체 Q/A 표식(항목마다 한 쌍).
+    expect(find.text('Q'), findsNWidgets(2));
+    expect(find.text('A'), findsNWidgets(2));
     expect(find.byIcon(Icons.forum_outlined), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('tips: 라운드 박스 안 잉크 도트 불릿 리스트를 렌더한다', (tester) async {
+  testWidgets('tips: 버터 메모 안 동그란 점 불릿 리스트를 렌더한다', (tester) async {
     await pumpSection(
       tester,
       const InfoSection.tips(title: '조리원 실전 팁', items: ['팁 하나예요.', '팁 둘이에요.']),
@@ -119,6 +131,16 @@ void main() {
     expect(find.text('팁 둘이에요.'), findsOneWidget);
     expect(find.byIcon(Icons.fiber_manual_record), findsNWidgets(2));
     expect(find.byIcon(Icons.lightbulb_outline), findsOneWidget);
+    // 버터(amberWash) 메모 면.
+    expect(
+      find.byWidgetPredicate(
+        (w) =>
+            w is Container &&
+            w.decoration is BoxDecoration &&
+            (w.decoration! as BoxDecoration).color == AppColors.light.amberWash,
+      ),
+      findsOneWidget,
+    );
     expect(tester.takeException(), isNull);
   });
 

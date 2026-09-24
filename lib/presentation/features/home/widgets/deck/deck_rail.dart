@@ -3,13 +3,15 @@ import 'dart:ui' show lerpDouble;
 
 import 'package:agawaeuleo/config/theme/theme.dart';
 import 'package:agawaeuleo/domain/entities/entities.dart';
+import 'package:agawaeuleo/presentation/features/home/widgets/deck/deck_palette.dart';
 import 'package:agawaeuleo/presentation/widgets/animated/tap_spring.dart';
 import 'package:agawaeuleo/presentation/widgets/symptom/symptom_icon.dart';
 import 'package:agawaeuleo/presentation/widgets/symptom/symptom_illustration.dart';
-import 'package:agawaeuleo/presentation/widgets/symptom/symptom_tone.dart';
 import 'package:flutter/material.dart';
 
-/// 케어 덱 아래 **증상 레일** — 동그란 종이 썸네일이 가로로 흐르는 인덱스.
+/// 케어 덱 아래 **증상 레일** — 동그란 파스텔 쿠션 위 클레이 썸네일이 가로로 흐르는
+/// 인덱스(DESIGN v3 §6 — 쿠션은 장면 톤 워시 + 흰 스티커 테두리, 선택은 그룹 강조
+/// 링: 아기 = 딸기 / 엄마 = 라일락).
 ///
 /// 덱과 양방향으로 묶인다: 덱을 넘기면 레일이 따라 흘러 현재 증상을 가운데로
 /// 데려오고(링·크기·라벨 색이 페이지 연속 값을 따라 보간), 썸네일을 누르면 덱이
@@ -179,26 +181,30 @@ class _RailItem extends StatelessWidget {
 
   static const double _circle = 52;
 
+  /// 선택 링 두께(쿠션 바깥으로 번지는 강조색 링).
+  static const double _ring = 2.5;
+
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
     final texts = context.texts;
+    final tone = DeckPalette.tone(context, symptom);
+    final emphasis = DeckPalette.emphasis(context, symptom.audience).fg;
 
     final Widget art;
     if (SymptomIllustrations.has(symptom.emojiOrIcon)) {
       art = SymptomIllustration(
         illustrationKey: symptom.emojiOrIcon!,
-        size: 44,
+        size: 46,
       );
     } else {
-      final tone = SymptomTone.resolve(context, symptom.emojiOrIcon);
       art = Icon(
         SymptomIcons.resolve(symptom.emojiOrIcon),
         size: 22,
         color: tone.fg,
       );
     }
-    // 썸네일 원 안의 그림은 페이지와 무관하므로 한 번만 만들어 둔다.
+    // 쿠션 안의 그림은 페이지와 무관하므로 한 번만 만들어 둔다.
     final thumbnail = ClipOval(
       child: SizedBox.square(
         dimension: _circle,
@@ -232,17 +238,19 @@ class _RailItem extends StatelessWidget {
                     width: _circle,
                     height: _circle,
                     decoration: BoxDecoration(
-                      color: Color.lerp(
-                        colors.paperCard,
-                        colors.paperRaised,
-                        t,
-                      ),
+                      color: tone.wash,
                       shape: BoxShape.circle,
-                      border: Border.all(
-                        color: Color.lerp(colors.line, colors.ink900, t)!,
-                        width: lerpDouble(1, 2, t)!,
-                      ),
-                      boxShadow: t > 0.5 ? context.shadows.e2 : null,
+                      // 흰 스티커 테두리 — 쿠션을 크림 바탕에서 또렷이 띄운다.
+                      border: Border.all(color: colors.paperRaised, width: 2),
+                      boxShadow: [
+                        // 선택 링: 레이아웃을 흔들지 않도록 번짐 없는 그림자로 그린다.
+                        if (t > 0)
+                          BoxShadow(
+                            color: emphasis.withValues(alpha: t),
+                            spreadRadius: _ring,
+                          ),
+                        ...context.shadows.e1,
+                      ],
                     ),
                     child: child,
                   ),

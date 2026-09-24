@@ -2,8 +2,11 @@ import 'package:flutter/material.dart';
 
 import '../../../config/theme/theme.dart';
 
-/// DESIGN v2 §6.2 증상 카테고리 톤 매핑. [SymptomIcons](`symptom_icon.dart`)와
-/// 나란한 프레젠테이션 유틸(도메인 데이터 아님 — 아이콘 키 매핑과 동일한 성격)이다.
+/// 증상 카테고리 톤 매핑(DESIGN v2 §6.2 — v3 "몽글 클레이"에서 매핑은 그대로, 값만
+/// 파스텔 셔벗 토큰으로 바뀌었다: 토마토·민트·버터·딸기).
+/// [SymptomIcons](`symptom_icon.dart`)와 나란한 프레젠테이션 유틸(도메인 데이터
+/// 아님 — 아이콘 키 매핑과 동일한 성격)이다. 엄마 돌봄(audience=mom) 강조의 라일락(`lilac`)은 증상
+/// 키가 아니라 audience 기준이므로 소비처가 따로 고른다(DESIGN v3 §3.1).
 ///
 /// 증상 32종(기존 16 + 신규 아기 9·산모 7)의 `emojiOrIcon` 키를 4분류로
 /// 매핑한다. 미지 키/`null`은 기본(호흡·피부·기타 = accent)으로 폴백한다.

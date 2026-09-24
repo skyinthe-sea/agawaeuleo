@@ -1,17 +1,18 @@
 import 'package:flutter/material.dart';
 
 import '../../../config/theme/theme.dart';
+import '../surfaces/clay_sheen.dart';
 
-/// DESIGN v2 §4.4 "아이콘-in-원" 공용 컴포넌트. 워시 원 + 바깥 링 + 중앙 아이콘의
-/// flat 패턴 복붙 4곳(로그인 `AuthLogo`, 권한 프라이밍 원, 재설정 성공 원,
-/// `EmptyState`/`ErrorState` 등)을 이 단일 위젯으로 대체한다.
+/// "아이콘-in-원" 공용 컴포넌트 — DESIGN v3 §5.4 **클레이 버블**(v2 §4.4 잉크 헤일로의
+/// 후신). 로그인 로고·권한 프라이밍·재설정 성공·`EmptyState`/`ErrorState`·메뉴 행 등의
+/// 동그란 아이콘 쿠션을 이 단일 위젯으로 그린다.
 ///
-/// 구조: 워시 원(배경 [washColor]) + 바깥 링(지름 +10dp, stroke 1.2,
-/// `[fgColor].withValues(alpha: .28)`) + 중앙 아이콘([icon], 색 [fgColor]) —
-/// 또는 [child]로 임의 위젯(예: `InkDropLogo`)을 대신 삽입.
+/// 구조: 파스텔 wash 원([washColor]) 위에 좌상단으로 빛이 한 점 맺히는 은은한 광택
+/// ([ClaySheen.bubble]) + (옵션) 바깥 링(지름 +10dp, 2dp, `[fgColor]` α.22) + 중앙
+/// 아이콘([icon], 색 [fgColor]) — 또는 [child]로 임의 위젯을 대신 삽입.
 ///
-/// [elevated]가 true면 원에 e2 그림자를 준다. [animate]가 true면 마운트 시
-/// scale .88→1 + fade(base, enter)로 "잉크 번짐"처럼 등장한다(reduce-motion 시
+/// [elevated]가 true면 원에 장밋빛 e2 그림자를 준다. [animate]가 true면 마운트 시
+/// scale .88→1 + fade(base, enter)로 "퐁" 하고 부풀며 등장한다(reduce-motion 시
 /// 즉시 표시). [ring]을 false로 주면 바깥 링을 생략한다(밀집 그리드용).
 class InkHaloIcon extends StatelessWidget {
   const InkHaloIcon({
@@ -34,7 +35,7 @@ class InkHaloIcon extends StatelessWidget {
   /// 중앙에 그릴 아이콘. [child]가 지정되면 무시된다.
   final IconData? icon;
 
-  /// 아이콘 대신 임의 위젯을 중앙에 배치(예: `InkDropLogo`).
+  /// 아이콘 대신 임의 위젯을 중앙에 배치(예: 로고·작은 클레이 일러스트).
   final Widget? child;
 
   /// 원 배경색(미지정 시 `colors.accentWash`).
@@ -43,7 +44,7 @@ class InkHaloIcon extends StatelessWidget {
   /// 아이콘/링 전경색(미지정 시 `colors.accent`).
   final Color? fgColor;
 
-  /// true면 원에 e2 그림자를 준다.
+  /// true면 원에 장밋빛 e2 그림자를 준다.
   final bool elevated;
 
   /// true면 등장 시 scale .88→1 + fade 모션을 재생한다.
@@ -60,7 +61,7 @@ class InkHaloIcon extends StatelessWidget {
   final String? semanticLabel;
 
   static const double _ringInset = 10;
-  static const double _ringStroke = 1.2;
+  static const double _ringStroke = 2;
 
   @override
   Widget build(BuildContext context) {
@@ -74,6 +75,7 @@ class InkHaloIcon extends StatelessWidget {
       alignment: Alignment.center,
       decoration: BoxDecoration(
         color: wash,
+        gradient: ClaySheen.bubble(context, wash),
         shape: BoxShape.circle,
         boxShadow: elevated ? context.shadows.e2 : null,
       ),
@@ -88,7 +90,7 @@ class InkHaloIcon extends StatelessWidget {
         decoration: BoxDecoration(
           shape: BoxShape.circle,
           border: Border.all(
-            color: fg.withValues(alpha: 0.28),
+            color: fg.withValues(alpha: 0.22),
             width: _ringStroke,
           ),
         ),

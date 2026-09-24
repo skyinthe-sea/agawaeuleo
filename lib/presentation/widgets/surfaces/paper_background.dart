@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 
 import '../../../config/theme/theme.dart';
 
-/// DESIGN v2 §4.5 종이 그레인 표면. 배경색은 기존 Scaffold가 그대로 칠하고
-/// 그 위에 §3.4 렌더 계약의 그레인 오버레이만 얹는다.
+/// 그레인 표면(DESIGN v2 §4.5 → v3 §3.5·§5.1 "무광 점토 결"). 배경색(딸기우유 크림)은
+/// 기존 Scaffold가 그대로 칠하고 그 위에 `AppTexture` 렌더 계약의 그레인 오버레이만
+/// 얹는다 — v3에서는 세기 토큰이 낮아져(.03/.035) 종이 결이 아니라 점토의 무광 결로 읽힌다.
 ///
 /// `MediaQuery.highContrast == true`면 그레인을 표시하지 않고 [child]만
 /// 반환한다(§9 가드레일 — 접근성). 타일 1장을 GPU repeat로만 그리므로

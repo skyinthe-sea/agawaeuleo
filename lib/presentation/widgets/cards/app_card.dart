@@ -6,24 +6,31 @@ import '../../../core/haptics/app_haptics.dart';
 import '../animated/ink_wash_splash.dart';
 import '../surfaces/paper_background.dart';
 
-/// DESIGN v2 §5.1 카드 위계 3단. 기본값은 [flat](기존 호출부와 시각적으로 동일).
+/// 카드 위계 3단(DESIGN v3 §5.1 "몽글 클레이"). 기본값은 [flat].
+///
+/// 면 구분은 헤어라인이 아니라 **부드럽게 퍼지는 장밋빛 그림자**가 맡는다 — 세 단
+/// 모두 라디우스 `lg`(26)의 말랑한 점토 표면이다.
 enum AppCardEmphasis {
-  /// 정지 카드(그리드·정보·리스트 카드) — `paperCard` + e1 + `brMd`(14).
+  /// 정지 카드(그리드·정보·리스트 카드) — `paperCard` + e1, 보더 없음.
   flat,
 
-  /// 강조·상승 표면 — `paperRaised` + e2 + `brLg`(20).
+  /// 강조·상승 표면 — `paperRaised` + e2.
   raised,
 
-  /// [raised]와 동일 표면이되, 뒤에 `paperStack` 아랫장을 겹쳐 "겹친 한지"
-  /// 인상을 낸다(요약 카드 등 히어로 모먼트 전용 — 그리드 밀도상 남용 금지).
+  /// [raised]보다 한 단 더 뜬 `paperRaised` + e3 면 뒤에 **파스텔 톤 wash 아랫장**
+  /// ([AppCard.stackColor], 기본 `accentWash`)이 살짝 비어져 나와 "겹쳐 빚은 점토"
+  /// 인상을 낸다(요약·BEST 같은 히어로 모먼트 전용 — 그리드 밀도상 남용 금지).
   hero,
 }
 
-/// §11.0 카드. 배경 paper.card · r.md · e1(+헤어라인 line) · 내부 패딩 16.
-/// [onTap] 지정 시 탭 스프링(scale .96) + 눌림 그림자(오목) + 잉크 워시 리플.
+/// §11.0 카드 — DESIGN v3 §5.1 "몽글 클레이" 표면.
 ///
-/// [emphasis]로 위계를 3단(flat/raised/hero, DESIGN v2 §5.1)으로 올릴 수 있다.
-/// 기본값 `flat`은 기존 시각과 완전히 동일하므로 기존 호출부는 무변경.
+/// 라디우스 `lg` · 내부 패딩 16 · [emphasis]별 면/그림자(flat=paperCard+e1,
+/// raised=paperRaised+e2, hero=paperRaised+e3+파스텔 아랫장). 헤어라인은 기본적으로
+/// 걷어냈고(라이트), 장밋빛 그림자가 약한 다크에서만 `line` 1px로 윤곽을 받친다.
+/// [showBorder]를 `true`로 주면 모드와 무관하게 `line` 1.5 윤곽을 그린다.
+///
+/// [onTap] 지정 시 말랑한 눌림(scale .96) + 오목 그림자 + 딸기 워시 리플.
 class AppCard extends StatefulWidget {
   const AppCard({
     required this.child,
@@ -34,27 +41,33 @@ class AppCard extends StatefulWidget {
     this.padding = const EdgeInsets.all(AppSpacing.cardPadding),
     this.color,
     this.borderRadius,
-    this.showBorder = true,
+    this.showBorder,
     this.clipContent = false,
+    this.stackColor,
   });
 
   final Widget child;
   final VoidCallback? onTap;
   final VoidCallback? onLongPress;
 
-  /// 카드 위계(DESIGN v2 §5.1). 기본 `flat`.
+  /// 카드 위계(DESIGN v3 §5.1). 기본 `flat`.
   final AppCardEmphasis emphasis;
   final EdgeInsetsGeometry padding;
   final Color? color;
 
-  /// 미지정 시 [emphasis]에 대응하는 라디우스(flat=brMd, raised/hero=brLg).
+  /// 미지정 시 `brLg`(세 단 공통, DESIGN v3 §3.4 "카드 = lg").
   final BorderRadius? borderRadius;
 
-  /// e1의 헤어라인 보더 표시 여부.
-  final bool showBorder;
+  /// 윤곽선. `null`(기본)=자동(라이트 없음 · 다크 `line` 1px), `true`=`line` 1.5
+  /// 상시, `false`=없음.
+  final bool? showBorder;
 
   /// 자식을 카드 모서리로 클리핑할지(썸네일 등).
   final bool clipContent;
+
+  /// [AppCardEmphasis.hero] 아랫장 색(미지정 시 `accentWash`). 카드가 속한 톤의
+  /// wash(버터·민트·라일락…)를 넘기면 그 파스텔이 카드 밑으로 비어져 나온다.
+  final Color? stackColor;
 
   /// [emphasis]의 기본 배경색.
   Color _defaultColor(AppColors colors) => switch (emphasis) {
@@ -62,16 +75,14 @@ class AppCard extends StatefulWidget {
     AppCardEmphasis.raised || AppCardEmphasis.hero => colors.paperRaised,
   };
 
-  /// [emphasis]의 기본 라디우스.
-  BorderRadius _defaultRadius() => switch (emphasis) {
-    AppCardEmphasis.flat => AppRadius.brMd,
-    AppCardEmphasis.raised || AppCardEmphasis.hero => AppRadius.brLg,
-  };
+  /// [emphasis]의 기본 라디우스(v3 — 세 단 모두 lg).
+  BorderRadius _defaultRadius() => AppRadius.brLg;
 
   /// [emphasis]의 기본 음영.
   List<BoxShadow> _defaultShadow(AppShadows shadows) => switch (emphasis) {
     AppCardEmphasis.flat => shadows.e1,
-    AppCardEmphasis.raised || AppCardEmphasis.hero => shadows.e2,
+    AppCardEmphasis.raised => shadows.e2,
+    AppCardEmphasis.hero => shadows.e3,
   };
 
   @override
@@ -105,18 +116,23 @@ class _AppCardState extends State<AppCard> {
     widget.onTap?.call();
   }
 
-  /// §9.5 카드 보더 — 양 모드 모두 [line] 헤어라인 1px(균일색).
+  /// 카드 윤곽(DESIGN v3 §5.1 — 헤어라인은 되도록 제거).
   ///
-  /// 다크 상단 하이라이트([AppShadows.topHighlight])를 top 변만 다른 색으로 주면
-  /// `Border` 가 비균일색이 되고, [AppCard.borderRadius] 와 함께 칠할 때
-  /// Flutter `Border.paint()` 의 assert("A borderRadius can only be given on
-  /// borders with uniform colors")가 페인트 도중 발생해 자식(카드 내용)이 렌더되지
-  /// 않는다(release 는 assert 제거로 각진 모서리로 조용히 폴백). 따라서 균일
-  /// [Border.all] 로만 렌더한다 — 라이트가 이미 쓰는 `paintUniformBorderWithRadius`
-  /// 경로와 동일해 다크에서도 둥근 모서리 헤어라인이 정상 렌더된다.
+  /// 라이트는 장밋빛 그림자가 면을 띄우므로 윤곽이 없다. 다크는 근검정 드롭만으로는
+  /// 면 경계가 흐려 `line` 1px을 받친다. [AppCard.showBorder]가 `true`면
+  /// 모드와 무관하게 `line` 1.5(§5.1 "필요 시 line 1.5").
+  ///
+  /// 윤곽은 반드시 균일색 [Border.all]로만 그린다 — 한 변만 다른 색(예: 다크 상단
+  /// 하이라이트)을 주면 `Border` 가 비균일색이 되어 [AppCard.borderRadius] 와 함께
+  /// 칠할 때 `Border.paint()` assert("A borderRadius can only be given on borders
+  /// with uniform colors")가 페인트 도중 터지고 자식이 렌더되지 않는다.
   Border? _cardBorder(BuildContext context) {
-    if (!widget.showBorder) return null;
-    return Border.all(color: context.colors.line);
+    final explicit = widget.showBorder;
+    if (explicit == false) return null;
+    if (explicit == true) {
+      return Border.all(color: context.colors.line, width: 1.5);
+    }
+    return context.isDark ? Border.all(color: context.colors.line) : null;
   }
 
   @override
@@ -142,24 +158,22 @@ class _AppCardState extends State<AppCard> {
 
     if (!grain) return core;
 
-    // DESIGN v2 §5.1 hero — 카드 뒤 paperStack 아랫장(좌우 10dp 인셋, 아래로 4dp
-    // 오프셋, 동일 라디우스, 보더 없음) + 그레인 오버레이("겹친 한지" 시그니처).
-    // 다크 모드는 별도 분기 없이 [AppColors.paperStack]의 다크 값을 그대로 쓴다
-    // (다크 hero는 이미 topHighlight로 강조되므로 스택 색만 교체하면 충분).
+    // DESIGN v3 §5.1 hero — 카드 뒤 파스텔 톤 wash 아랫장(좌우 12dp 인셋, 아래로
+    // 6dp 비어져 나옴, 동일 라디우스, 보더 없음) + 무광 점토 결(그레인) 오버레이.
     //
     // 그레인은 core "내부"(데코레이션 클립 안)에서 그린다 — core를 ClipRRect로
-    // 감싸면 데코레이션이 칠하는 e2 그림자까지 잘려 나가 부양감이 사라진다.
+    // 감싸면 데코레이션이 칠하는 e3 그림자까지 잘려 나가 부양감이 사라진다.
     return Stack(
       clipBehavior: Clip.none,
       children: [
         Positioned(
-          left: 10,
-          right: 10,
-          top: 4,
-          bottom: -4,
+          left: 12,
+          right: 12,
+          top: 6,
+          bottom: -6,
           child: DecoratedBox(
             decoration: BoxDecoration(
-              color: colors.paperStack,
+              color: widget.stackColor ?? colors.accentWash,
               borderRadius: radius,
             ),
           ),
@@ -169,7 +183,7 @@ class _AppCardState extends State<AppCard> {
     );
   }
 
-  /// [grain]이면 [child] 아래에 그레인 오버레이를 깐다(§5.1 hero 전용).
+  /// [grain]이면 [child] 아래에 무광 점토 결 오버레이를 깐다(§5.1 hero 전용).
   Widget _withGrain(bool grain, Widget child) =>
       grain ? PaperBackground(child: child) : child;
 

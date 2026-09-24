@@ -4,13 +4,18 @@ import 'package:agawaeuleo/core/haptics/app_haptics.dart';
 import 'package:agawaeuleo/presentation/widgets/animated/ink_wash_splash.dart';
 import 'package:agawaeuleo/presentation/widgets/headers/section_header.dart';
 import 'package:agawaeuleo/presentation/widgets/states/empty_state.dart';
+import 'package:agawaeuleo/presentation/widgets/surfaces/clay_sheen.dart';
+import 'package:agawaeuleo/presentation/widgets/symptom/symptom_illustration.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../search_providers.dart';
-import 'search_result_tile.dart';
 
 /// §11.8 최근 검색어 — 입력이 비었을 때 노출. 좌스와이프로 개별 삭제, 탭 시 재검색.
+///
+/// DESIGN v3 "몽글 클레이" §6 — 헤어라인 행 대신 **알약 칩 행**(paperRaised 알약 + e1,
+/// 앞에 딸기 워시 동그라미 시계)을 간격을 두고 쌓는다. 스와이프 삭제 배경도 같은
+/// 알약 모양의 토마토 워시.
 class RecentSearchesView extends ConsumerWidget {
   const RecentSearchesView({required this.onSelect, super.key});
 
@@ -21,10 +26,14 @@ class RecentSearchesView extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final async = ref.watch(recentSearchesProvider);
     return async.maybeWhen(
-      // DESIGN v2 §7.2-4 — 수제 `_EmptyHint` → 공용 `EmptyState`로 교체.
+      // DESIGN v2 §7.2-4 — 공용 `EmptyState`. v3 §5.5 — 클레이 장면을 일러스트 슬롯에.
       data: (items) => items.isEmpty
           ? const EmptyState(
               icon: Icons.history_rounded,
+              illustration: ClayIllustration(
+                asset: ClayScenes.emptySearch,
+                size: 140,
+              ),
               title: '아직 검색 기록이 없어요',
               message: '증상 이름이나 초성으로 검색해 보세요',
             )
@@ -34,20 +43,9 @@ class RecentSearchesView extends ConsumerWidget {
   }
 
   Widget _list(BuildContext context, WidgetRef ref, List<String> items) {
-    final colors = context.colors;
-    // DESIGN v2 §7.2-2 — 행 사이 inset 헤어라인(좌 72dp, 결과 행과 동일 리듬).
-    // 헤더와 첫 행 사이에는 넣지 않는다("행 사이"에만 적용).
-    return ListView.separated(
+    return ListView.builder(
       padding: const EdgeInsets.only(bottom: AppSpacing.x24),
       itemCount: items.length + 1,
-      separatorBuilder: (context, index) => index == 0
-          ? const SizedBox.shrink()
-          : Divider(
-              height: 1,
-              thickness: 1,
-              indent: SearchResultTile.dividerIndent,
-              color: colors.line,
-            ),
       itemBuilder: (context, index) {
         if (index == 0) {
           return _Header(
@@ -72,7 +70,7 @@ class RecentSearchesView extends ConsumerWidget {
   }
 }
 
-/// DESIGN v2 §7.2-3 — `SectionHeader`(trailing="전체 삭제" 텍스트 버튼)로 교체.
+/// DESIGN v2 §7.2-3 — `SectionHeader`(trailing="전체 삭제"). v3 — 삭제는 작은 딸기 알약.
 class _Header extends StatelessWidget {
   const _Header({required this.onClearAll});
 
@@ -94,13 +92,25 @@ class _Header extends StatelessWidget {
           behavior: HitTestBehavior.opaque,
           onTap: onClearAll,
           child: Padding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: AppSpacing.x8,
-              vertical: AppSpacing.x4,
-            ),
-            child: Text(
-              '전체 삭제',
-              style: context.texts.caption.copyWith(color: colors.accent),
+            // 보이는 알약보다 넓은 히트 영역.
+            padding: const EdgeInsets.symmetric(vertical: AppSpacing.x8),
+            child: Container(
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.x12,
+                vertical: AppSpacing.x4,
+              ),
+              decoration: BoxDecoration(
+                color: colors.accentWash,
+                borderRadius: AppRadius.brFull,
+              ),
+              child: Text(
+                '전체 삭제',
+                style: context.texts.caption.copyWith(
+                  color: colors.accent,
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: 0,
+                ),
+              ),
             ),
           ),
         ),
@@ -109,7 +119,7 @@ class _Header extends StatelessWidget {
   }
 }
 
-/// 좌스와이프(→ endToStart) 개별 삭제 + 탭 재검색.
+/// 좌스와이프(→ endToStart) 개별 삭제 + 탭 재검색 — 알약 칩 행.
 class _RecentRow extends StatelessWidget {
   const _RecentRow({
     required this.query,
@@ -125,56 +135,96 @@ class _RecentRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
-    return Dismissible(
-      key: ValueKey(query),
-      direction: DismissDirection.endToStart,
-      onDismissed: (_) => onDelete(),
-      background: ColoredBox(
-        color: colors.coralWash,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.screenPadding,
+    return Padding(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.x16,
+        vertical: AppSpacing.x4,
+      ),
+      child: Dismissible(
+        key: ValueKey(query),
+        direction: DismissDirection.endToStart,
+        onDismissed: (_) => onDelete(),
+        background: DecoratedBox(
+          decoration: BoxDecoration(
+            color: colors.coralWash,
+            borderRadius: AppRadius.brFull,
           ),
-          child: Align(
-            alignment: Alignment.centerRight,
-            child: Icon(
-              Icons.delete_outline_rounded,
-              size: 20,
-              color: colors.coral,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.x20),
+            child: Align(
+              alignment: Alignment.centerRight,
+              child: Icon(
+                Icons.delete_outline_rounded,
+                size: 20,
+                color: colors.coral,
+              ),
             ),
           ),
         ),
-      ),
-      child: Material(
-        type: MaterialType.transparency,
-        child: InkWell(
-          splashFactory: InkWashSplash.splashFactory,
-          splashColor: colors.accentWash,
-          highlightColor: Colors.transparent,
-          onTap: () {
-            AppHaptics.tap();
-            onTap();
-          },
-          child: Padding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: AppSpacing.screenPadding,
-              vertical: AppSpacing.x12,
-            ),
-            child: Row(
-              children: [
-                Icon(Icons.history_rounded, size: 20, color: colors.ink300),
-                const SizedBox(width: AppSpacing.x12),
-                Expanded(
-                  child: Text(
-                    query,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: context.texts.bodyL.copyWith(color: colors.ink900),
-                  ),
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            color: colors.paperRaised,
+            borderRadius: AppRadius.brFull,
+            boxShadow: context.shadows.e1,
+          ),
+          child: Material(
+            type: MaterialType.transparency,
+            borderRadius: AppRadius.brFull,
+            clipBehavior: Clip.antiAlias,
+            child: InkWell(
+              splashFactory: InkWashSplash.splashFactory,
+              splashColor: colors.accentWash,
+              highlightColor: Colors.transparent,
+              borderRadius: AppRadius.brFull,
+              onTap: () {
+                AppHaptics.tap();
+                onTap();
+              },
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(
+                  AppSpacing.x8,
+                  AppSpacing.x8,
+                  AppSpacing.x16,
+                  AppSpacing.x8,
                 ),
-                const SizedBox(width: AppSpacing.x8),
-                Icon(Icons.north_west_rounded, size: 18, color: colors.ink300),
-              ],
+                child: Row(
+                  children: [
+                    Container(
+                      width: 32,
+                      height: 32,
+                      decoration: BoxDecoration(
+                        gradient: ClaySheen.gradient(
+                          context,
+                          colors.accentWash,
+                        ),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        Icons.history_rounded,
+                        size: 18,
+                        color: colors.accent,
+                      ),
+                    ),
+                    const SizedBox(width: AppSpacing.x12),
+                    Expanded(
+                      child: Text(
+                        query,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: context.texts.bodyL.copyWith(
+                          color: colors.ink900,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: AppSpacing.x8),
+                    Icon(
+                      Icons.north_west_rounded,
+                      size: 18,
+                      color: colors.ink300,
+                    ),
+                  ],
+                ),
+              ),
             ),
           ),
         ),

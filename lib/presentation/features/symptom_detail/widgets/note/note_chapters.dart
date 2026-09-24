@@ -1,6 +1,7 @@
 import 'package:agawaeuleo/config/theme/theme.dart';
 import 'package:agawaeuleo/core/utils/keep_all.dart';
 import 'package:agawaeuleo/domain/entities/entities.dart';
+import 'package:agawaeuleo/presentation/features/symptom_detail/widgets/detail_clay.dart';
 import 'package:agawaeuleo/presentation/features/symptom_detail/widgets/emergency_card.dart';
 import 'package:agawaeuleo/presentation/features/symptom_detail/widgets/info_accordion.dart';
 import 'package:agawaeuleo/presentation/features/symptom_detail/widgets/product_section.dart';
@@ -10,6 +11,7 @@ import 'package:agawaeuleo/presentation/widgets/cards/app_card.dart';
 import 'package:agawaeuleo/presentation/widgets/dividers/brush_divider.dart';
 import 'package:agawaeuleo/presentation/widgets/headers/section_header.dart';
 import 'package:agawaeuleo/presentation/widgets/skeletons/skeleton_blocks.dart';
+import 'package:agawaeuleo/presentation/widgets/surfaces/clay_sheen.dart';
 import 'package:flutter/foundation.dart' show ValueListenable;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -67,6 +69,7 @@ class NoteOverviewChapter extends StatelessWidget {
     final texts = context.texts;
     final data = info.value;
     final aliases = symptom.aliases;
+    final tone = DetailTone.audience(context, symptom.audience);
     final later = [
       for (final c in chapters)
         if (c != NoteChapter.overview) c,
@@ -89,12 +92,19 @@ class NoteOverviewChapter extends StatelessWidget {
           const _SummarySkeleton()
         else if (data != null)
           ScrollReveal(
+            // 겹쳐 빚은 점토 — 아랫장은 대상 톤 wash(아기 딸기 / 엄마 라일락).
             child: AppCard(
               emphasis: AppCardEmphasis.hero,
+              stackColor: tone.wash,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const _InkOverline(label: '한눈에 보기'),
+                  HeartOverline(
+                    label: '한눈에 보기',
+                    heartColor: symptom.audience == SymptomAudience.mom
+                        ? tone.fg
+                        : null,
+                  ),
                   const SizedBox(height: AppSpacing.x8),
                   Text(
                     keepAll(data.summary),
@@ -121,25 +131,9 @@ class NoteOverviewChapter extends StatelessWidget {
                   spacing: AppSpacing.x8,
                   runSpacing: AppSpacing.x8,
                   children: [
+                    // 스티커 칩 — 대상 톤(아기 딸기 / 엄마 라일락) wash + 흰 테두리.
                     for (final alias in aliases)
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: AppSpacing.x12,
-                          vertical: AppSpacing.x4,
-                        ),
-                        decoration: BoxDecoration(
-                          color: colors.paperCard,
-                          borderRadius: AppRadius.brFull,
-                          border: Border.all(color: colors.line),
-                        ),
-                        child: Text(
-                          alias,
-                          style: texts.caption.copyWith(
-                            color: colors.ink700,
-                            letterSpacing: 0,
-                          ),
-                        ),
-                      ),
+                      StickerChip(label: alias, wash: tone.wash, fg: tone.fg),
                   ],
                 ),
               ],
@@ -155,12 +149,19 @@ class NoteOverviewChapter extends StatelessWidget {
           ScrollReveal(
             delay: AppMotion.fast ~/ 3,
             child: AppCard(
-              padding: EdgeInsets.zero,
+              emphasis: AppCardEmphasis.raised,
+              padding: const EdgeInsets.symmetric(vertical: AppSpacing.x4),
               child: Column(
                 children: [
                   for (final (i, chapter) in later.indexed) ...[
                     if (i > 0)
-                      Divider(height: 1, thickness: 1, color: colors.line),
+                      Divider(
+                        height: 1,
+                        thickness: 1,
+                        color: colors.line,
+                        indent: _ContentsRow.textInset,
+                        endIndent: AppSpacing.x16,
+                      ),
                     _ContentsRow(
                       number: chapters.indexOf(chapter) + 1,
                       chapter: chapter,
@@ -219,34 +220,73 @@ class NoteGuideChapter extends StatelessWidget {
       children: [
         SectionHeader(
           title: '집에서 돌보는 법',
-          trailing: _CountPill(label: '${info.sections.length}편'),
+          trailing: StickerChip(
+            label: '${info.sections.length}편',
+            wash: colors.sageWash,
+            fg: colors.sage,
+            dense: true,
+          ),
         ),
         const SizedBox(height: AppSpacing.x12),
         InfoAccordionList(sections: info.sections),
         // §11.9 개정 — 참고 자료(출처 label 불릿). 탭 액션·URL 노출 없음.
+        // 둥근 크림 메모(오목한 paperBg 면) 안에 출처를 모은다.
         if (info.sources.isNotEmpty) ...[
           const SizedBox(height: AppSpacing.x20),
-          Text('참고 자료', style: captionStyle),
-          const SizedBox(height: AppSpacing.x4),
-          for (final source in info.sources)
-            Padding(
-              padding: const EdgeInsets.only(top: AppSpacing.x2),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.only(top: 6),
-                    child: Icon(
-                      Icons.fiber_manual_record,
-                      size: 4,
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.fromLTRB(
+              AppSpacing.x16,
+              AppSpacing.x12,
+              AppSpacing.x16,
+              AppSpacing.x12,
+            ),
+            decoration: BoxDecoration(
+              color: colors.paperBg,
+              borderRadius: AppRadius.brMd,
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Icon(
+                      Icons.menu_book_rounded,
+                      size: 14,
                       color: colors.ink500,
                     ),
+                    const SizedBox(width: AppSpacing.x4 + AppSpacing.x2),
+                    Text('참고 자료', style: captionStyle),
+                  ],
+                ),
+                const SizedBox(height: AppSpacing.x4),
+                for (final source in info.sources)
+                  Padding(
+                    padding: const EdgeInsets.only(top: AppSpacing.x2),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.only(top: 7),
+                          child: Container(
+                            width: 5,
+                            height: 5,
+                            decoration: BoxDecoration(
+                              color: colors.ink300,
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: AppSpacing.iconTextGap),
+                        Expanded(
+                          child: Text(source.label, style: captionStyle),
+                        ),
+                      ],
+                    ),
                   ),
-                  const SizedBox(width: AppSpacing.iconTextGap),
-                  Expanded(child: Text(source.label, style: captionStyle)),
-                ],
-              ),
+              ],
             ),
+          ),
         ],
       ],
     );
@@ -264,6 +304,8 @@ class NoteProductsChapter extends StatelessWidget {
 }
 
 /// 장 끝의 "다음 장" 카드 — 넘기지 않고 눌러서도 다음 장으로 간다.
+///
+/// DESIGN v3 — 둥근 크림 카드(e2) + 주아체 번호 버블 + 젤리 화살표 버튼.
 class NoteNextCard extends StatelessWidget {
   const NoteNextCard({
     required this.number,
@@ -280,6 +322,7 @@ class NoteNextCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = context.colors;
     final texts = context.texts;
+    final arrowFill = colors.accentFill;
 
     return Semantics(
       button: true,
@@ -289,7 +332,7 @@ class NoteNextCard extends StatelessWidget {
         onTap: onTap,
         child: Container(
           padding: const EdgeInsets.fromLTRB(
-            AppSpacing.x16,
+            AppSpacing.x12,
             AppSpacing.x12,
             AppSpacing.x12,
             AppSpacing.x12,
@@ -297,14 +340,14 @@ class NoteNextCard extends StatelessWidget {
           decoration: BoxDecoration(
             color: colors.paperRaised,
             borderRadius: AppRadius.brLg,
-            border: Border.all(color: colors.line),
             boxShadow: context.shadows.e2,
           ),
           child: Row(
             children: [
-              Text(
-                number.toString().padLeft(2, '0'),
-                style: texts.dataL.copyWith(color: colors.accent),
+              ClayBubble(
+                size: 48,
+                wash: colors.accentWash,
+                child: ClayNumber('$number', color: colors.accent, size: 22),
               ),
               const SizedBox(width: AppSpacing.x12),
               Expanded(
@@ -325,15 +368,16 @@ class NoteNextCard extends StatelessWidget {
                 ),
               ),
               Container(
-                width: 40,
-                height: 40,
+                width: 44,
+                height: 44,
                 decoration: BoxDecoration(
-                  color: colors.ink900,
                   shape: BoxShape.circle,
+                  gradient: ClaySheen.gradient(context, arrowFill),
+                  boxShadow: ClaySheen.toneShadow(context, arrowFill),
                 ),
                 child: Icon(
                   Icons.arrow_forward_rounded,
-                  size: 20,
+                  size: 22,
                   color: colors.paperRaised,
                 ),
               ),
@@ -347,6 +391,9 @@ class NoteNextCard extends StatelessWidget {
 
 /// §11.9-5 / §13.3 의학 면책 — 모든 장 끝에 늘 노출(격은 낮게, 존재감만).
 /// baby 문구는 원문 그대로(바이트 단위 불변). mom은 상담 대상만 분기(§13.3 개정).
+///
+/// DESIGN v3 — 시트보다 한 톤 낮은 크림(`paperBg`) 둥근 메모. 캡션 `ink500`은
+/// 이 면 위에서 4.78:1(AA).
 class NoteDisclaimer extends StatelessWidget {
   const NoteDisclaimer({required this.audience, super.key});
 
@@ -358,15 +405,27 @@ class NoteDisclaimer extends StatelessWidget {
     final texts = context.texts;
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(AppSpacing.x12),
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.x12,
+        AppSpacing.x12,
+        AppSpacing.x16,
+        AppSpacing.x12,
+      ),
       decoration: BoxDecoration(
-        border: Border.all(color: colors.line),
-        borderRadius: AppRadius.brSm,
+        color: colors.paperBg,
+        borderRadius: AppRadius.brMd,
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(Icons.info_outline, size: 16, color: colors.ink500),
+          Padding(
+            padding: const EdgeInsets.only(top: AppSpacing.x2),
+            child: Icon(
+              Icons.info_outline_rounded,
+              size: 16,
+              color: colors.ink500,
+            ),
+          ),
           const SizedBox(width: AppSpacing.iconTextGap),
           Expanded(
             child: Text(
@@ -384,7 +443,8 @@ class NoteDisclaimer extends StatelessWidget {
   }
 }
 
-/// 목차 한 줄 — mono 장 번호 + 장 이름 + 요약 메타 + 화살표.
+/// 목차 한 줄 — 파스텔 아이콘 버블(+ 주아체 장 번호 스티커) + 장 이름 + 요약 메타 +
+/// 동그란 셰브론 버블.
 class _ContentsRow extends StatelessWidget {
   const _ContentsRow({
     required this.number,
@@ -398,15 +458,32 @@ class _ContentsRow extends StatelessWidget {
   final String meta;
   final VoidCallback onTap;
 
+  static const double _bubble = 42;
+
+  /// 글자 시작 x(구분선 들여쓰기에 맞춘다).
+  static const double textInset = AppSpacing.x16 + _bubble + AppSpacing.x12;
+
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
     final texts = context.texts;
-    final (icon, tone) = switch (chapter) {
-      NoteChapter.emergency => (Icons.local_hospital_rounded, colors.coral),
-      NoteChapter.guide => (Icons.spa_outlined, colors.sage),
-      NoteChapter.products => (Icons.auto_awesome_rounded, colors.amber),
-      NoteChapter.overview => (Icons.article_outlined, colors.accent),
+    final (icon, wash, tone) = switch (chapter) {
+      NoteChapter.emergency => (
+        Icons.local_hospital_rounded,
+        colors.coralWash,
+        colors.coral,
+      ),
+      NoteChapter.guide => (Icons.spa_rounded, colors.sageWash, colors.sage),
+      NoteChapter.products => (
+        Icons.auto_awesome_rounded,
+        colors.amberWash,
+        colors.amber,
+      ),
+      NoteChapter.overview => (
+        Icons.article_rounded,
+        colors.accentWash,
+        colors.accent,
+      ),
     };
 
     return Semantics(
@@ -423,13 +500,31 @@ class _ContentsRow extends StatelessWidget {
           ),
           child: Row(
             children: [
-              Text(
-                number.toString().padLeft(2, '0'),
-                style: texts.data.copyWith(color: colors.ink300),
+              Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  ClayBubble(
+                    size: _bubble,
+                    wash: wash,
+                    icon: icon,
+                    iconColor: tone,
+                    iconSize: 20,
+                  ),
+                  // 장 번호 스티커(주아체).
+                  Positioned(
+                    left: -AppSpacing.x4,
+                    top: -AppSpacing.x4,
+                    child: ClayBubble(
+                      size: 20,
+                      wash: colors.paperRaised,
+                      outline: true,
+                      lifted: true,
+                      child: ClayNumber('$number', color: tone, size: 12),
+                    ),
+                  ),
+                ],
               ),
               const SizedBox(width: AppSpacing.x12),
-              Icon(icon, size: 18, color: tone),
-              const SizedBox(width: AppSpacing.x8),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -452,66 +547,15 @@ class _ContentsRow extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: AppSpacing.x8),
-              Icon(Icons.chevron_right_rounded, size: 22, color: colors.ink300),
+              ClayBubble(
+                size: 28,
+                wash: colors.paperStack,
+                icon: Icons.chevron_right_rounded,
+                iconColor: colors.ink500,
+                iconSize: 20,
+              ),
             ],
           ),
-        ),
-      ),
-    );
-  }
-}
-
-class _InkOverline extends StatelessWidget {
-  const _InkOverline({required this.label});
-
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = context.colors;
-    return Row(
-      children: [
-        Container(
-          width: 3,
-          height: 16,
-          decoration: BoxDecoration(
-            color: colors.accent,
-            borderRadius: BorderRadius.circular(1.5),
-          ),
-        ),
-        const SizedBox(width: AppSpacing.iconTextGap),
-        Text(
-          label,
-          style: context.texts.overline.copyWith(color: colors.ink500),
-        ),
-      ],
-    );
-  }
-}
-
-class _CountPill extends StatelessWidget {
-  const _CountPill({required this.label});
-
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = context.colors;
-    return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.x8,
-        vertical: AppSpacing.x2,
-      ),
-      decoration: BoxDecoration(
-        color: colors.paperCard,
-        borderRadius: AppRadius.brFull,
-        border: Border.all(color: colors.line),
-      ),
-      child: Text(
-        label,
-        style: context.texts.caption.copyWith(
-          color: colors.ink500,
-          letterSpacing: 0,
         ),
       ),
     );
@@ -530,7 +574,6 @@ class _SummarySkeleton extends StatelessWidget {
         color: colors.paperRaised,
         borderRadius: AppRadius.brLg,
         boxShadow: context.shadows.e2,
-        border: Border.all(color: colors.line),
       ),
       padding: const EdgeInsets.all(AppSpacing.cardPadding),
       child: const Column(

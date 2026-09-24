@@ -26,7 +26,8 @@ void main() {
     expect(find.byType(CareDeck), findsOneWidget);
     expect(find.byType(HomeSearchBar), findsOneWidget);
     expect(sceneText('배앓이'), findsOneWidget);
-    expect(find.text('01'), findsWidgets);
+    // DESIGN v3 — 모노 `01` 대신 주아체 번호(카운터·번호 동그라미 배지).
+    expect(find.text('1'), findsWidgets);
     // 떠 있는 실데이터 조각 — 픽스처 배앓이 제품 3개와 1위 카드.
     expect(find.text('추천 용품'), findsOneWidget);
     expect(find.text('BEST PICK'), findsOneWidget);
@@ -56,7 +57,7 @@ void main() {
     await tester.tap(find.descendant(of: rail, matching: find.text('트림 안 나옴')));
     await tester.pumpAndSettle();
     expect(sceneText('트림 안 나옴'), findsOneWidget);
-    expect(find.text('05'), findsWidgets);
+    expect(sceneText('5'), findsOneWidget);
 
     await disposeApp(tester);
   });

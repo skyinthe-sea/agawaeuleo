@@ -6,8 +6,8 @@ import '../../../../config/theme/theme.dart';
 import '../../../widgets/stage/paper_blob_painter.dart';
 import '../../../widgets/symptom/symptom_illustration.dart';
 import 'onboarding_float_cards.dart';
-import 'onboarding_illustration_data.dart';
 import 'onboarding_page_data.dart';
+import 'orbit_charms_painter.dart';
 
 /// 온보딩 히어로 스테이지 — 페이지뷰 **바깥**의 고정 무대.
 ///
@@ -18,8 +18,9 @@ import 'onboarding_page_data.dart';
 /// 여기서는 세 장면을 한 무대에 항상 올려 두고(빌드 지연 없음), 페이지 컨트롤러의
 /// 연속 값으로 레이어마다 이동·페이드·기울기를 **손가락에 1:1로** 연동한다.
 /// 깊이감은 레이어별 이동 배율로 만든다(일러스트 < 앞 카드 < 맨 앞 카드).
-/// 공유 배경([PaperBlobPainter] — 종이 오림 블롭 + 궤도)은 장면 사이에서 모양과
-/// 색이 모핑된다.
+/// 공유 배경([PaperBlobPainter] — 파스텔 블롭)은 장면 사이에서 모양과 색이
+/// 모핑되고(딸기 → 버터 → 토마토 워시), 그 위 [OrbitCharmsPainter]가 둥근 점선
+/// 궤도와 하트·별·구슬을 스와이프에 따라 돌린다(DESIGN v3 §6 "몽글 클레이").
 class OnboardingStage extends StatefulWidget {
   const OnboardingStage({
     required this.controller,
@@ -57,6 +58,13 @@ class _OnboardingStageState extends State<OnboardingStage>
     duration: const Duration(milliseconds: 900),
   );
   bool _introStarted = false;
+
+  /// 궤도 장식 — 하트(딸기 핑크) · 별(버터) · 구슬(로즈).
+  static const List<OrbitCharm> _charms = <OrbitCharm>[
+    OrbitCharm.heart,
+    OrbitCharm.star,
+    OrbitCharm.bead,
+  ];
 
   @override
   void didChangeDependencies() {
@@ -123,6 +131,12 @@ class _OnboardingStageState extends State<OnboardingStage>
                 final page = _page();
                 final breath = _ambient.value;
                 final backdropIn = _reveal(0, 0.55);
+                // 장면별 파스텔 — ① 딸기(검색) ② 버터(용품) ③ 토마토(병원 신호).
+                final washes = [
+                  colors.accentWash,
+                  colors.amberWash,
+                  colors.coralWash,
+                ];
                 return Stack(
                   clipBehavior: Clip.none,
                   children: [
@@ -132,24 +146,33 @@ class _OnboardingStageState extends State<OnboardingStage>
                         child: Transform.scale(
                           scale: 0.92 + 0.08 * backdropIn,
                           child: CustomPaint(
-                            // 행성 시작각·속도는 세 장면 모두에서 떠 있는 카드와
-                            // 겹치지 않는 자리(공용 기본값) — 카드를 옮기면 재확인.
+                            // 블롭만 공용 페인터로 — 궤도·행성은 끄고(0) 점선 궤도 +
+                            // 하트·별·구슬을 위에 얹는다.
                             painter: PaperBlobPainter(
                               page: page,
                               breath: breath,
-                              washes: [
-                                colors.accentWash,
-                                colors.amberWash,
-                                colors.coralWash,
-                              ],
+                              washes: washes,
                               under: colors.paperStack,
                               orbit: colors.lineStrong,
                               rim: colors.paperBg,
-                              planets: [
+                              planets: const <Color>[],
+                              orbitProgress: 0,
+                              planetScale: 0,
+                            ),
+                            // 장식 시작각·속도는 옛 행성과 같은 자리(세 장면 모두에서
+                            // 떠 있는 카드와 겹치지 않는 공용 기본값) — 카드를 옮기면 재확인.
+                            foregroundPainter: OrbitCharmsPainter(
+                              page: page,
+                              lastPage: washes.length - 1,
+                              dotColor: colors.lineStrong,
+                              rim: colors.paperBg,
+                              charms: _charms,
+                              colors: [
                                 colors.seal,
                                 colors.amber,
                                 colors.accent,
                               ],
+                              sway: breath,
                             ),
                           ),
                         ),
@@ -207,7 +230,7 @@ class _OnboardingStageState extends State<OnboardingStage>
         top: _SceneParts.illustrationTop,
         width: illo,
         height: illo,
-        // 선 일러스트 둘이 반투명으로 겹치면 탁해진다 — 중간 지점 전에 서로 비켜
+        // 클레이 일러스트 둘이 반투명으로 겹치면 탁해진다 — 중간 지점 전에 서로 비켜
         // 사라지고(빠른 페이드 + 큰 이동), 그 찰나는 모핑 블롭만 남는다.
         child: depth(
           child: s.illustration,
@@ -270,21 +293,18 @@ class _SceneParts {
   });
 
   factory _SceneParts.of(OnboardingScene scene, {required bool active}) {
-    Widget illo(List<IllustrationShape> shapes) => InkIllustration(
-      shapes: shapes,
-      size: illustrationSize,
-      viewBox: onboardingIllustrationViewBox,
-    );
+    Widget illo(String asset) =>
+        ClayIllustration(asset: asset, size: illustrationSize);
     return switch (scene) {
       OnboardingScene.search => _SceneParts(
-        illustration: illo(onboardingCryShapes),
+        illustration: illo(ClayScenes.onboardingCry),
         back: OnboardingSearchPill(active: active),
         backAnchor: const _Anchor.left(4, 18),
         front: const OnboardingResultCard(),
         frontAnchor: const _Anchor.right(0, 272),
       ),
       OnboardingScene.products => _SceneParts(
-        illustration: illo(onboardingCareShapes),
+        illustration: illo(ClayScenes.onboardingCare),
         back: const OnboardingRecommendChip(),
         backAnchor: const _Anchor.right(6, 30),
         front: OnboardingBestPickCard(active: active),
@@ -294,7 +314,7 @@ class _SceneParts {
       ),
       // 병원 신호 — 구름 위 잠(차분히 확인하고 안심하는 밤)과 짝지은 장면.
       OnboardingScene.safety => _SceneParts(
-        illustration: illo(onboardingSleepShapes),
+        illustration: illo(ClayScenes.onboardingSleep),
         back: OnboardingAlertChip(active: active),
         backAnchor: const _Anchor.left(4, 24),
         front: OnboardingSignalCard(active: active),

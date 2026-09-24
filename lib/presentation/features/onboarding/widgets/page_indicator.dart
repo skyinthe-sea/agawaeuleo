@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 
 import '../../../../config/theme/theme.dart';
 
-/// §11.2 페이지 인디케이터 — 활성 점이 알약으로 늘어난다.
+/// §11.2 페이지 인디케이터 — 활성 점이 알약으로 늘어난다(DESIGN v3 §6: 알약 점,
+/// 활성 accent 폭 20 · 비활성 lineStrong).
 ///
 /// 폭·색을 안착한 인덱스가 아니라 [controller]의 **연속 페이지 값**에 묶어,
 /// 스와이프하는 동안 알약이 손가락을 따라 옆 점으로 흘러간다(탭 "다음"의
@@ -21,8 +22,8 @@ class PageIndicator extends StatelessWidget {
   /// 컨트롤러가 붙기 전(첫 프레임) 기준 인덱스이자 시맨틱 값.
   final int index;
 
-  static const double _dotSize = 6;
-  static const double _activeWidth = 22;
+  static const double _dotSize = 8;
+  static const double _activeWidth = 20;
 
   @override
   Widget build(BuildContext context) {
@@ -47,7 +48,7 @@ class PageIndicator extends StatelessWidget {
                     width: _dotSize + (_activeWidth - _dotSize) * t,
                     height: _dotSize,
                     decoration: BoxDecoration(
-                      color: Color.lerp(colors.lineStrong, colors.ink900, t),
+                      color: Color.lerp(colors.lineStrong, colors.accent, t),
                       borderRadius: AppRadius.brFull,
                     ),
                   ),

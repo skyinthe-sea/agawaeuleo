@@ -1,8 +1,12 @@
 import 'package:agawaeuleo/config/theme/theme.dart';
+import 'package:agawaeuleo/presentation/features/home/widgets/home_search_bar.dart';
 import 'package:flutter/material.dart';
 
-/// §11.8 상단 검색 입력. 홈 검색바(§11.7 — 높이 52 · r.full · paper.card · e1 ·
-/// 좌측 돋보기 20 ink.500)에서 Hero `home-search-bar`로 morph 되는 알약형 필드.
+/// §11.8 상단 검색 입력. 홈 검색바(§11.7 — 높이 52 · r.full · paperRaised · e1 ·
+/// 좌측 딸기 워시 돋보기 버블)에서 Hero `home-search-bar`로 morph 되는 알약형 필드.
+///
+/// DESIGN v3 §5.2 — 말랑한 알약 입력: `line` 1.5 보더가 포커스 중에는 딸기(accent)
+/// 2.0으로 바뀐다.
 ///
 /// 자동 포커스, 우측 X(클리어)를 포함한다. 좌측 뒤로가기는 화면(부모)이 배치한다.
 class SearchFieldBar extends StatelessWidget {
@@ -45,13 +49,16 @@ class SearchFieldBar extends StatelessWidget {
       height: 1,
     );
     return Hero(
-      tag: 'home-search-bar',
+      tag: HomeSearchBar.heroTag,
       flightShuttleBuilder: _flightShuttle,
-      child: _Pill(
+      child: ListenableBuilder(
+        listenable: focusNode,
+        builder: (context, child) =>
+            _Pill(focused: focusNode.hasFocus, child: child!),
         child: Row(
           children: [
-            Icon(Icons.search, size: 20, color: colors.ink500),
-            const SizedBox(width: AppSpacing.iconTextGap),
+            const SearchPillBubble(),
+            const SizedBox(width: AppSpacing.x12),
             Expanded(
               // 알약 전체(빈 여백 포함)를 탭 히트영역으로 유지 — 데코레이터가
               // 텍스트 높이로 줄었으므로 GestureDetector가 포커스를 복원한다.
@@ -106,10 +113,11 @@ class SearchFieldBar extends StatelessWidget {
     return Material(
       type: MaterialType.transparency,
       child: _Pill(
+        focused: false,
         child: Row(
           children: [
-            Icon(Icons.search, size: 20, color: colors.ink500),
-            const SizedBox(width: AppSpacing.iconTextGap),
+            const SearchPillBubble(),
+            const SizedBox(width: AppSpacing.x12),
             Expanded(
               child: Text(
                 text.isEmpty ? _hint : text,
@@ -128,23 +136,29 @@ class SearchFieldBar extends StatelessWidget {
   }
 }
 
-/// §11.7 검색바 셸 — 높이 52 · r.full · paper.card · e1 · 헤어라인 line.
+/// §11.7 검색바 셸 — 높이 52 · r.full · paperRaised · e1 · `line` 1.5(포커스 accent 2.0).
 class _Pill extends StatelessWidget {
-  const _Pill({required this.child});
+  const _Pill({required this.focused, required this.child});
 
+  final bool focused;
   final Widget child;
 
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
-    return Container(
+    return AnimatedContainer(
+      duration: AppMotion.resolve(context, AppMotion.fast),
+      curve: AppMotion.standard,
       height: SearchFieldBar._height,
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.x16),
+      padding: const EdgeInsets.fromLTRB(AppSpacing.x8, 0, AppSpacing.x16, 0),
       decoration: BoxDecoration(
-        color: colors.paperCard,
+        color: colors.paperRaised,
         borderRadius: AppRadius.brFull,
         boxShadow: context.shadows.e1,
-        border: Border.all(color: colors.line),
+        border: Border.all(
+          color: focused ? colors.accent : colors.line,
+          width: focused ? 2 : 1.5,
+        ),
       ),
       child: child,
     );

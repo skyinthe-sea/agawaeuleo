@@ -15,6 +15,7 @@ import '../../widgets/segments/sliding_segment.dart';
 import '../../widgets/skeletons/skeleton_blocks.dart';
 import '../../widgets/states/empty_state.dart';
 import '../../widgets/states/error_state.dart';
+import '../../widgets/symptom/symptom_illustration.dart';
 import 'providers/favorites_providers.dart';
 import 'widgets/favorite_product_tile.dart';
 import 'widgets/favorite_symptom_card.dart';
@@ -128,7 +129,13 @@ class _FavoritesScreenState extends ConsumerState<FavoritesScreen> {
                     trailing: count != null
                         ? Text(
                             '$count개',
-                            style: texts.data.copyWith(color: colors.ink500),
+                            // DESIGN v3 §3.3 — 개수 강조는 모노 대신 주아체 숫자.
+                            style: texts.data.copyWith(
+                              color: colors.ink500,
+                              fontFamily: AppFontFamily.display,
+                              fontFamilyFallback: AppFontFamily.displayFallback,
+                              fontWeight: FontWeight.w400,
+                            ),
                           )
                         : null,
                   ),
@@ -207,7 +214,11 @@ class _SymptomGrid extends ConsumerWidget {
           return EmptyState(
             title: '즐겨찾기한 증상이 없어요',
             message: '증상 상세에서 별을 눌러 저장해 보세요',
-            icon: Icons.star_outline_rounded,
+            // DESIGN v3 §5.5 — 빈 상태는 클레이 장면(하트를 안은 아가)을 우선 사용.
+            illustration: const ClayIllustration(
+              asset: ClayScenes.emptyHeart,
+              size: 140,
+            ),
             actionLabel: '증상 둘러보기',
             onAction: () => context.goNamed(Routes.home),
           );
@@ -263,7 +274,11 @@ class _ProductList extends ConsumerWidget {
           return EmptyState(
             title: '즐겨찾기한 용품이 없어요',
             message: '증상 상세의 추천 용품에서 별을 눌러 저장해 보세요',
-            icon: Icons.star_outline_rounded,
+            // DESIGN v3 §5.5 — 빈 상태는 클레이 장면(하트를 안은 아가)을 우선 사용.
+            illustration: const ClayIllustration(
+              asset: ClayScenes.emptyHeart,
+              size: 140,
+            ),
             actionLabel: '홈에서 둘러보기',
             onAction: () => context.goNamed(Routes.home),
           );

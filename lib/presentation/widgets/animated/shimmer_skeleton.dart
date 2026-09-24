@@ -5,14 +5,14 @@ import 'package:flutter_animate/flutter_animate.dart';
 
 import '../../../config/theme/theme.dart';
 
-/// §10.2 스켈레톤 반짝임. base(paper.card) 위로 highlight가 45°·1200ms 반복 스윕.
-/// reduce-motion 시 정적 블록(반짝임 없음)으로 대체.
+/// §10.2 스켈레톤 반짝임. base(`paperStack` — DESIGN v3 §5.5) 위로 highlight
+/// (`paperRaised`)가 45°·1200ms 반복 스윕. reduce-motion 시 정적 블록(반짝임 없음).
 class ShimmerSkeleton extends StatelessWidget {
   const ShimmerSkeleton({
     super.key,
     this.width,
     this.height = 16,
-    this.borderRadius = AppRadius.brSm,
+    this.borderRadius = AppRadius.brMd,
     this.baseColor,
     this.highlightColor,
   });
@@ -26,7 +26,7 @@ class ShimmerSkeleton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
-    final base = baseColor ?? colors.paperCard;
+    final base = baseColor ?? colors.paperStack;
     final highlight = highlightColor ?? colors.paperRaised;
 
     final block = Container(

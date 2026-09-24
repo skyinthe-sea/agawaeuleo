@@ -1,5 +1,7 @@
+import 'package:agawaeuleo/config/theme/theme.dart';
 import 'package:agawaeuleo/presentation/features/symptom_detail/widgets/note/care_note.dart';
 import 'package:agawaeuleo/presentation/features/symptom_detail/widgets/note/note_chapters.dart';
+import 'package:agawaeuleo/presentation/features/symptom_detail/widgets/note/note_header.dart';
 import 'package:agawaeuleo/presentation/router/routes.dart';
 import 'package:agawaeuleo/presentation/widgets/brand/ink_halo_icon.dart';
 import 'package:agawaeuleo/presentation/widgets/dividers/brush_divider.dart';
@@ -46,7 +48,7 @@ void main() {
     await disposeApp(tester);
   });
 
-  testWidgets('Hero 태그 유지 + 머리 일러스트(colic)·붓결 디바이더, 제품 장의 개수·1위 배지', (
+  testWidgets('Hero 태그 유지 + 머리 일러스트(colic)·몽글 점선 디바이더, 제품 장의 개수·1위 배지', (
     tester,
   ) async {
     await openColic(tester);
@@ -80,6 +82,16 @@ void main() {
 
     expect(find.text('3개'), findsOneWidget);
     expect(find.text('1'), findsOneWidget);
+    // v3 장 탭 — 개수는 주아체 숫자, 알약 안/밖 두 겹 라벨이라 두 번 그린다.
+    final tabCount = find.descendant(
+      of: find.byType(NoteHeader),
+      matching: find.text('3'),
+    );
+    expect(tabCount, findsNWidgets(2));
+    expect(
+      tester.widget<Text>(tabCount.first).style?.fontFamily,
+      AppFontFamily.display,
+    );
 
     await disposeApp(tester);
   });

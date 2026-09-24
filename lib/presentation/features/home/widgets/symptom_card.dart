@@ -3,21 +3,22 @@ import 'dart:math' as math;
 import 'package:agawaeuleo/config/theme/theme.dart';
 import 'package:agawaeuleo/domain/entities/symptom.dart';
 import 'package:agawaeuleo/presentation/widgets/cards/app_card.dart';
+import 'package:agawaeuleo/presentation/widgets/surfaces/clay_sheen.dart';
 import 'package:agawaeuleo/presentation/widgets/symptom/symptom_icon.dart';
 import 'package:agawaeuleo/presentation/widgets/symptom/symptom_illustration.dart';
 import 'package:agawaeuleo/presentation/widgets/symptom/symptom_tone.dart';
 import 'package:flutter/material.dart';
 
-/// §11.7 홈 증상 그리드 카드. 높이 ~120 · r.md · e1 · 내부 패딩 16.
+/// §11.7 홈 증상 그리드 카드. 높이 ~120 · r.lg · e1 · 내부 패딩 16.
 ///
-/// 두 가지 레이아웃:
-/// - **일러스트 카드**([SymptomIllustrations] 등록 증상 — 시드 16종 전부):
-///   좌상단 제목(heading) + 그 아래 한 줄 설명([Symptom.tagline], caption
-///   `ink500`, 개행 없음), 우측 절반에 먹선+하프톤 손그림 일러스트(세로 중앙).
-/// - **기본 카드**(폴백): 미등록 키/신규 증상용 — 상단 수묵 라인 아이콘
-///   (40 원형, `SymptomTone` 톤) + 하단 증상명.
+/// 두 가지 레이아웃(DESIGN v3 "몽글 클레이"):
+/// - **일러스트 카드**([SymptomIllustrations] 등록 증상 — 시드 32종 전부):
+///   좌상단 주아체 제목(heading) + 그 아래 한 줄 설명([Symptom.tagline], caption
+///   `ink500`, 개행 없음), 우측 절반에 톤 워시 쿠션 위 클레이 일러스트(세로 중앙).
+/// - **기본 카드**(폴백): 미등록 키/신규 증상용 — 상단 클레이 버블 라인 아이콘
+///   (40 원형, `SymptomTone` 워시 + 광택) + 하단 증상명.
 ///
-/// 탭 시 [AppCard]의 스프링(scale .96) + 눌림 그림자 + 잉크 워시 리플 +
+/// 탭 시 [AppCard]의 스프링(scale .96) + 눌림 그림자 + 워시 리플 +
 /// 라이트 햅틱. 카드 자체는 그리드 밀도상 `flat`(기본값) 유지.
 ///
 /// Hero 태그 계약(상세 화면과 공유 — §11.9): 아이콘 `symptom-icon-<id>`,
@@ -41,6 +42,7 @@ class SymptomCard extends StatelessWidget {
   Widget _buildIllustrated(BuildContext context) {
     final colors = context.colors;
     final tagline = symptom.tagline;
+    final tone = SymptomTone.resolve(context, symptom.emojiOrIcon);
 
     return AppCard(
       onTap: onTap,
@@ -56,6 +58,24 @@ class SymptomCard extends StatelessWidget {
           return Stack(
             fit: StackFit.expand,
             children: [
+              // 일러스트가 앉는 폭신한 톤 워시 쿠션(그림보다 조금 작게, 살짝 아래).
+              Align(
+                alignment: Alignment.centerRight,
+                child: Padding(
+                  padding: EdgeInsets.only(
+                    right: AppSpacing.x4 + illustrationSize * 0.1,
+                    top: illustrationSize * 0.12,
+                  ),
+                  child: Container(
+                    width: illustrationSize * 0.8,
+                    height: illustrationSize * 0.8,
+                    decoration: BoxDecoration(
+                      color: tone.wash,
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                ),
+              ),
               Align(
                 alignment: Alignment.centerRight,
                 child: Padding(
@@ -119,9 +139,8 @@ class SymptomCard extends StatelessWidget {
               width: 40,
               height: 40,
               decoration: BoxDecoration(
-                color: tone.wash,
+                gradient: ClaySheen.gradient(context, tone.wash),
                 shape: BoxShape.circle,
-                border: Border.all(color: tone.fg.withValues(alpha: 0.22)),
               ),
               alignment: Alignment.center,
               child: Icon(

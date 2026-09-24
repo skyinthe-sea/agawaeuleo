@@ -2,6 +2,7 @@ import 'package:agawaeuleo/config/theme/theme.dart';
 import 'package:agawaeuleo/presentation/features/onboarding/data/onboarding_prefs.dart';
 import 'package:agawaeuleo/presentation/features/onboarding/onboarding_screen.dart';
 import 'package:agawaeuleo/presentation/features/onboarding/widgets/onboarding_float_cards.dart';
+import 'package:agawaeuleo/presentation/features/onboarding/widgets/splash_mark.dart';
 import 'package:agawaeuleo/presentation/router/routes.dart';
 import 'package:agawaeuleo/presentation/widgets/brand/ink_seal.dart';
 import 'package:flutter/material.dart';
@@ -59,6 +60,8 @@ void main() {
     expect(find.text('다음'), findsOneWidget);
     expect(find.text('건너뛰기'), findsOneWidget);
     expect(find.byType(InkSeal), findsNothing);
+    // DESIGN v3 — 모노 쪽번호(01) 대신 주아체 번호 스티커.
+    expect(find.text('01'), findsNothing);
     expect(tester.takeException(), isNull);
   });
 
@@ -139,6 +142,36 @@ void main() {
 
     await tester.pumpWidget(const SizedBox.shrink());
     await tester.pump(const Duration(seconds: 2));
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('스플래시 배지: 첫 프레임은 우는 얼굴만, 끝은 웃는 얼굴만 남는다', (tester) async {
+    Future<List<double>> faceOpacities(double smile, double tear) async {
+      await tester.pumpWidget(
+        Directionality(
+          textDirection: TextDirection.ltr,
+          child: Center(
+            child: SplashMark(size: 160, smile: smile, tear: tear),
+          ),
+        ),
+      );
+      return tester
+          .widgetList<Opacity>(
+            find.descendant(
+              of: find.byType(SplashMark),
+              matching: find.byType(Opacity),
+            ),
+          )
+          .map((o) => o.opacity)
+          .toList();
+    }
+
+    // 네이티브 배지와 같은 첫 프레임 — 우는 얼굴 불투명, 웃는 얼굴 숨김.
+    expect(await faceOpacities(0, 0), <double>[1, 0]);
+    // 바뀌는 중간에도 얼굴이 비어 보이지 않게 우는 얼굴은 아직 깔려 있다.
+    expect((await faceOpacities(0.5, 0.5)).first, 1);
+    // 연출 끝(reduce-motion 완성 상태) — 웃는 얼굴만.
+    expect(await faceOpacities(1, 1), <double>[0, 1]);
     expect(tester.takeException(), isNull);
   });
 }

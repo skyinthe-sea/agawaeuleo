@@ -3,9 +3,12 @@ import 'package:flutter/material.dart';
 import '../../../../config/theme/theme.dart';
 import '../../../../core/haptics/app_haptics.dart';
 import '../../../widgets/animated/ink_wash_splash.dart';
+import '../../../widgets/brand/ink_halo_icon.dart';
 
 /// §11.16 게스트 상단 배너 — "계정 연결" · `accent.wash` 배경.
 /// 탭하면 로그인/계정 연결 화면으로 이동만 한다(실제 연결 로직은 M5).
+///
+/// DESIGN v3 §5.4 — 단색 아이콘을 클레이 버블([InkHaloIcon])로 승격했다.
 class ConnectAccountBanner extends StatelessWidget {
   const ConnectAccountBanner({required this.onTap, super.key});
 
@@ -32,7 +35,13 @@ class ConnectAccountBanner extends StatelessWidget {
           padding: const EdgeInsets.all(AppSpacing.cardPadding),
           child: Row(
             children: [
-              Icon(Icons.cloud_upload_outlined, size: 28, color: colors.accent),
+              InkHaloIcon(
+                size: 40,
+                icon: Icons.cloud_upload_outlined,
+                washColor: colors.paperRaised,
+                fgColor: colors.accent,
+                ring: false,
+              ),
               const SizedBox(width: AppSpacing.x12),
               Expanded(
                 child: Column(

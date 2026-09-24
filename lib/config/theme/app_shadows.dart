@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 
-/// §9.5 음영(DESIGN v2 §3.2 개정 — "보일 듯 말 듯"에서 "종이가 실제로 겹친" 수준으로 상향).
-/// 회색 금지 — Light는 따뜻한 먹빛 rgba(74,66,50,α). Dark는 근검정 드롭 + 상단 1px 하이라이트.
+/// §9.5 음영(DESIGN v3 §3.2 개정 — "몽글 클레이": 넓고 부드럽게 퍼지는 장밋빛 그림자로
+/// 표면이 폭신하게 떠 보이게). 회색 금지 — Light는 따뜻한 로즈브라운 rgba(150,96,84,α).
+/// Dark는 근검정 드롭 + 상단 1px 하이라이트.
 ///
 /// [press](오목) 인셋과 다크 상단 하이라이트는 `BlurStyle.inner` 로는 불투명 fill
 /// 뒤에 그려져 가려진다(무효과). 따라서 [press] 는 소비처(app_card)에서
@@ -37,52 +38,52 @@ class AppShadows extends ThemeExtension<AppShadows> {
   static const AppShadows light = AppShadows(
     e1: [
       BoxShadow(
-        color: Color.fromRGBO(74, 66, 50, 0.10),
+        color: Color.fromRGBO(150, 96, 84, 0.07),
         offset: Offset(0, 1),
-        blurRadius: 2,
+        blurRadius: 3,
       ),
       BoxShadow(
-        color: Color.fromRGBO(74, 66, 50, 0.05),
-        offset: Offset(0, 2),
-        blurRadius: 6,
+        color: Color.fromRGBO(150, 96, 84, 0.07),
+        offset: Offset(0, 4),
+        blurRadius: 12,
       ),
     ],
     e2: [
       BoxShadow(
-        color: Color.fromRGBO(74, 66, 50, 0.12),
-        offset: Offset(0, 2),
-        blurRadius: 8,
+        color: Color.fromRGBO(150, 96, 84, 0.10),
+        offset: Offset(0, 6),
+        blurRadius: 18,
       ),
       BoxShadow(
-        color: Color.fromRGBO(74, 66, 50, 0.06),
+        color: Color.fromRGBO(150, 96, 84, 0.06),
         offset: Offset(0, 1),
-        blurRadius: 3,
+        blurRadius: 4,
       ),
     ],
     e3: [
       BoxShadow(
-        color: Color.fromRGBO(74, 66, 50, 0.14),
-        offset: Offset(0, 10),
-        blurRadius: 28,
+        color: Color.fromRGBO(150, 96, 84, 0.15),
+        offset: Offset(0, 16),
+        blurRadius: 36,
       ),
       BoxShadow(
-        color: Color.fromRGBO(74, 66, 50, 0.07),
-        offset: Offset(0, 2),
+        color: Color.fromRGBO(150, 96, 84, 0.07),
+        offset: Offset(0, 3),
         blurRadius: 8,
       ),
     ],
     e4: [
       BoxShadow(
-        color: Color.fromRGBO(74, 66, 50, 0.16),
-        offset: Offset(0, 6),
-        blurRadius: 18,
+        color: Color.fromRGBO(150, 96, 84, 0.16),
+        offset: Offset(0, 10),
+        blurRadius: 26,
       ),
     ],
     press: [
       BoxShadow(
-        color: Color.fromRGBO(74, 66, 50, 0.08),
-        offset: Offset(0, 1),
-        blurRadius: 3,
+        color: Color.fromRGBO(150, 96, 84, 0.10),
+        offset: Offset(0, 2),
+        blurRadius: 5,
         blurStyle: BlurStyle.inner,
       ),
     ],

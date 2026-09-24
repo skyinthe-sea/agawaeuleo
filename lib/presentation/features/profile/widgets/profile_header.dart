@@ -3,8 +3,12 @@ import 'package:flutter/material.dart';
 import '../../../../config/theme/theme.dart';
 import '../../../../core/haptics/app_haptics.dart';
 import '../../../widgets/animated/ink_wash_splash.dart';
+import '../../../widgets/symptom/symptom_illustration.dart';
 
-/// §11.13 상단 프로필 헤더 — 아바타 원 64 + 이름/부제.
+/// §11.13 상단 프로필 헤더 — 엄마·아가 클레이 장면 쿠션(§124) + 이름/부제.
+///
+/// DESIGN v3 §6 — 아바타 원을 [ClayScenes.momAndBaby] 클레이 장면을 얹은 파스텔
+/// 쿠션(딸기×라일락 워시)으로 승격했다.
 ///
 /// 게스트일 때는 이름 자리에 "게스트"를 보여주고 그 아래 로컬 저장 안내 한 줄
 /// (캡션, `ink500`)을 붙인다(게스트 전용 모드 — 계정 연결 유도 문구는 비활성).
@@ -39,8 +43,9 @@ class ProfileHeader extends StatelessWidget {
         vertical: AppSpacing.x12,
       ),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          _Avatar(isGuest: isGuest),
+          _HeroCushion(isGuest: isGuest),
           const SizedBox(width: AppSpacing.x16),
           Expanded(
             child: Column(
@@ -75,8 +80,10 @@ class ProfileHeader extends StatelessWidget {
               ],
             ),
           ),
-          if (onTap != null)
-            Icon(Icons.chevron_right_rounded, color: colors.ink300),
+          if (onTap != null) ...[
+            const SizedBox(width: AppSpacing.x8),
+            _ChevronBubble(),
+          ],
         ],
       ),
     );
@@ -100,32 +107,60 @@ class ProfileHeader extends StatelessWidget {
   }
 }
 
-class _Avatar extends StatelessWidget {
-  const _Avatar({required this.isGuest});
+/// DESIGN v3 §6 — 엄마·아가 클레이 장면을 얹은 파스텔 쿠션. `isGuest`는 현재
+/// 시각에 영향을 주지 않지만(장면은 항상 동일), 향후 계정 상태별 장면 분기가
+/// 필요해지면 이 지점에서 [ClayScenes]를 바꿔 끼우면 된다.
+class _HeroCushion extends StatelessWidget {
+  const _HeroCushion({required this.isGuest});
 
   final bool isGuest;
+
+  static const double _cushionSize = 124;
+  static const double _illustrationSize = 100;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.colors;
+    // 딸기(accent) × 라일락(lilac) 절반 혼합 워시 — "엄마+아가" 장면을 위한
+    // 전용 파스텔(§3.2 lerp 규칙, 두 토큰의 파생이라 하드코딩 아님).
+    final wash = Color.lerp(colors.accentWash, colors.lilacWash, 0.5)!;
+    return Container(
+      width: _cushionSize,
+      height: _cushionSize,
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        color: wash,
+        shape: BoxShape.circle,
+        border: Border.all(
+          color: colors.accent.withValues(alpha: 0.22),
+          width: 1.5,
+        ),
+        boxShadow: context.shadows.e2,
+      ),
+      child: const ClayIllustration(
+        asset: ClayScenes.momAndBaby,
+        size: _illustrationSize,
+      ),
+    );
+  }
+}
+
+/// DESIGN v3 §5.4 — 소프트 원 안의 chevron(밀집 정보와 구분되는 "말랑한" 탭 힌트).
+class _ChevronBubble extends StatelessWidget {
+  const _ChevronBubble();
 
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
     return Container(
-      width: 64,
-      height: 64,
+      width: 28,
+      height: 28,
+      alignment: Alignment.center,
       decoration: BoxDecoration(
-        color: colors.accentWash,
+        color: colors.paperStack,
         shape: BoxShape.circle,
-        // DESIGN v2 §7.7 프로필 헤더 히어로화 — e2 + accent 25% 1.5px 링.
-        border: Border.all(
-          color: colors.accent.withValues(alpha: 0.25),
-          width: 1.5,
-        ),
-        boxShadow: context.shadows.e2,
       ),
-      child: Icon(
-        isGuest ? Icons.person_outline_rounded : Icons.person_rounded,
-        size: 32,
-        color: colors.accent,
-      ),
+      child: Icon(Icons.chevron_right_rounded, size: 17, color: colors.ink500),
     );
   }
 }

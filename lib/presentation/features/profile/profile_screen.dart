@@ -14,12 +14,13 @@ import 'widgets/profile_menu_tile.dart';
 
 /// §11.13 내 정보(탭3 루트).
 ///
-/// 상단 프로필 헤더(아바타 64 · 이름 · 이메일/게스트 안내) + 메뉴 리스트
-/// (아기 프로필 · 즐겨찾기 · 설정 · 문의). 각 행 높이 56, 우측 chevron, 탭 시
-/// 잉크 워시 리플.
+/// 상단 프로필 헤더(엄마·아가 클레이 쿠션 · 이름 · 이메일/게스트 안내) + 메뉴
+/// 리스트(아기 프로필 · 즐겨찾기 · 설정 · 문의). 각 행 높이 56, 우측 chevron(소프트
+/// 원), 탭 시 잉크 워시 리플.
 ///
-/// DESIGN v2 §7.7 — 헤더 블록 아래 [BrushDivider.section]로 "격 전환"을 표시하고
-/// (§6.4, 32dp 간격), 메뉴 아이콘은 항목별 wash 원 + 진입 stagger로 승격했다.
+/// DESIGN v3 §5.1/§6 — 헤더 블록 아래 [BrushDivider.section]로 "격 전환"을 표시하고
+/// (§6.4, 32dp 간격), 메뉴는 벤토 라운드 카드(raised) 안에 항목별 파스텔 wash
+/// 버블 + 진입 stagger로 담는다.
 ///
 /// 통합 메모: 도메인 [AuthRepository]에 표시용 이메일/닉네임 필드가 없어
 /// "아바타 탭 → 프로필 편집" 대상 화면이 라우트 트리(§4.1)에 없다. 게스트는
@@ -48,6 +49,8 @@ class ProfileScreen extends ConsumerWidget {
               const SizedBox(height: AppSpacing.x32),
               AppCard(
                 padding: EdgeInsets.zero,
+                // DESIGN v3 §5.1/§6 — 벤토 느낌의 큰 라운드 카드(raised, brLg).
+                emphasis: AppCardEmphasis.raised,
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
@@ -75,9 +78,9 @@ class ProfileScreen extends ConsumerWidget {
                     ProfileMenuTile(
                       icon: Icons.settings_outlined,
                       label: '설정',
-                      washColor: colors.paperCard,
-                      iconColor: colors.ink700,
-                      borderColor: colors.line,
+                      // DESIGN v3 §3.1/§6 — 엄마 돌봄 톤(lilac)으로 벤토 행 색을 다양화.
+                      washColor: colors.lilacWash,
+                      iconColor: colors.lilac,
                       index: 1,
                       onTap: () => context.pushNamed(Routes.settings),
                     ),

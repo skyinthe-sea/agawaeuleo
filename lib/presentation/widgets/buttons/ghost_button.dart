@@ -4,8 +4,12 @@ import '../../../config/theme/theme.dart';
 import '../../../core/haptics/app_haptics.dart';
 import '../animated/ink_wash_splash.dart';
 
-/// §11.0 보조 버튼(Ghost). 높이 52 · r.sm · 투명 배경 · 보더 1dp line.strong · 텍스트 ink.700.
-/// press 시 잉크 워시 + 미세 스케일, 로딩 시 라벨→스피너 크로스페이드.
+/// §11.0 보조 버튼(Ghost) — DESIGN v3 §5.2 "말랑 알약".
+///
+/// 높이 54 · 알약(`brFull`) · `paperRaised` 면 + `lineStrong` 1.5 윤곽 · 글자
+/// `label`/`ink700`. 누르면 면이 `accentWash`(딸기 워시)로 물들고 scale .97로
+/// 말랑하게 눌린다. 비활성은 `line` 윤곽 + `ink300` 글자. 로딩 시 라벨→스피너
+/// 크로스페이드. [expand]가 false면 글자 폭에 맞춘 작은 알약이 된다.
 class GhostButton extends StatefulWidget {
   const GhostButton({
     required this.label,
@@ -52,45 +56,50 @@ class _GhostButtonState extends State<GhostButton> {
     final button = AnimatedContainer(
       duration: AppMotion.fast,
       curve: AppMotion.standard,
-      height: 52,
+      height: 54,
       width: widget.expand ? double.infinity : null,
       decoration: BoxDecoration(
-        color: (_enabled && _pressed) ? colors.accentWash : Colors.transparent,
-        borderRadius: AppRadius.brSm,
-        border: Border.all(color: border),
+        color: (_enabled && _pressed) ? colors.accentWash : colors.paperRaised,
+        borderRadius: AppRadius.brFull,
+        border: Border.all(color: border, width: 1.5),
       ),
       child: Material(
         type: MaterialType.transparency,
-        borderRadius: AppRadius.brSm,
+        borderRadius: AppRadius.brFull,
         clipBehavior: Clip.antiAlias,
         child: InkWell(
           splashFactory: InkWashSplash.splashFactory,
           splashColor: colors.accentWash,
           highlightColor: Colors.transparent,
-          borderRadius: AppRadius.brSm,
+          borderRadius: AppRadius.brFull,
           onTap: _enabled ? _handleTap : null,
           onHighlightChanged: _setPressed,
-          child: Center(
-            child: AnimatedSwitcher(
-              duration: AppMotion.fast,
-              child: widget.loading
-                  ? SizedBox(
-                      key: const ValueKey('loading'),
-                      width: 22,
-                      height: 22,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2.4,
-                        valueColor: AlwaysStoppedAnimation<Color>(
-                          colors.ink700,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.x20),
+            child: Center(
+              widthFactor: widget.expand ? null : 1,
+              child: AnimatedSwitcher(
+                duration: AppMotion.fast,
+                child: widget.loading
+                    ? SizedBox(
+                        key: const ValueKey('loading'),
+                        width: 22,
+                        height: 22,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2.4,
+                          strokeCap: StrokeCap.round,
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            colors.ink700,
+                          ),
                         ),
+                      )
+                    : _GhostLabel(
+                        key: const ValueKey('label'),
+                        label: widget.label,
+                        icon: widget.icon,
+                        color: foreground,
                       ),
-                    )
-                  : _GhostLabel(
-                      key: const ValueKey('label'),
-                      label: widget.label,
-                      icon: widget.icon,
-                      color: foreground,
-                    ),
+              ),
             ),
           ),
         ),

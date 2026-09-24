@@ -75,12 +75,15 @@ class SettingsScreen extends ConsumerWidget {
     WidgetRef ref,
     ThemeMode themeMode,
   ) {
+    final colors = context.colors;
     return SettingsGroup(
       header: '화면',
       children: [
         SettingsTile(
           label: '테마',
           icon: Icons.contrast_rounded,
+          iconWash: colors.accentWash,
+          iconColor: colors.accent,
           trailing: SizedBox(
             width: 176,
             // DESIGN v2 §4.7/§7.7 — 사설 `SegmentedControl` 중복 구현을 공용
@@ -103,6 +106,8 @@ class SettingsScreen extends ConsumerWidget {
         SettingsTile(
           label: '글자 크기',
           icon: Icons.text_fields_rounded,
+          iconWash: colors.lilacWash,
+          iconColor: colors.lilac,
           subtitle: '기기 설정을 따라 자동으로 조절돼요',
         ),
       ],
@@ -115,6 +120,7 @@ class SettingsScreen extends ConsumerWidget {
     WidgetRef ref,
     NotificationSettings settings,
   ) {
+    final colors = context.colors;
     final controller = ref.read(notificationSettingsProvider.notifier);
     // §11.16·§11.6(개정): OS 권한이 켜져 있지 않을 때만 안내를 노출한다.
     // granted → 숨김, 조회 중(loading)·unknown(판단 불가) → 오탐 방지 위해 숨김.
@@ -135,6 +141,8 @@ class SettingsScreen extends ConsumerWidget {
             SettingsTile(
               label: '전체 알림',
               icon: Icons.notifications_none_rounded,
+              iconWash: colors.amberWash,
+              iconColor: colors.amber,
               trailing: AppSwitch(value: settings.masterEnabled),
               useSelectionHaptic: true,
               onTap: () => controller.setMaster(!settings.masterEnabled),
@@ -157,6 +165,8 @@ class SettingsScreen extends ConsumerWidget {
             SettingsTile(
               label: '공지사항',
               icon: Icons.campaign_outlined,
+              iconWash: colors.sageWash,
+              iconColor: colors.sage,
               trailing: AppSwitch(
                 value: settings.noticeEnabled,
                 enabled: settings.masterEnabled,
@@ -179,12 +189,15 @@ class SettingsScreen extends ConsumerWidget {
   /// "계정" 그룹(연결된 사용자만) — 세부 관리는 [Routes.account]로 위임한다.
   /// 게스트 상태는 화면 최상단 배너가 대신하므로 이 그룹은 노출하지 않는다.
   Widget _buildAccountGroup(BuildContext context) {
+    final colors = context.colors;
     return SettingsGroup(
       header: '계정',
       children: [
         SettingsTile(
           label: '계정 관리',
           icon: Icons.manage_accounts_outlined,
+          iconWash: colors.accentWash,
+          iconColor: colors.accent,
           showChevron: true,
           onTap: () => context.pushNamed(Routes.account),
         ),
@@ -201,6 +214,8 @@ class SettingsScreen extends ConsumerWidget {
         SettingsTile(
           label: TermsDoc.titleOf(TermsDoc.privacy),
           icon: Icons.privacy_tip_outlined,
+          iconWash: colors.accentWash,
+          iconColor: colors.accent,
           showChevron: true,
           onTap: () => context.pushNamed(
             Routes.terms,
@@ -210,6 +225,8 @@ class SettingsScreen extends ConsumerWidget {
         SettingsTile(
           label: TermsDoc.titleOf(TermsDoc.terms),
           icon: Icons.description_outlined,
+          iconWash: colors.lilacWash,
+          iconColor: colors.lilac,
           showChevron: true,
           onTap: () => context.pushNamed(
             Routes.terms,
@@ -230,6 +247,8 @@ class SettingsScreen extends ConsumerWidget {
         SettingsTile(
           label: '앱 버전',
           icon: Icons.info_outline_rounded,
+          iconWash: colors.sageWash,
+          iconColor: colors.sage,
           trailing: appVersion.when(
             data: (value) => Text(
               value,
@@ -245,6 +264,8 @@ class SettingsScreen extends ConsumerWidget {
         SettingsTile(
           label: '문의',
           icon: Icons.mail_outline_rounded,
+          iconWash: colors.amberWash,
+          iconColor: colors.amber,
           showChevron: true,
           onTap: () => launchSupportEmail(context),
         ),

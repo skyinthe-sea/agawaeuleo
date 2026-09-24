@@ -16,7 +16,7 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 # https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
 # In Windows, build-name is used as the major, minor, and patch parts
 # of the product and file versions while build-number is used as the build suffix.
-version: 1.1.0+8
+version: 1.1.1+9
 environment:
   sdk: ^3.12.0
 
@@ -98,8 +98,11 @@ flutter:
   generate: true
 
   # DESIGN v2 §3.4/§8 — 종이 그레인 텍스처 타일(assets/textures/paper_grain.png).
+  # DESIGN v3 §4 — 클레이 일러스트(tool/illustrations/clay/ 생성물, WebP).
   assets:
     - assets/textures/
+    - assets/illustrations/symptoms/
+    - assets/illustrations/scenes/
 
   fonts:
     - family: Pretendard
@@ -112,11 +115,11 @@ flutter:
           weight: 600
         - asset: assets/fonts/Pretendard-Bold.otf
           weight: 700
-    - family: NotoSerifKR
+    # DESIGN v3 — 제목 서체 주아체(SIL OFL 1.1, Google Fonts). 한 가지 굵기.
+    # 명조(NotoSerifKR 8.5MB)를 대체해 앱 용량도 줄었다.
+    - family: Jua
       fonts:
-        # wght=700 고정 인스턴스 + 한글/라틴 서브셋 (원본 가변폰트 23.8MB -> 8.5MB)
-        - asset: assets/fonts/NotoSerifKR-Bold.ttf
-          weight: 700
+        - asset: assets/fonts/Jua-Regular.ttf
     - family: JetBrainsMono
       fonts:
         - asset: assets/fonts/JetBrainsMono-Regular.ttf

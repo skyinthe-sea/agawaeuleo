@@ -4,23 +4,25 @@ import 'dart:math' as math;
 import 'package:agawaeuleo/config/theme/theme.dart';
 import 'package:agawaeuleo/core/haptics/app_haptics.dart';
 import 'package:agawaeuleo/domain/entities/entities.dart';
+import 'package:agawaeuleo/presentation/features/home/widgets/deck/deck_palette.dart';
 import 'package:agawaeuleo/presentation/features/home/widgets/deck/deck_rail.dart';
 import 'package:agawaeuleo/presentation/features/home/widgets/deck/deck_scene.dart';
 import 'package:agawaeuleo/presentation/widgets/stage/paper_blob_painter.dart';
-import 'package:agawaeuleo/presentation/widgets/symptom/symptom_tone.dart';
+import 'package:agawaeuleo/presentation/widgets/surfaces/clay_sheen.dart';
 import 'package:flutter/material.dart';
 
 /// §11.7 홈 **케어 덱**(2026-09-11 홈 전면 개편 — 그리드 폐기).
 ///
 /// 증상을 격자로 늘어놓는 대신 한 장씩 넘겨 보는 무대다. 온보딩 히어로 스테이지의
 /// 문법을 그대로 가져왔다:
-/// - 뒤에는 종이 오림 블롭([PaperBlobPainter])이 증상 톤 색으로 모핑하고,
-/// - 가운데 증상 일러스트와 떠 있는 **실데이터 조각**(추천 용품 수·1위 제품)이
+/// - 뒤에는 파스텔 블롭 쿠션([PaperBlobPainter])이 증상 톤 워시로 모핑하고,
+/// - 가운데 클레이 일러스트와 떠 있는 **실데이터 조각**(추천 용품 수·1위 제품)이
 ///   레이어별 속도로 손가락에 1:1로 따라오며,
 /// - 멈추면 일러스트가 톡 튀고 1위 배지가 도장 찍히듯 앉는다.
 ///
-/// 위에는 '아기 돌봄 / 엄마 돌봄' 그룹 탭과 mono 카운터, 아래에는 한 번의 탭으로
-/// 원하는 증상으로 건너뛰는 [DeckRail]이 붙는다.
+/// 위에는 '아기 돌봄 / 엄마 돌봄' 알약 세그먼트와 주아체 카운터, 아래에는 한 번의
+/// 탭으로 원하는 증상으로 건너뛰는 [DeckRail]이 붙는다(DESIGN v3 §6 — 엄마 돌봄
+/// 강조는 라일락, 아기 돌봄은 딸기).
 class CareDeck extends StatefulWidget {
   const CareDeck({
     required this.symptoms,
@@ -290,10 +292,13 @@ class _DeckBody extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
+    // DESIGN v3 §6 — 톤 워시 파스텔(엄마 돌봄은 라일락 쪽으로 살짝 기운다).
     final washes = [
-      for (final s in symptoms)
-        SymptomTone.resolve(context, s.emojiOrIcon).wash,
+      for (final s in symptoms) DeckPalette.tone(context, s).wash,
     ];
+    final planets = group == DeckGroup.mom
+        ? [colors.seal, colors.lilac, colors.amber]
+        : [colors.seal, colors.amber, colors.accent];
 
     return Column(
       children: [
@@ -348,11 +353,7 @@ class _DeckBody extends StatelessWidget {
                                         under: colors.paperStack,
                                         orbit: colors.lineStrong,
                                         rim: colors.paperBg,
-                                        planets: [
-                                          colors.seal,
-                                          colors.amber,
-                                          colors.accent,
-                                        ],
+                                        planets: planets,
                                         center: const Offset(180, 150),
                                         radius: 112,
                                         orbitScale: 1.17,
@@ -418,7 +419,7 @@ class _DeckBody extends StatelessWidget {
   }
 }
 
-/// 덱 머리 — 그룹 탭('아기 돌봄 25' / '엄마 돌봄 7') + 현재 위치 mono 카운터.
+/// 덱 머리 — 알약 세그먼트('아기 돌봄 25' / '엄마 돌봄 7') + 현재 위치 주아체 카운터.
 class _GroupBar extends StatelessWidget {
   const _GroupBar({
     required this.groups,
@@ -441,19 +442,23 @@ class _GroupBar extends StatelessWidget {
     final total = countOf(selected);
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.x12),
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.x16),
       child: Row(
         children: [
-          for (final g in groups)
-            _GroupTab(
-              label: g.label,
-              count: countOf(g),
-              selected: g == selected,
-              onTap: () => onSelect(g),
+          Expanded(
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: _GroupSegment(
+                groups: groups,
+                selected: selected,
+                countOf: countOf,
+                onSelect: onSelect,
+              ),
             ),
-          const Spacer(),
+          ),
+          const SizedBox(width: AppSpacing.x12),
           Padding(
-            padding: const EdgeInsets.only(right: AppSpacing.x12),
+            padding: const EdgeInsets.only(right: AppSpacing.x4),
             child: AnimatedBuilder(
               animation: controller,
               builder: (context, _) {
@@ -480,17 +485,17 @@ class _GroupBar extends StatelessWidget {
                         ),
                       ),
                       child: Text(
-                        (current + 1).toString().padLeft(2, '0'),
+                        '${current + 1}',
                         key: ValueKey(current),
-                        style: texts.data.copyWith(color: colors.ink900),
+                        style: DeckPalette.digits(
+                          texts.heading.copyWith(color: colors.ink900),
+                        ),
                       ),
                     ),
                     Text(
-                      ' / ${total.toString().padLeft(2, '0')}',
-                      style: texts.caption.copyWith(
-                        color: colors.ink300,
-                        fontFamily: AppFontFamily.mono,
-                        letterSpacing: 0,
+                      ' / $total',
+                      style: DeckPalette.digits(
+                        texts.body.copyWith(color: colors.ink500),
                       ),
                     ),
                   ],
@@ -504,17 +509,109 @@ class _GroupBar extends StatelessWidget {
   }
 }
 
+/// 그룹 알약 세그먼트 — 트랙(paperStack 알약) 위를 선택 알약이 미끄러진다.
+///
+/// 선택 알약은 그룹 강조 워시(아기 = 딸기 / 엄마 = 라일락) + 클레이 광택 + 흰 스티커
+/// 테두리 + e1. 탭 폭은 가장 긴 탭에 맞춰 같게 두어 알약이 칸에 딱 맞는다.
+class _GroupSegment extends StatelessWidget {
+  const _GroupSegment({
+    required this.groups,
+    required this.selected,
+    required this.countOf,
+    required this.onSelect,
+  });
+
+  final List<DeckGroup> groups;
+  final DeckGroup selected;
+  final int Function(DeckGroup) countOf;
+  final ValueChanged<DeckGroup> onSelect;
+
+  static const double _inset = AppSpacing.x4;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.colors;
+    final n = groups.length;
+    final index = groups.indexOf(selected).clamp(0, n - 1);
+    final alignX = n > 1 ? index / (n - 1) * 2 - 1 : 0.0;
+    final emphasis = DeckPalette.emphasis(context, selected.audience);
+    final duration = AppMotion.resolve(context, AppMotion.base);
+
+    return IntrinsicWidth(
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          color: colors.paperStack,
+          borderRadius: AppRadius.brFull,
+        ),
+        child: Stack(
+          children: [
+            Positioned.fill(
+              child: Padding(
+                padding: const EdgeInsets.all(_inset),
+                child: AnimatedAlign(
+                  duration: duration,
+                  curve: AppMotion.enter,
+                  alignment: Alignment(alignX, 0),
+                  child: FractionallySizedBox(
+                    widthFactor: 1 / n,
+                    heightFactor: 1,
+                    child: AnimatedContainer(
+                      duration: duration,
+                      curve: AppMotion.enter,
+                      decoration: BoxDecoration(
+                        gradient: ClaySheen.gradient(context, emphasis.wash),
+                        borderRadius: AppRadius.brFull,
+                        border: Border.all(
+                          color: colors.paperRaised,
+                          width: 1.5,
+                        ),
+                        boxShadow: context.shadows.e1,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: _inset),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  for (final g in groups)
+                    Expanded(
+                      child: _GroupTab(
+                        label: g.label,
+                        count: countOf(g),
+                        selected: g == selected,
+                        emphasis: DeckPalette.emphasis(context, g.audience).fg,
+                        onTap: () => onSelect(g),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 class _GroupTab extends StatelessWidget {
   const _GroupTab({
     required this.label,
     required this.count,
     required this.selected,
+    required this.emphasis,
     required this.onTap,
   });
 
   final String label;
   final int count;
   final bool selected;
+
+  /// 선택됐을 때 글자색(그룹 강조 fg).
+  final Color emphasis;
   final VoidCallback onTap;
 
   @override
@@ -522,6 +619,7 @@ class _GroupTab extends StatelessWidget {
     final colors = context.colors;
     final texts = context.texts;
     final duration = AppMotion.resolve(context, AppMotion.fast);
+    final color = selected ? emphasis : colors.ink500;
 
     return Semantics(
       button: true,
@@ -535,47 +633,33 @@ class _GroupTab extends StatelessWidget {
           constraints: const BoxConstraints(minHeight: 44),
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: AppSpacing.x12),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.baseline,
-                  textBaseline: TextBaseline.alphabetic,
-                  children: [
-                    AnimatedDefaultTextStyle(
-                      duration: duration,
-                      style: texts.body.copyWith(
-                        color: selected ? colors.ink900 : colors.ink300,
-                        fontWeight: FontWeight.w700,
-                        height: 1.2,
-                      ),
-                      child: Text(label),
+            // 좁은 화면 × 큰 글자 배율에서 칸이 모자라면 넘치지 않고 살짝 줄어든다.
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.baseline,
+                textBaseline: TextBaseline.alphabetic,
+                children: [
+                  AnimatedDefaultTextStyle(
+                    duration: duration,
+                    style: texts.body.copyWith(
+                      color: color,
+                      fontWeight: FontWeight.w700,
+                      height: 1.2,
                     ),
-                    const SizedBox(width: AppSpacing.x4),
-                    Text(
-                      '$count',
-                      style: texts.caption.copyWith(
-                        color: selected ? colors.accent : colors.ink300,
-                        fontFamily: AppFontFamily.mono,
-                        letterSpacing: 0,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: AppSpacing.x4),
-                AnimatedContainer(
-                  duration: duration,
-                  curve: AppMotion.enter,
-                  width: selected ? 20 : 0,
-                  height: 3,
-                  decoration: BoxDecoration(
-                    color: colors.ink900,
-                    borderRadius: AppRadius.brFull,
+                    child: Text(label, maxLines: 1),
                   ),
-                ),
-              ],
+                  const SizedBox(width: AppSpacing.x4),
+                  AnimatedDefaultTextStyle(
+                    duration: duration,
+                    style: DeckPalette.digits(
+                      texts.label.copyWith(color: color, height: 1.2),
+                    ),
+                    child: Text('$count'),
+                  ),
+                ],
+              ),
             ),
           ),
         ),

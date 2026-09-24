@@ -4,8 +4,10 @@ import '../../../config/theme/theme.dart';
 import '../../../core/haptics/app_haptics.dart';
 import '../animated/shake.dart';
 
-/// §11.0 입력창. 높이 52 · r.sm · 배경 paper.card · 보더 line(포커스 accent 1.5dp) ·
-/// placeholder ink.300 · 패딩 16. 에러 시 coral 보더 + 흔들기 + 하단 caption + 라이트 햅틱.
+/// §11.0 입력창 — DESIGN v3 §5.2. 최소 높이 52 · 라디우스 `md`(20)의 말랑한 면 ·
+/// 배경 `paperRaised` · 윤곽 `line` 1.5(포커스 `accent` 2.0) · placeholder `ink300` ·
+/// 패딩 16. 외형은 `AppTheme.inputDecorationTheme`이 단일 소스다(검색창 알약은 소비처).
+/// 에러 시 coral 윤곽 + 흔들기 + 하단 caption + 라이트 햅틱.
 /// obscure=true면 우측 눈 아이콘으로 표시/숨김 토글(§11.3).
 class AppTextField extends StatefulWidget {
   const AppTextField({

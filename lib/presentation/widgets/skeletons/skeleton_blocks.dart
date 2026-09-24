@@ -3,8 +3,9 @@ import 'package:flutter/material.dart';
 import '../../../config/theme/theme.dart';
 import '../animated/shimmer_skeleton.dart';
 
-/// §11.17 스켈레톤 프리셋. 실제 레이아웃과 동일 형태의 반짝임 블록.
-/// 개별 블록은 placeholder 톤(line) 위로 반짝인다.
+/// §11.17 스켈레톤 프리셋 — DESIGN v3 §5.5. 실제 레이아웃과 동일 형태의 반짝임 블록.
+/// 개별 블록은 겹친 아랫장 톤(`paperStack`) 위로 반짝이고, 모서리는 v2보다 한 단계
+/// 더 둥글다(줄 = `brSm` 알약, 상자 = `brMd`, 셸 카드 = `brLg`).
 
 /// 카드/리스트 내부에 쓰는 한 줄 블록.
 class SkeletonLine extends StatelessWidget {
@@ -12,7 +13,7 @@ class SkeletonLine extends StatelessWidget {
     super.key,
     this.width,
     this.height = 12,
-    this.radius = AppRadius.brXs,
+    this.radius = AppRadius.brSm,
   });
 
   final double? width;
@@ -25,7 +26,7 @@ class SkeletonLine extends StatelessWidget {
       width: width,
       height: height,
       borderRadius: radius,
-      baseColor: context.colors.line,
+      baseColor: context.colors.paperStack,
     );
   }
 }
@@ -35,7 +36,7 @@ class SkeletonBox extends StatelessWidget {
   const SkeletonBox({
     required this.size,
     super.key,
-    this.radius = AppRadius.brSm,
+    this.radius = AppRadius.brMd,
     this.circle = false,
   });
 
@@ -49,12 +50,12 @@ class SkeletonBox extends StatelessWidget {
       width: size,
       height: size,
       borderRadius: circle ? BorderRadius.circular(size) : radius,
-      baseColor: context.colors.line,
+      baseColor: context.colors.paperStack,
     );
   }
 }
 
-/// 공용 카드 셸(paper.card · r.md · e1) — 스켈레톤 내용을 감싼다.
+/// 공용 카드 셸(`paperCard` · r.lg · e1, 윤곽 없음 — `AppCard` flat과 같은 면).
 class _SkeletonShell extends StatelessWidget {
   const _SkeletonShell({required this.child, this.height});
 
@@ -68,9 +69,9 @@ class _SkeletonShell extends StatelessWidget {
       height: height,
       decoration: BoxDecoration(
         color: colors.paperCard,
-        borderRadius: AppRadius.brMd,
+        borderRadius: AppRadius.brLg,
         boxShadow: context.shadows.e1,
-        border: Border.all(color: colors.line),
+        border: context.isDark ? Border.all(color: colors.line) : null,
       ),
       padding: const EdgeInsets.all(AppSpacing.cardPadding),
       child: child,

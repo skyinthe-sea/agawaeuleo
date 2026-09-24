@@ -4,19 +4,19 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../../config/theme/theme.dart';
+import '../surfaces/clay_sheen.dart';
 
-/// §11.0 하단 탭바 (DESIGN v2.3 — 먹 캡슐, 2026-09-11).
+/// §11.0 하단 탭바 — DESIGN v3 §5.3 "딸기 캡슐"(v2.3 먹 캡슐의 모션을 그대로 물려받음).
 ///
-/// 화면 폭을 가로지르던 독 대신, 가운데에 떠 있는 **작은 캡슐**(paperRaised +
-/// `line` 헤어라인 + 오버레이 음영 `e4`)이다. 탭이 둘뿐이라 넓은 독은 휑했고, 홈 덱
-/// 아래 레일과도 무게가 겹쳤다.
+/// 화면 폭을 가로지르던 독 대신, 가운데에 떠 있는 **작은 캡슐**(`paperRaised` +
+/// 장밋빛 음영 `e3`, 헤어라인 없음 — 다크만 `line` 1px로 윤곽을 받친다)이다. 탭이
+/// 둘뿐이라 넓은 독은 휑했고, 홈 덱 아래 레일과도 무게가 겹쳤다.
 ///
-/// 활성 표시는 `ink900` 먹 알약이다. 탭을 바꾸면 알약이 **먹이 번지듯** 흐른다 —
-/// 가는 방향의 앞 가장자리가 먼저 뻗고 뒤 가장자리가 늦게 따라와 잠깐 늘어났다가
-/// 새 칸에 맞춰 앉는다. 칸 줄을 두 겹(먹색 바탕 / 알약 모양으로 자른 종이색·채운
-/// 아이콘)으로 그려, 알약 가장자리가 지나가는 자리에서 글자가 정확히 뒤집힌다.
-/// 다크 모드는 `ink900`이 밝은 먹이라 알약·글자 대비가 자동으로 뒤집힌다.
-/// 그라데이션·블러 없음(페이퍼잉크 계약).
+/// 활성 표시는 클레이 광택([ClaySheen])을 입힌 `accent` 젤리 알약이다. 탭을 바꾸면
+/// 알약이 **물감이 번지듯** 흐른다 — 가는 방향의 앞 가장자리가 먼저 뻗고 뒤
+/// 가장자리가 늦게 따라와 잠깐 늘어났다가 새 칸에 맞춰 앉는다. 칸 줄을 두 겹
+/// (`ink500` 바탕 / 알약 모양으로 자른 `paperRaised` 글자·채운 아이콘)으로 그려, 알약
+/// 가장자리가 지나가는 자리에서 글자가 정확히 뒤집힌다.
 ///
 /// 두 탭 모두 라벨을 늘 보여 준다(아이콘 단독의 모호함 제거). 탭 시 `selectionClick`
 /// 햅틱, 칸 높이 48(최소 터치 타깃), 큰 시스템 글자는 배율 상한 1.3 + FittedBox
@@ -34,7 +34,11 @@ class AppBottomNav extends StatefulWidget {
 
   /// 탭 순서 = 셸 브랜치 순서(app_router). 항목을 되살리면 브랜치도 함께 되살릴 것.
   static const List<_NavItemData> _items = <_NavItemData>[
-    _NavItemData(label: '홈', icon: Icons.home_outlined, activeIcon: Icons.home),
+    _NavItemData(
+      label: '홈',
+      icon: Icons.home_outlined,
+      activeIcon: Icons.home_rounded,
+    ),
     // 기록 기능 숨김(2026-09-11 발주자 요청 — 제품 추천 집중). 삭제가 아니라 주석:
     // 되살릴 때는 이 항목과 app_router.dart의 기록 브랜치 주석을 함께 해제한다.
     // _NavItemData(
@@ -44,8 +48,8 @@ class AppBottomNav extends StatefulWidget {
     // ),
     _NavItemData(
       label: '내 정보',
-      icon: Icons.person_outline,
-      activeIcon: Icons.person,
+      icon: Icons.person_outline_rounded,
+      activeIcon: Icons.person_rounded,
     ),
   ];
 
@@ -60,7 +64,7 @@ class AppBottomNav extends StatefulWidget {
 
 class _AppBottomNavState extends State<AppBottomNav>
     with SingleTickerProviderStateMixin {
-  /// 먹 알약이 흐르는 시간 — 앞 가장자리는 이 중 앞부분에, 뒤 가장자리는 늦게 끝난다.
+  /// 알약이 흐르는 시간 — 앞 가장자리는 이 중 앞부분에, 뒤 가장자리는 늦게 끝난다.
   late final AnimationController _flow = AnimationController(
     vsync: this,
     duration: const Duration(milliseconds: 460),
@@ -137,8 +141,8 @@ class _AppBottomNavState extends State<AppBottomNav>
             decoration: BoxDecoration(
               color: c.paperRaised,
               borderRadius: AppRadius.brFull,
-              border: Border.all(color: c.line),
-              boxShadow: context.shadows.e4,
+              border: context.isDark ? Border.all(color: c.line) : null,
+              boxShadow: context.shadows.e3,
             ),
             child: SizedBox(
               width: cell * items.length,
@@ -167,15 +171,21 @@ class _AppBottomNavState extends State<AppBottomNav>
                         rect: pill.outerRect,
                         child: DecoratedBox(
                           decoration: BoxDecoration(
-                            color: c.ink900,
+                            gradient: ClaySheen.gradient(context, c.accentFill),
                             borderRadius: AppRadius.brFull,
+                            // 트랙 안에 앉은 알약이라 낮은 톤 그림자만.
+                            boxShadow: ClaySheen.toneShadow(
+                              context,
+                              c.accentFill,
+                              pressed: true,
+                            ),
                           ),
                         ),
                       ),
-                      // 바탕 글자(먹색) — 탭·스크린리더를 맡는다.
+                      // 바탕 글자(ink500) — 탭·스크린리더를 맡는다.
                       baseRow!,
-                      // 알약 안 글자(종이색·채운 아이콘) — 알약 모양으로 잘라, 먹이
-                      // 지나가는 가장자리에서 글자가 정확히 뒤집힌다.
+                      // 알약 안 글자(paperRaised·채운 아이콘) — 알약 모양으로 잘라,
+                      // 알약이 지나가는 가장자리에서 글자가 정확히 뒤집힌다.
                       IgnorePointer(
                         child: ExcludeSemantics(
                           child: ClipPath(
@@ -213,7 +223,7 @@ class _PillClipper extends CustomClipper<Path> {
   bool shouldReclip(_PillClipper oldClipper) => oldClipper.pill != pill;
 }
 
-/// 칸 줄 한 겹. [inked]면 알약 안쪽 모습(종이색 + 채운 아이콘)이다.
+/// 칸 줄 한 겹. [inked]면 알약 안쪽 모습(`paperRaised` 글자 + 채운 아이콘)이다.
 class _NavRow extends StatelessWidget {
   const _NavRow({
     required this.items,
@@ -254,7 +264,7 @@ class _NavCell extends StatelessWidget {
   final _NavItemData data;
   final bool selected;
 
-  /// 알약 안쪽 겹(종이색 + 채운 아이콘)인지.
+  /// 알약 안쪽 겹(`paperRaised` 글자 + 채운 아이콘)인지.
   final bool inked;
 
   /// null이면 장식 겹(탭·시맨틱스 없음).
@@ -285,9 +295,9 @@ class _NavCell extends StatelessWidget {
                 Text(
                   data.label,
                   maxLines: 1,
-                  style: context.texts.body.copyWith(
+                  // 주아체 19 — accentFill 알약 위 큰 텍스트 대비(§3.1).
+                  style: context.texts.heading.copyWith(
                     color: color,
-                    fontWeight: FontWeight.w700,
                     height: 1.2,
                   ),
                   // 큰 시스템 글자에서도 캡슐이 과도하게 늘지 않도록 상한.

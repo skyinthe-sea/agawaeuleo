@@ -1,9 +1,13 @@
 import 'package:agawaeuleo/config/theme/theme.dart';
 import 'package:agawaeuleo/core/utils/hangul_typing.dart';
 import 'package:agawaeuleo/presentation/widgets/animated/ink_wash_splash.dart';
+import 'package:agawaeuleo/presentation/widgets/surfaces/clay_sheen.dart';
 import 'package:flutter/material.dart';
 
-/// §11.7 홈 검색 바. 높이 52 · r.full · 배경 `paper.card` · e1.
+/// §11.7 홈 검색 바. 높이 52 · r.full · 배경 `paperRaised` · `line` 1.5 · e1.
+///
+/// DESIGN v3 §5.2 — 말랑한 알약 입력. 왼쪽 돋보기는 딸기 워시 동그라미(클레이 버블)
+/// 안에 앉고, 타이핑 커서는 딸기(accent) 알약.
 ///
 /// 2026-09-11 홈 개편 — 비어 있던 알약에 **타이핑 힌트**를 넣었다. [hints]의 증상
 /// 이름을 한글 IME 조합 순서(ㅂ → 배 → 뱅 → 배아 …)로 쳤다가 지우기를 한 바퀴
@@ -176,10 +180,10 @@ class _HomeSearchBarState extends State<HomeSearchBar>
           type: MaterialType.transparency,
           child: DecoratedBox(
             decoration: BoxDecoration(
-              color: colors.paperCard,
+              color: colors.paperRaised,
               borderRadius: AppRadius.brFull,
               boxShadow: context.shadows.e1,
-              border: Border.all(color: colors.line),
+              border: Border.all(color: colors.line, width: 1.5),
             ),
             child: Material(
               type: MaterialType.transparency,
@@ -195,12 +199,8 @@ class _HomeSearchBarState extends State<HomeSearchBar>
                   height: HomeSearchBar.height,
                   child: Row(
                     children: [
-                      const SizedBox(width: AppSpacing.x16),
-                      Icon(
-                        Icons.search_rounded,
-                        size: 20,
-                        color: colors.accent,
-                      ),
+                      const SizedBox(width: AppSpacing.x8),
+                      const SearchPillBubble(),
                       const SizedBox(width: AppSpacing.x12),
                       Expanded(child: hint),
                       const SizedBox(width: AppSpacing.x16),
@@ -212,6 +212,29 @@ class _HomeSearchBarState extends State<HomeSearchBar>
           ),
         ),
       ),
+    );
+  }
+}
+
+/// 검색 알약 왼쪽의 돋보기 버블 — 딸기 워시 동그라미 + 은은한 클레이 광택.
+///
+/// 홈 검색 바와 검색 화면 입력이 같은 버블을 써야 Hero morph가 이음새 없이 이어진다.
+class SearchPillBubble extends StatelessWidget {
+  const SearchPillBubble({super.key});
+
+  static const double size = 34;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.colors;
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        gradient: ClaySheen.gradient(context, colors.accentWash),
+        shape: BoxShape.circle,
+      ),
+      child: Icon(Icons.search_rounded, size: 19, color: colors.accent),
     );
   }
 }

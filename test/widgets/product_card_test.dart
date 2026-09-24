@@ -1,3 +1,4 @@
+import 'package:agawaeuleo/config/theme/theme.dart';
 import 'package:agawaeuleo/domain/entities/entities.dart';
 import 'package:agawaeuleo/presentation/features/symptom_detail/widgets/product_card.dart';
 import 'package:agawaeuleo/presentation/features/symptom_detail/widgets/product_thumbnail.dart';
@@ -12,6 +13,7 @@ import '_widget_harness.dart';
 ///
 /// 1위 히어로/2위 이하 행이 각각 제목·한 줄 설명·순위를 노출하는지, 가격·평점이
 /// 새지 않는지(0011), 사진이 있을 때 패럴랙스 프레임이 붙는지를 확인한다.
+/// (DESIGN v3 — 순위 스티커 숫자는 주아체, 다크에서도 예외 없이 그린다.)
 Product _product({
   String title = '테스트 젖병 트윈팩',
   String? blurb = '수유 중 공기 혼입이 적어요',
@@ -46,6 +48,31 @@ void main() {
     // 0011 — 가격/평점은 필드가 살아 있어도 카드에 새지 않는다.
     expect(find.textContaining('19,900'), findsNothing);
     expect(find.textContaining('4.5'), findsNothing);
+
+    // v3 — 순위 숫자는 모노가 아니라 주아체(§3.3).
+    expect(
+      tester.widget<Text>(find.text('1')).style?.fontFamily,
+      AppFontFamily.display,
+    );
+  });
+
+  testWidgets('히어로·행 카드: 다크 모드에서도 예외 없이 그린다', (tester) async {
+    await pumpWidgetWithTheme(
+      tester,
+      Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          ProductHeroCard(product: _product()),
+          ProductCard(product: _product(), rank: 4),
+        ],
+      ),
+      dark: true,
+      reduceMotion: true,
+    );
+
+    expect(find.text('BEST PICK'), findsOneWidget);
+    expect(find.text('4'), findsOneWidget);
+    expect(tester.takeException(), isNull);
   });
 
   testWidgets('행 카드: 순위 배지와 제목/한 줄 설명을 노출하고, 설명이 비면 줄을 생략한다', (tester) async {

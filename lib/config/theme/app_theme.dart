@@ -7,7 +7,9 @@ import 'app_radius.dart';
 import 'app_shadows.dart';
 import 'app_typography.dart';
 
-/// §9 + §11.0 을 ThemeData로 배선. Material3 기반 커스텀.
+/// §9 + §11.0 을 ThemeData로 배선. Material3 기반 커스텀(DESIGN v3 "몽글 클레이" —
+/// 버튼·칩·툴팁은 알약, 입력·카드·시트·다이얼로그는 한 단계 더 둥글게, 상단바는
+/// 화면과 같은 크림 바탕, 스낵바는 코코아 토스트).
 /// light()/dark() 두 빌더만 노출 — main/통합에서 사용.
 class AppTheme {
   const AppTheme._();
@@ -59,7 +61,8 @@ class AppTheme {
       extensions: <ThemeExtension<dynamic>>[c, shadows],
       appBarTheme: AppBarTheme(
         toolbarHeight: 56,
-        backgroundColor: c.paperRaised,
+        // DESIGN v3 — 상단바는 화면 바탕(크림)과 한 몸(`AppAppBar`와 동일).
+        backgroundColor: c.paperBg,
         surfaceTintColor: Colors.transparent,
         shadowColor: Colors.transparent,
         foregroundColor: c.ink900,
@@ -107,10 +110,8 @@ class AppTheme {
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ButtonStyle(
-          minimumSize: const WidgetStatePropertyAll(Size.fromHeight(52)),
-          shape: const WidgetStatePropertyAll(
-            RoundedRectangleBorder(borderRadius: AppRadius.brSm),
-          ),
+          minimumSize: const WidgetStatePropertyAll(Size.fromHeight(54)),
+          shape: const WidgetStatePropertyAll(StadiumBorder()),
           backgroundColor: WidgetStateProperty.resolveWith((states) {
             if (states.contains(WidgetState.disabled)) return c.ink300;
             if (states.contains(WidgetState.pressed)) return c.accentDeep;
@@ -131,14 +132,13 @@ class AppTheme {
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: ButtonStyle(
-          minimumSize: const WidgetStatePropertyAll(Size.fromHeight(52)),
-          shape: const WidgetStatePropertyAll(
-            RoundedRectangleBorder(borderRadius: AppRadius.brSm),
-          ),
+          minimumSize: const WidgetStatePropertyAll(Size.fromHeight(54)),
+          shape: const WidgetStatePropertyAll(StadiumBorder()),
           side: WidgetStatePropertyAll(
-            BorderSide(color: c.lineStrong, width: 1),
+            BorderSide(color: c.lineStrong, width: 1.5),
           ),
-          backgroundColor: const WidgetStatePropertyAll(Colors.transparent),
+          // DESIGN v3 §5.2 — 보조 알약은 paperRaised 면(`GhostButton`과 동일).
+          backgroundColor: WidgetStatePropertyAll(c.paperRaised),
           foregroundColor: WidgetStatePropertyAll(c.ink700),
           overlayColor: WidgetStatePropertyAll(c.accentWash),
           textStyle: const WidgetStatePropertyAll(AppTypography.label),
@@ -152,14 +152,12 @@ class AppTheme {
           foregroundColor: WidgetStatePropertyAll(c.accent),
           overlayColor: WidgetStatePropertyAll(c.accentWash),
           textStyle: const WidgetStatePropertyAll(AppTypography.label),
-          shape: const WidgetStatePropertyAll(
-            RoundedRectangleBorder(borderRadius: AppRadius.brSm),
-          ),
+          shape: const WidgetStatePropertyAll(StadiumBorder()),
         ),
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: c.paperCard,
+        fillColor: c.paperRaised,
         isDense: false,
         constraints: const BoxConstraints(minHeight: 52),
         contentPadding: const EdgeInsets.symmetric(
@@ -172,28 +170,28 @@ class AppTheme {
         errorStyle: AppTypography.caption.copyWith(color: c.coral),
         helperStyle: AppTypography.caption.copyWith(color: c.ink500),
         border: OutlineInputBorder(
-          borderRadius: AppRadius.brSm,
-          borderSide: BorderSide(color: c.line, width: 1),
+          borderRadius: AppRadius.brMd,
+          borderSide: BorderSide(color: c.line, width: 1.5),
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: AppRadius.brSm,
-          borderSide: BorderSide(color: c.line, width: 1),
+          borderRadius: AppRadius.brMd,
+          borderSide: BorderSide(color: c.line, width: 1.5),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: AppRadius.brSm,
-          borderSide: BorderSide(color: c.accent, width: 1.5),
+          borderRadius: AppRadius.brMd,
+          borderSide: BorderSide(color: c.accent, width: 2),
         ),
         disabledBorder: OutlineInputBorder(
-          borderRadius: AppRadius.brSm,
-          borderSide: BorderSide(color: c.line, width: 1),
+          borderRadius: AppRadius.brMd,
+          borderSide: BorderSide(color: c.line, width: 1.5),
         ),
         errorBorder: OutlineInputBorder(
-          borderRadius: AppRadius.brSm,
-          borderSide: BorderSide(color: c.coral, width: 1),
+          borderRadius: AppRadius.brMd,
+          borderSide: BorderSide(color: c.coral, width: 1.5),
         ),
         focusedErrorBorder: OutlineInputBorder(
-          borderRadius: AppRadius.brSm,
-          borderSide: BorderSide(color: c.coral, width: 1.5),
+          borderRadius: AppRadius.brMd,
+          borderSide: BorderSide(color: c.coral, width: 2),
         ),
       ),
       cardTheme: CardThemeData(
@@ -202,7 +200,7 @@ class AppTheme {
         shadowColor: Colors.transparent,
         elevation: 0,
         margin: EdgeInsets.zero,
-        shape: const RoundedRectangleBorder(borderRadius: AppRadius.brMd),
+        shape: const RoundedRectangleBorder(borderRadius: AppRadius.brLg),
         clipBehavior: Clip.antiAlias,
       ),
       bottomSheetTheme: BottomSheetThemeData(
@@ -213,9 +211,11 @@ class AppTheme {
         modalElevation: 0,
         showDragHandle: true,
         dragHandleColor: c.lineStrong,
+        // DESIGN v3 §5.1 — 핸들 40×5 알약(`AppSheetShell` 그래버와 동일).
+        dragHandleSize: const Size(40, 5),
         shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(
-            top: Radius.circular(AppRadius.lg),
+            top: Radius.circular(AppRadius.xl),
           ),
         ),
       ),
@@ -223,26 +223,42 @@ class AppTheme {
         backgroundColor: c.paperRaised,
         surfaceTintColor: Colors.transparent,
         elevation: 0,
-        shape: const RoundedRectangleBorder(borderRadius: AppRadius.brLg),
+        shape: const RoundedRectangleBorder(borderRadius: AppRadius.brXl),
         titleTextStyle: AppTypography.title.copyWith(color: c.ink900),
         contentTextStyle: AppTypography.bodyL.copyWith(color: c.ink700),
       ),
+      // DESIGN v3 — 크림 바탕 위에서 또렷한 코코아 토스트(다크는 `ink900`이 밝아
+      // 자동으로 크림 토스트로 뒤집힌다). 액션은 두 모드 모두 대비 4.5:1 이상인
+      // `accentWash`(딸기 워시) 글자.
       snackBarTheme: SnackBarThemeData(
-        backgroundColor: c.paperRaised,
-        contentTextStyle: AppTypography.body.copyWith(color: c.ink900),
-        actionTextColor: c.accent,
+        backgroundColor: c.ink900,
+        contentTextStyle: AppTypography.body.copyWith(color: c.paperRaised),
+        actionTextColor: c.accentWash,
         behavior: SnackBarBehavior.floating,
         elevation: 0,
-        shape: const RoundedRectangleBorder(borderRadius: AppRadius.brSm),
+        shape: const RoundedRectangleBorder(borderRadius: AppRadius.brLg),
       ),
       dividerTheme: DividerThemeData(color: c.line, thickness: 1, space: 1),
       chipTheme: ChipThemeData(
-        backgroundColor: c.paperCard,
+        backgroundColor: c.paperRaised,
         selectedColor: c.accentWash,
-        side: BorderSide(color: c.line, width: 1),
+        side: BorderSide(color: c.line, width: 1.5),
         labelStyle: AppTypography.caption.copyWith(color: c.ink700),
-        shape: const RoundedRectangleBorder(borderRadius: AppRadius.brXs),
+        shape: const StadiumBorder(),
         showCheckmark: false,
+      ),
+      tooltipTheme: TooltipThemeData(
+        decoration: BoxDecoration(
+          color: c.ink900,
+          borderRadius: AppRadius.brFull,
+        ),
+        textStyle: AppTypography.caption.copyWith(color: c.paperRaised),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      ),
+      progressIndicatorTheme: ProgressIndicatorThemeData(
+        color: c.accent,
+        linearTrackColor: c.paperStack,
+        circularTrackColor: Colors.transparent,
       ),
       textSelectionTheme: TextSelectionThemeData(
         cursorColor: c.accent,

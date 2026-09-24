@@ -3,15 +3,19 @@ import 'dart:math' as math;
 import 'package:agawaeuleo/config/theme/theme.dart';
 import 'package:agawaeuleo/domain/entities/entities.dart';
 import 'package:agawaeuleo/presentation/features/home/widgets/deck/deck_float_cards.dart';
+import 'package:agawaeuleo/presentation/features/home/widgets/deck/deck_palette.dart';
 import 'package:agawaeuleo/presentation/features/symptom_detail/widgets/note/note_chapters.dart';
 import 'package:agawaeuleo/presentation/widgets/animated/tap_spring.dart';
+import 'package:agawaeuleo/presentation/widgets/surfaces/clay_sheen.dart';
 import 'package:agawaeuleo/presentation/widgets/symptom/symptom_icon.dart';
 import 'package:agawaeuleo/presentation/widgets/symptom/symptom_illustration.dart';
-import 'package:agawaeuleo/presentation/widgets/symptom/symptom_tone.dart';
 import 'package:flutter/material.dart';
 
-/// 케어 덱의 한 장 — 무대(일러스트 + 떠 있는 실데이터 조각) + 글(오버라인·이름·
+/// 케어 덱의 한 장 — 무대(일러스트 + 떠 있는 실데이터 조각) + 글(번호 배지·이름·
 /// 한 줄 설명·열기 버튼).
+///
+/// DESIGN v3 "몽글 클레이" §6 — 클레이 일러스트가 파스텔 블롭 쿠션 위에 앉고, 떠 있는
+/// 조각은 스티커 문법, 글은 주아체 번호 동그라미 + 주아체 이름 + 딸기 젤리 알약.
 ///
 /// 온보딩 스테이지와 같은 원리로 모든 레이어가 페이지 값에 **1:1로** 묶인다.
 /// 장면은 페이지뷰 안에 있지만, 무대 레이어는 페이지 이동을 상쇄한 뒤 레이어별
@@ -37,7 +41,7 @@ class DeckScene extends StatelessWidget {
   final Symptom symptom;
   final int index;
 
-  /// 그룹 안 순번(1부터) — 오버라인 mono 번호.
+  /// 그룹 안 순번(1부터) — 글 머리의 주아체 번호 동그라미.
   final int number;
   final String groupLabel;
   final PageController controller;
@@ -60,7 +64,7 @@ class DeckScene extends StatelessWidget {
   static const Size canvas = Size(360, 300);
   static const double illustrationSize = 212;
 
-  /// 글 영역 높이(오버라인 + 이름 + 설명 + '자세히 보기' 알약).
+  /// 글 영역 높이(번호 배지 줄 + 이름 + 설명 + '자세히 보기' 알약).
   /// 글자 배율 상한(1.3)에서도 넘치지 않는 값.
   static const double copyHeight = 186;
 
@@ -294,22 +298,20 @@ class _SceneIllustrationState extends State<_SceneIllustration>
       art = SymptomIllustration(
         illustrationKey: symptom.emojiOrIcon!,
         size: DeckScene.illustrationSize,
-        holdInkWeight: true,
       );
     } else {
-      // 일러스트 미등록 증상(신규 콘텐츠) — 톤 워시 원 + 라인 아이콘으로 자리를 지킨다.
-      final tone = SymptomTone.resolve(context, symptom.emojiOrIcon);
+      // 일러스트 미등록 증상(신규 콘텐츠) — 톤 워시 클레이 버블 + 라인 아이콘으로
+      // 자리를 지킨다(흰 스티커 테두리 + 은은한 광택).
+      final tone = DeckPalette.tone(context, symptom);
       art = Center(
         child: Container(
           width: DeckScene.illustrationSize * 0.62,
           height: DeckScene.illustrationSize * 0.62,
           decoration: BoxDecoration(
-            color: context.colors.paperRaised,
+            gradient: ClaySheen.gradient(context, tone.wash),
             shape: BoxShape.circle,
-            border: Border.all(
-              color: tone.fg.withValues(alpha: 0.28),
-              width: 2,
-            ),
+            border: Border.all(color: context.colors.paperRaised, width: 3),
+            boxShadow: context.shadows.e2,
           ),
           child: Icon(
             SymptomIcons.resolve(symptom.emojiOrIcon),
@@ -337,7 +339,7 @@ class _SceneIllustrationState extends State<_SceneIllustration>
   }
 }
 
-/// 장면 글 — 오버라인(accent 틱 + mono 번호 + 그룹) · 명조 이름 · 한 줄 설명 · 열기.
+/// 장면 글 — 머리(주아체 번호 동그라미 + 그룹) · 주아체 이름 · 한 줄 설명 · 열기.
 ///
 /// 페이지와 함께 움직이되 블록마다 조금씩 더 빨리 흘러 나가며 흐려진다(온보딩 글과
 /// 같은 키네틱 타이포, 추가 이동은 항상 화면 바깥 방향).
@@ -366,31 +368,43 @@ class _SceneCopy extends StatelessWidget {
     final texts = context.texts;
     final reduce = context.reduceMotion;
 
+    final tone = DeckPalette.tone(context, symptom);
+
+    // DESIGN v3 §6 — 먹선 틱 + 모노 번호(`01`) 대신 톤 워시 동그라미 안의 주아체 번호.
     final overline = Row(
       children: [
         Container(
-          width: 3,
-          height: 14,
+          width: 24,
+          height: 24,
+          alignment: Alignment.center,
+          padding: const EdgeInsets.all(AppSpacing.x2),
           decoration: BoxDecoration(
-            color: colors.accent,
-            borderRadius: AppRadius.brFull,
+            gradient: ClaySheen.gradient(context, tone.wash),
+            shape: BoxShape.circle,
+            border: Border.all(color: colors.paperRaised, width: 1.5),
+            boxShadow: context.shadows.e1,
+          ),
+          child: FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(
+              '$number',
+              style: DeckPalette.digits(
+                texts.label.copyWith(color: tone.fg, height: 1),
+              ),
+            ),
           ),
         ),
         const SizedBox(width: AppSpacing.x8),
-        Text(
-          number.toString().padLeft(2, '0'),
-          style: texts.overline.copyWith(
-            color: colors.accent,
-            fontFamily: AppFontFamily.mono,
-          ),
-        ),
-        const SizedBox(width: AppSpacing.x8),
-        Text(
-          groupLabel,
-          style: texts.caption.copyWith(
-            color: colors.ink500,
-            fontWeight: FontWeight.w600,
-            letterSpacing: 0,
+        Flexible(
+          child: Text(
+            groupLabel,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: texts.caption.copyWith(
+              color: colors.ink500,
+              fontWeight: FontWeight.w600,
+              letterSpacing: 0,
+            ),
           ),
         ),
       ],
@@ -421,9 +435,10 @@ class _SceneCopy extends StatelessWidget {
       style: texts.bodyL.copyWith(color: colors.ink500, height: 1.3),
     );
 
-    // 초보 사용자가 "어디를 눌러야 하는지" 한눈에 알도록, 먹색 원형 화살표 대신
-    // 글자가 있는 **전폭 먹 캡슐**을 둔다(하단 먹 캡슐 네비와 같은 문법).
-    // 무대·글 어디를 눌러도 같은 곳으로 가지만, 어피던스는 이 캡슐이 진다.
+    // 초보 사용자가 "어디를 눌러야 하는지" 한눈에 알도록 글자가 있는 **전폭 알약**을
+    // 둔다. DESIGN v3 §5.2 — 딸기(accent) 젤리 알약 + 클레이 광택 + 자기 색 그림자,
+    // 끝에는 흰 동그라미 안의 화살표. 무대·글 어디를 눌러도 같은 곳으로 가지만,
+    // 어피던스는 이 알약이 진다.
     final openButton = Semantics(
       button: true,
       label: '${symptom.name} 케어 노트 열기',
@@ -433,11 +448,16 @@ class _SceneCopy extends StatelessWidget {
         onTap: onOpen,
         child: Container(
           height: 52,
-          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.x20),
+          padding: const EdgeInsets.fromLTRB(
+            AppSpacing.x24,
+            0,
+            AppSpacing.x8,
+            0,
+          ),
           decoration: BoxDecoration(
-            color: colors.ink900,
+            gradient: ClaySheen.gradient(context, colors.accentFill),
             borderRadius: AppRadius.brFull,
-            boxShadow: context.shadows.e2,
+            boxShadow: ClaySheen.toneShadow(context, colors.accentFill),
           ),
           child: Row(
             children: [
@@ -446,14 +466,26 @@ class _SceneCopy extends StatelessWidget {
                   '자세히 보기',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: texts.label.copyWith(color: colors.paperRaised),
+                  // 주아체 19 — accentFill 면 위 큰 텍스트(§3.1).
+                  style: texts.heading.copyWith(
+                    color: colors.paperRaised,
+                    height: 1.2,
+                  ),
                 ),
               ),
               const SizedBox(width: AppSpacing.x8),
-              Icon(
-                Icons.arrow_forward_rounded,
-                size: 20,
-                color: colors.paperRaised,
+              Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  color: colors.paperRaised,
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  Icons.arrow_forward_rounded,
+                  size: 20,
+                  color: colors.accent,
+                ),
               ),
             ],
           ),

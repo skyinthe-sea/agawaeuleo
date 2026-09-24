@@ -1,60 +1,63 @@
 import 'package:flutter/material.dart';
 
-/// §9.2 폰트 패밀리. NotoSerifKR은 wght=700 고정 정적 서브셋
-/// (assets/fonts/NotoSerifKR-Bold.ttf, pubspec에서 weight:700 단일 선언)이다.
-/// 가변폰트가 아니므로 굵기는 fontWeight(w700)로 결정된다.
+/// §9.2 폰트 패밀리 — DESIGN v3 §3.3.
+///
+/// - [display] **주아체(Jua, SIL OFL 1.1)** — 제목·히어로. 통통하고 둥근 한 가지 굵기라
+///   `fontWeight`는 의미가 없다(항상 같은 획). 가운뎃점(·) 등 일부 문장부호가 없어
+///   [displayFallback]으로 Pretendard를 받친다.
+/// - [sans] Pretendard — 본문·라벨(가독성 담당).
+/// - [mono] JetBrains Mono — 수치(기록 기능 숨김 중이라 사용처가 적다).
 class AppFontFamily {
   const AppFontFamily._();
 
-  static const String serif = 'NotoSerifKR';
+  static const String display = 'Jua';
   static const String sans = 'Pretendard';
   static const String mono = 'JetBrainsMono';
+
+  /// 주아체에 없는 글리프(·, 일부 기호)를 이어받는 폴백 체인.
+  static const List<String> displayFallback = [sans];
 }
 
-/// §9.2 타입 스케일(색상 비의존, DESIGN v2 §3.3 개정 — displayL/overline/dataL 신규 +
-/// 자간 도입). 색은 ThemeData/텍스트가 주입.
-/// 명조 계열은 정적 Bold 서브셋을 쓰므로 fontWeight(w700)만으로 충분하다.
-/// fontVariations(wght 700)는 정적 폰트에서 무해하게 무시되며 호환성을 위해 유지한다.
+/// §9.2 타입 스케일(색상 비의존, DESIGN v3 §3.3 개정 — 명조 → 주아체, 제목 계열 자간 0 근처).
+/// 색은 ThemeData/텍스트가 주입.
 class AppTypography {
   const AppTypography._();
 
-  // 정적 Bold 서브셋에는 가변 축이 없어 실효는 없으나(무해), 명시성을 위해 유지.
-  static const List<FontVariation> _serifBold = [FontVariation('wght', 700)];
-
-  /// DESIGN v2 §3.3 신규 — 온보딩 제목, 히어로 모먼트.
+  /// 온보딩 제목, 히어로 모먼트(주아체).
   static const TextStyle displayL = TextStyle(
-    fontFamily: AppFontFamily.serif,
-    fontVariations: _serifBold,
-    fontWeight: FontWeight.w700,
+    fontFamily: AppFontFamily.display,
+    fontFamilyFallback: AppFontFamily.displayFallback,
+    fontWeight: FontWeight.w400,
     fontSize: 34,
-    height: 1.25,
-    letterSpacing: -0.5,
+    height: 1.22,
+    letterSpacing: -0.4,
   );
 
   static const TextStyle display = TextStyle(
-    fontFamily: AppFontFamily.serif,
-    fontVariations: _serifBold,
-    fontWeight: FontWeight.w700,
+    fontFamily: AppFontFamily.display,
+    fontFamilyFallback: AppFontFamily.displayFallback,
+    fontWeight: FontWeight.w400,
     fontSize: 28,
-    height: 1.30,
-    letterSpacing: -0.5,
-  );
-
-  static const TextStyle title = TextStyle(
-    fontFamily: AppFontFamily.serif,
-    fontVariations: _serifBold,
-    fontWeight: FontWeight.w700,
-    fontSize: 22,
-    height: 1.35,
+    height: 1.26,
     letterSpacing: -0.3,
   );
 
-  static const TextStyle heading = TextStyle(
-    fontFamily: AppFontFamily.sans,
-    fontWeight: FontWeight.w600,
-    fontSize: 18,
-    height: 1.40,
+  static const TextStyle title = TextStyle(
+    fontFamily: AppFontFamily.display,
+    fontFamilyFallback: AppFontFamily.displayFallback,
+    fontWeight: FontWeight.w400,
+    fontSize: 22,
+    height: 1.32,
     letterSpacing: -0.2,
+  );
+
+  static const TextStyle heading = TextStyle(
+    fontFamily: AppFontFamily.display,
+    fontFamilyFallback: AppFontFamily.displayFallback,
+    fontWeight: FontWeight.w400,
+    fontSize: 19,
+    height: 1.36,
+    letterSpacing: -0.1,
   );
 
   static const TextStyle bodyL = TextStyle(

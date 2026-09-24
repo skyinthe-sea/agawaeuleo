@@ -164,6 +164,7 @@ class _MetaRow extends StatelessWidget {
   }
 }
 
+/// DESIGN v3 §6 "크림 썸네일 우물" — `paperStack`(크림) 배경 + `brMd`(둥근) 클립.
 class _Thumbnail extends StatelessWidget {
   const _Thumbnail({required this.imageUrl});
 
@@ -174,8 +175,8 @@ class _Thumbnail extends StatelessWidget {
     final colors = context.colors;
     final placeholder = DecoratedBox(
       decoration: BoxDecoration(
-        color: colors.accentWash,
-        borderRadius: AppRadius.brSm,
+        color: colors.paperStack,
+        borderRadius: AppRadius.brMd,
       ),
       child: Icon(Icons.shopping_bag_outlined, size: 28, color: colors.ink300),
     );
@@ -188,13 +189,16 @@ class _Thumbnail extends StatelessWidget {
       width: 72,
       height: 72,
       child: ClipRRect(
-        borderRadius: AppRadius.brSm,
-        child: Image.network(
-          url,
-          fit: BoxFit.cover,
-          errorBuilder: (context, error, stackTrace) => placeholder,
-          loadingBuilder: (context, child, progress) =>
-              progress == null ? child : placeholder,
+        borderRadius: AppRadius.brMd,
+        child: DecoratedBox(
+          decoration: BoxDecoration(color: colors.paperStack),
+          child: Image.network(
+            url,
+            fit: BoxFit.cover,
+            errorBuilder: (context, error, stackTrace) => placeholder,
+            loadingBuilder: (context, child, progress) =>
+                progress == null ? child : placeholder,
+          ),
         ),
       ),
     );

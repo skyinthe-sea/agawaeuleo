@@ -70,7 +70,12 @@ class SearchHighlight {
       rune == 0x20 || rune == 0x09 || rune == 0x0A || rune == 0x0D;
 }
 
-/// §11.8 매칭 글자 하이라이트 텍스트. 매칭 음절/부분은 `accent` 볼드로 강조한다.
+/// §11.8 매칭 글자 하이라이트 텍스트. 매칭 음절/부분은 `accent` 글자 + `accentWash`
+/// 형광펜 면으로 강조한다.
+///
+/// DESIGN v3 §3.3 — 주아체(display)는 한 가지 굵기라 굵기를 올리면 가짜 볼드가 생긴다.
+/// 그래서 기본 스타일이 주아체면 굵기는 그대로 두고 색·형광펜만으로 강조하고, 본문
+/// 서체(Pretendard)일 때만 스펙대로 볼드를 더한다.
 class HighlightedName extends StatelessWidget {
   const HighlightedName({
     required this.name,
@@ -97,9 +102,12 @@ class HighlightedName extends StatelessWidget {
       );
     }
 
+    final colors = context.colors;
+    final isDisplay = baseStyle.fontFamily == AppFontFamily.display;
     final highlightStyle = baseStyle.copyWith(
-      color: context.colors.accent,
-      fontWeight: FontWeight.w700,
+      color: colors.accent,
+      backgroundColor: colors.accentWash,
+      fontWeight: isDisplay ? baseStyle.fontWeight : FontWeight.w700,
     );
 
     final runes = name.runes.toList(growable: false);

@@ -1,4 +1,5 @@
 import 'package:agawaeuleo/config/theme/theme.dart';
+import 'package:agawaeuleo/presentation/features/symptom_detail/widgets/detail_clay.dart';
 import 'package:agawaeuleo/presentation/widgets/animated/scroll_parallax.dart';
 import 'package:agawaeuleo/presentation/widgets/animated/scroll_reveal.dart';
 import 'package:agawaeuleo/presentation/widgets/animated/shimmer_skeleton.dart';
@@ -6,11 +7,11 @@ import 'package:agawaeuleo/presentation/widgets/surfaces/paper_background.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 
-/// §11.9-6 제품 썸네일 — "옴폭한 종이 우물".
+/// §11.9-6 제품 썸네일 — "폭신한 크림 쿠션"(DESIGN v3 "몽글 클레이").
 ///
-/// 상품 사진을 그냥 얹지 않고 `paperBg`(카드면보다 어두운 종이) + `line` 헤어라인
-/// 프레임 안에 앉혀, 흰 배경 상품 컷이 카드 위에 떠 있지 않고 **면에 파인 자리**에
-/// 놓인 것처럼 보이게 한다(DESIGN v2 §2 "묵직한 페이퍼잉크").
+/// 상품 사진을 그냥 얹지 않고 `paperBg` 크림 면 + 흰 스티커 테두리(`paperRaised` 2)
+/// + e1 그림자의 둥근 쿠션 위에 앉혀, 흰 배경 상품 컷이 카드 면과 섞이지 않고
+/// **말랑한 받침** 위에 놓인 것처럼 보이게 한다.
 ///
 /// 모션(전부 reduce-motion 시 정지):
 /// - 로딩 → 표시: 시머에서 사진으로 크로스페이드(§10.2).
@@ -18,7 +19,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 ///   미끄러질 여유분만큼 사진을 미리 확대해 두어 가장자리 빈틈을 막는다.
 /// - [breathe](히어로 전용): 아주 느린 호흡 스케일.
 ///
-/// URL이 없거나(픽스처·미등록) 로드에 실패하면 그레인 종이 위 워시 원
+/// URL이 없거나(픽스처·미등록) 로드에 실패하면 크림 쿠션 위 딸기 워시 버블
 /// 플레이스홀더가 자리를 지킨다(이때는 패럴랙스를 걸지 않는다 — 가운데 아이콘이
 /// 흔들려 보이므로).
 class ProductThumbnail extends StatelessWidget {
@@ -26,7 +27,7 @@ class ProductThumbnail extends StatelessWidget {
     required this.imageUrl,
     required this.size,
     super.key,
-    this.radius = AppRadius.brSm,
+    this.radius = AppRadius.brMd,
     this.breathe = false,
   });
 
@@ -49,22 +50,15 @@ class ProductThumbnail extends StatelessWidget {
     final url = imageUrl?.trim() ?? '';
 
     // 사진이 없을 때의 대역 — 사진 자리를 대신하는 장식이므로 `InkHaloIcon`
-    // (아이콘-in-원 어피던스)이 아니라 링 없는 워시 원으로 조용히 처리한다.
+    // (아이콘-in-원 어피던스)이 아니라 링 없는 클레이 버블로 조용히 처리한다.
     final placeholder = PaperBackground(
       child: Center(
-        child: Container(
-          width: size * 0.44,
-          height: size * 0.44,
-          alignment: Alignment.center,
-          decoration: BoxDecoration(
-            color: colors.accentWash,
-            shape: BoxShape.circle,
-          ),
-          child: Icon(
-            Icons.shopping_bag_outlined,
-            size: size * 0.24,
-            color: colors.accent,
-          ),
+        child: ClayBubble(
+          size: size * 0.46,
+          wash: colors.accentWash,
+          icon: Icons.shopping_bag_rounded,
+          iconColor: colors.accent,
+          iconSize: size * 0.24,
         ),
       ),
     );
@@ -97,7 +91,7 @@ class ProductThumbnail extends StatelessWidget {
                     width: size,
                     height: size,
                     borderRadius: radius,
-                    baseColor: colors.line,
+                    baseColor: colors.paperStack,
                   )
                 : KeyedSubtree(key: const ValueKey('image'), child: child),
           );
@@ -120,13 +114,19 @@ class ProductThumbnail extends StatelessWidget {
       );
     }
 
+    // 흰 테두리는 전경으로 덧그린다 — 사진 가장자리를 말끔히 감싸고, 사진 자리는
+    // 프레임 전체를 그대로 쓴다(패럴랙스 확대 계산 불변).
     return Container(
       width: size,
       height: size,
       decoration: BoxDecoration(
         color: colors.paperBg,
         borderRadius: radius,
-        border: Border.all(color: colors.line),
+        boxShadow: context.shadows.e1,
+      ),
+      foregroundDecoration: BoxDecoration(
+        borderRadius: radius,
+        border: Border.all(color: colors.paperRaised, width: 2),
       ),
       clipBehavior: Clip.antiAlias,
       child: content,

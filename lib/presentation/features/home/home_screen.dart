@@ -24,17 +24,21 @@ import 'package:go_router/go_router.dart';
 
 /// §11.7 홈 — 앱의 얼굴(2026-09-11 전면 개편: 증상 그리드 → 케어 덱).
 ///
-/// 인사(날짜·명조 인사·오늘의 응원·메뉴) → 타이핑 힌트 검색 바 → [CareDeck].
+/// 인사(날짜·주아체 인사·오늘의 응원 말풍선·메뉴) → 타이핑 힌트 검색 바 → [CareDeck].
 /// 덱이 화면의 남은 높이를 모두 쓰는 한 화면 구성이고, 작은 화면에서는 덱의 최소
-/// 높이를 지키며 세로로 스크롤된다. 아래로 당기면 잉크 드롭 새로고침(§5.3).
+/// 높이를 지키며 세로로 스크롤된다. 아래로 당기면 딸기 하트 새로고침(§5.3).
+///
+/// DESIGN v3 "몽글 클레이" §6 — 딸기우유 크림 바탕 + 무광 점토 결 그레인.
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
 
-  /// 덱이 무너지지 않는 최소 높이(그룹 탭 44 + 무대 최소 ~218 + 글 186 + 레일 92).
-  static const double _deckMinHeight = 540;
+  /// 덱이 무너지지 않는 최소 높이(그룹 탭 44 + 무대 최소 ~188 + 글 186 + 레일 92).
+  /// 540에서 낮췄다 — 6.3" 폰(874pt)에서 인사 말풍선(192) + 덱이 한 화면에 들어오게.
+  static const double _deckMinHeight = 510;
 
   /// 인사 + 검색 바가 차지하는 대략 높이(최소 높이 계산용 — 실제 배치는 Column).
-  static const double _headerEstimate = 176;
+  /// v3에서 오늘의 응원이 말풍선(위아래 안쪽 여백 + 간격)이 되며 16 늘었다.
+  static const double _headerEstimate = 192;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -170,8 +174,8 @@ class HomeScreen extends ConsumerWidget {
   }
 }
 
-/// 덱 로딩 자리 — 실제 덱과 같은 뼈대(그룹 탭 · 무대 원 · 글 · 레일)로 맞춰
-/// 데이터 도착 시 튐이 없게 한다(DESIGN v2 §5.5).
+/// 덱 로딩 자리 — 실제 덱과 같은 뼈대(알약 세그먼트 · 무대 원 · 글 · 레일)로 맞춰
+/// 데이터 도착 시 튐이 없게 한다(DESIGN v3 §5.5 — 알약·동그라미 블록).
 class _DeckSkeleton extends StatelessWidget {
   const _DeckSkeleton();
 
@@ -182,14 +186,16 @@ class _DeckSkeleton extends StatelessWidget {
         const SizedBox(
           height: 44,
           child: Padding(
-            padding: EdgeInsets.symmetric(horizontal: AppSpacing.x24),
+            padding: EdgeInsets.symmetric(horizontal: AppSpacing.x16),
             child: Row(
               children: [
-                SkeletonLine(width: 72, height: 14),
-                SizedBox(width: AppSpacing.x16),
-                SkeletonLine(width: 72, height: 14),
+                ShimmerSkeleton(
+                  width: 208,
+                  height: 44,
+                  borderRadius: AppRadius.brFull,
+                ),
                 Spacer(),
-                SkeletonLine(width: 44, height: 14),
+                SkeletonLine(width: 44, height: 16, radius: AppRadius.brFull),
               ],
             ),
           ),
@@ -226,7 +232,13 @@ class _DeckSkeleton extends StatelessWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          SkeletonLine(width: 96, height: 12),
+                          Row(
+                            children: [
+                              SkeletonBox(size: 24, circle: true),
+                              SizedBox(width: AppSpacing.x8),
+                              SkeletonLine(width: 56, height: 12),
+                            ],
+                          ),
                           SizedBox(height: AppSpacing.x12),
                           SkeletonLine(width: 160, height: 30),
                           SizedBox(height: AppSpacing.x8),
@@ -253,7 +265,7 @@ class _DeckSkeleton extends StatelessWidget {
               for (var i = 0; i < 4; i++)
                 const Padding(
                   padding: EdgeInsets.symmetric(horizontal: AppSpacing.x8),
-                  child: SkeletonBox(size: 48, circle: true),
+                  child: SkeletonBox(size: 52, circle: true),
                 ),
             ],
           ),

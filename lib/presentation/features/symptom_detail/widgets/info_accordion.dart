@@ -1,13 +1,17 @@
 import 'package:agawaeuleo/config/theme/theme.dart';
 import 'package:agawaeuleo/core/haptics/app_haptics.dart';
 import 'package:agawaeuleo/domain/entities/entities.dart';
+import 'package:agawaeuleo/presentation/features/symptom_detail/widgets/detail_clay.dart';
 import 'package:agawaeuleo/presentation/widgets/animated/scroll_reveal.dart';
 import 'package:agawaeuleo/presentation/widgets/cards/app_card.dart';
 import 'package:flutter/material.dart';
 
 /// §11.9-4 정보 섹션 아코디언 리스트.
 ///
-/// 각 섹션은 heading 18 + 타입별 본문([InfoSection] 유니온 — text/steps/
+/// DESIGN v3 "몽글 클레이" — 둥근 카드 + 파스텔 아이콘 버블 + 동그란 셰브론 버블,
+/// 타입별 본문도 말랑하게(번호 동그라미·동그란 체크·버터 메모·둥근 표).
+///
+/// 각 섹션은 heading(주아체) + 타입별 본문([InfoSection] 유니온 — text/steps/
 /// checklist/table/qa/tips). 펼침/접힘 높이 트윈 260ms(§11.9). 첫 섹션은 기본 펼침.
 ///
 /// 진입 모션은 빌드 시점이 아니라 **화면에 들어오는 순간** 재생한다([ScrollReveal]
@@ -110,47 +114,85 @@ class _InfoAccordionState extends State<_InfoAccordion> {
   Widget build(BuildContext context) {
     final colors = context.colors;
     final texts = context.texts;
-    // §7.3-3: 펼침 시 아이콘·제목 색 ink700→accent 트윈(fast).
+    // §7.3-3: 펼침 시 아이콘·제목 색 ink700→accent 트윈(fast). v3: 아이콘 버블 면도
+    // 크림(paperStack)→딸기 워시로 함께 물든다.
     final tweenColor = _expanded ? colors.accent : colors.ink700;
+    final tweenWash = _expanded ? colors.accentWash : colors.paperStack;
     final duration = AppMotion.resolve(context, AppMotion.fast);
     final curve = AppMotion.resolveCurve(context, AppMotion.standard);
 
+    // 머리 줄은 누르는 자리 48을 확보하고, 그만큼 카드 위아래 여백을 줄여
+    // 접힌 높이는 그대로 둔다.
     return AppCard(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.cardPadding,
+        vertical: AppSpacing.x8 + AppSpacing.x2,
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           GestureDetector(
             behavior: HitTestBehavior.opaque,
             onTap: _toggle,
-            child: Row(
-              children: [
-                TweenAnimationBuilder<Color?>(
-                  tween: ColorTween(begin: colors.ink700, end: tweenColor),
-                  duration: duration,
-                  curve: curve,
-                  builder: (context, color, _) =>
-                      Icon(_sectionIcon, size: 20, color: color),
-                ),
-                const SizedBox(width: AppSpacing.iconTextGap),
-                Expanded(
-                  child: AnimatedDefaultTextStyle(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(minHeight: 48),
+              child: Row(
+                children: [
+                  TweenAnimationBuilder<Color?>(
+                    tween: ColorTween(begin: colors.paperStack, end: tweenWash),
                     duration: duration,
                     curve: curve,
-                    style: texts.heading.copyWith(color: tweenColor),
-                    child: Text(widget.section.title),
+                    builder: (context, wash, _) =>
+                        TweenAnimationBuilder<Color?>(
+                          tween: ColorTween(
+                            begin: colors.ink700,
+                            end: tweenColor,
+                          ),
+                          duration: duration,
+                          curve: curve,
+                          builder: (context, color, _) => ClayBubble(
+                            size: 36,
+                            wash: wash ?? tweenWash,
+                            icon: _sectionIcon,
+                            iconColor: color,
+                            iconSize: 19,
+                          ),
+                        ),
                   ),
-                ),
-                AnimatedRotation(
-                  turns: _expanded ? 0.5 : 0,
-                  duration: AppMotion.resolve(context, AppMotion.base),
-                  curve: AppMotion.enter,
-                  child: Icon(
-                    Icons.expand_more_rounded,
-                    size: 24,
-                    color: colors.ink500,
+                  const SizedBox(width: AppSpacing.x12),
+                  Expanded(
+                    child: AnimatedDefaultTextStyle(
+                      duration: duration,
+                      curve: curve,
+                      style: texts.heading.copyWith(color: tweenColor),
+                      child: Text(widget.section.title),
+                    ),
                   ),
-                ),
-              ],
+                  const SizedBox(width: AppSpacing.x8),
+                  // 동그란 셰브론 버블 — 펼치면 딸기 워시로 물들며 뒤집힌다.
+                  AnimatedContainer(
+                    duration: duration,
+                    curve: curve,
+                    width: 30,
+                    height: 30,
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: tweenWash,
+                      shape: BoxShape.circle,
+                    ),
+                    child: AnimatedRotation(
+                      turns: _expanded ? 0.5 : 0,
+                      duration: AppMotion.resolve(context, AppMotion.base),
+                      curve: AppMotion.enter,
+                      child: Icon(
+                        Icons.expand_more_rounded,
+                        size: 22,
+                        color: _expanded ? colors.accent : colors.ink500,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
           ClipRect(
@@ -160,7 +202,10 @@ class _InfoAccordionState extends State<_InfoAccordion> {
               alignment: Alignment.topCenter,
               child: _expanded
                   ? Padding(
-                      padding: const EdgeInsets.only(top: AppSpacing.x8),
+                      padding: const EdgeInsets.only(
+                        top: AppSpacing.x8,
+                        bottom: AppSpacing.x8,
+                      ),
                       child: _sectionBody(context),
                     )
                   : const SizedBox(width: double.infinity),
@@ -187,7 +232,7 @@ class _BodyText extends StatelessWidget {
   }
 }
 
-/// steps — 번호 원형 칩(24dp, accentWash 배경 + accent 숫자) + 본문 행.
+/// steps — 파스텔 번호 동그라미(26dp, 딸기 워시 + 광택 + 주아체 숫자) + 본문 행.
 /// intro가 있으면 리스트 위에 문단으로 얹는다.
 class _StepsBody extends StatelessWidget {
   const _StepsBody({required this.items, this.intro});
@@ -198,7 +243,7 @@ class _StepsBody extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
-    final texts = context.texts;
+    final digit = colors.accent;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -214,24 +259,19 @@ class _StepsBody extends StatelessWidget {
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Container(
-                  width: 24,
-                  height: 24,
-                  decoration: BoxDecoration(
-                    color: colors.accentWash,
-                    shape: BoxShape.circle,
-                  ),
-                  alignment: Alignment.center,
-                  child: Text(
-                    '${index + 1}',
-                    style: texts.caption.copyWith(
-                      color: colors.accent,
-                      height: 1,
-                    ),
-                  ),
+                ClayBubble(
+                  size: 26,
+                  wash: colors.accentWash,
+                  child: ClayNumber('${index + 1}', color: digit),
                 ),
                 const SizedBox(width: AppSpacing.x12),
-                Expanded(child: _BodyText(item)),
+                Expanded(
+                  child: Padding(
+                    // 숫자 동그라미 가운데에 첫 줄이 오도록.
+                    padding: const EdgeInsets.only(top: AppSpacing.x2),
+                    child: _BodyText(item),
+                  ),
+                ),
               ],
             ),
           ),
@@ -240,7 +280,7 @@ class _StepsBody extends StatelessWidget {
   }
 }
 
-/// checklist — 체크 라인 아이콘(accent) + 본문 리스트.
+/// checklist — 동그란 민트 체크(22dp 워시 원 + 체크) + 본문 리스트.
 class _ChecklistBody extends StatelessWidget {
   const _ChecklistBody({required this.items, this.intro});
 
@@ -267,13 +307,15 @@ class _ChecklistBody extends StatelessWidget {
               children: [
                 Padding(
                   padding: const EdgeInsets.only(top: AppSpacing.x2),
-                  child: Icon(
-                    Icons.check_rounded,
-                    size: 18,
-                    color: colors.accent,
+                  child: ClayBubble(
+                    size: 22,
+                    wash: colors.sageWash,
+                    icon: Icons.check_rounded,
+                    iconColor: colors.sage,
+                    iconSize: 15,
                   ),
                 ),
-                const SizedBox(width: AppSpacing.iconTextGap),
+                const SizedBox(width: AppSpacing.x12),
                 Expanded(child: _BodyText(item)),
               ],
             ),
@@ -283,9 +325,9 @@ class _ChecklistBody extends StatelessWidget {
   }
 }
 
-/// table — 헤어라인(line) 보더 표. 헤더 행 overline(ink500), 셀 body(ink700).
-/// 표가 카드 폭을 넘으면 표 자신이 **가로 스크롤**된다(화면 가로 오버플로
-/// 절대 금지). caption은 표 아래 caption(ink500).
+/// table — 둥근 표(바깥 lineStrong 1.5 + 안쪽 line 헤어라인, 크림 머리 행).
+/// 머리 행 overline(ink700), 셀 body(ink700). 표가 카드 폭을 넘으면 표 자신이
+/// **가로 스크롤**된다(화면 가로 오버플로 절대 금지). caption은 표 아래 caption(ink500).
 class _TableBody extends StatelessWidget {
   const _TableBody({required this.columns, required this.rows, this.caption});
 
@@ -304,7 +346,12 @@ class _TableBody extends StatelessWidget {
     final colors = context.colors;
     final texts = context.texts;
 
-    TableRow buildRow(List<String> cells, TextStyle style) => TableRow(
+    TableRow buildRow(
+      List<String> cells,
+      TextStyle style, {
+      Decoration? decoration,
+    }) => TableRow(
+      decoration: decoration,
       children: [
         for (var i = 0; i < columns.length; i++)
           Padding(
@@ -325,18 +372,31 @@ class _TableBody extends StatelessWidget {
       children: [
         SingleChildScrollView(
           scrollDirection: Axis.horizontal,
-          child: Table(
-            defaultColumnWidth: const IntrinsicColumnWidth(),
-            defaultVerticalAlignment: TableCellVerticalAlignment.middle,
-            border: TableBorder.all(
-              color: colors.line,
-              borderRadius: AppRadius.brXs,
+          // 테두리는 전경으로 덧그린다 — 배경 테두리면 크림 머리 행이 둥근
+          // 모서리의 선을 덮는다.
+          child: Container(
+            decoration: const BoxDecoration(borderRadius: AppRadius.brMd),
+            foregroundDecoration: BoxDecoration(
+              borderRadius: AppRadius.brMd,
+              border: Border.all(color: colors.lineStrong, width: 1.5),
             ),
-            children: [
-              buildRow(columns, texts.overline.copyWith(color: colors.ink500)),
-              for (final row in rows)
-                buildRow(row, texts.body.copyWith(color: colors.ink700)),
-            ],
+            clipBehavior: Clip.antiAlias,
+            child: Table(
+              defaultColumnWidth: const IntrinsicColumnWidth(),
+              defaultVerticalAlignment: TableCellVerticalAlignment.middle,
+              border: TableBorder.symmetric(
+                inside: BorderSide(color: colors.line),
+              ),
+              children: [
+                buildRow(
+                  columns,
+                  texts.overline.copyWith(color: colors.ink700),
+                  decoration: BoxDecoration(color: colors.paperStack),
+                ),
+                for (final row in rows)
+                  buildRow(row, texts.body.copyWith(color: colors.ink700)),
+              ],
+            ),
           ),
         ),
         if (caption != null) ...[
@@ -348,7 +408,8 @@ class _TableBody extends StatelessWidget {
   }
 }
 
-/// qa — Q(body 볼드, ink900) / A(body, ink700) 쌍. 항목 사이 헤어라인.
+/// qa — 주아체 Q/A 동그라미 + 질문(body 볼드, ink900) / 답(body, ink700) 쌍.
+/// 항목 사이는 헤어라인 대신 여백으로 숨을 둔다.
 class _QaBody extends StatelessWidget {
   const _QaBody({required this.items});
 
@@ -358,35 +419,61 @@ class _QaBody extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = context.colors;
     final texts = context.texts;
+
+    Widget mark(String letter, Color wash, Color fg) => ExcludeSemantics(
+      child: ClayBubble(
+        size: 24,
+        wash: wash,
+        child: ClayNumber(letter, color: fg, size: 13),
+      ),
+    );
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         for (final (index, item) in items.indexed) ...[
-          if (index > 0)
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: AppSpacing.x12),
-              child: ColoredBox(
-                color: colors.line,
-                child: const SizedBox(height: 1, width: double.infinity),
+          if (index > 0) const SizedBox(height: AppSpacing.x16),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              mark('Q', colors.accentWash, colors.accent),
+              const SizedBox(width: AppSpacing.x8),
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.only(top: AppSpacing.x2),
+                  child: Text(
+                    item.q,
+                    style: texts.body.copyWith(
+                      color: colors.ink900,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
               ),
-            ),
-          Text(
-            item.q,
-            style: texts.body.copyWith(
-              color: colors.ink900,
-              fontWeight: FontWeight.w700,
-            ),
+            ],
           ),
-          const SizedBox(height: AppSpacing.x4),
-          _BodyText(item.a),
+          const SizedBox(height: AppSpacing.x8),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              mark('A', colors.sageWash, colors.sage),
+              const SizedBox(width: AppSpacing.x8),
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.only(top: AppSpacing.x2),
+                  child: _BodyText(item.a),
+                ),
+              ),
+            ],
+          ),
         ],
       ],
     );
   }
 }
 
-/// tips — accentWash 라운드 박스 안 잉크 도트 불릿 리스트
-/// ('조리원 실전 팁' 시그니처).
+/// tips — 버터(amberWash) 메모 안 동그란 점 불릿 리스트('조리원 실전 팁' 시그니처).
+/// 흰 스티커 테두리 + e1로 카드 위에 살짝 붙인 쪽지처럼.
 class _TipsBody extends StatelessWidget {
   const _TipsBody({required this.items});
 
@@ -397,10 +484,17 @@ class _TipsBody extends StatelessWidget {
     final colors = context.colors;
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(AppSpacing.x12),
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.x16,
+        AppSpacing.x12,
+        AppSpacing.x16,
+        AppSpacing.x12,
+      ),
       decoration: BoxDecoration(
-        color: colors.accentWash,
-        borderRadius: AppRadius.brSm,
+        color: colors.amberWash,
+        borderRadius: AppRadius.brMd,
+        border: Border.all(color: colors.paperRaised, width: 2),
+        boxShadow: context.shadows.e1,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -414,11 +508,11 @@ class _TipsBody extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Padding(
-                    padding: const EdgeInsets.only(top: 6),
+                    padding: const EdgeInsets.only(top: 7),
                     child: Icon(
                       Icons.fiber_manual_record,
-                      size: 6,
-                      color: colors.accent,
+                      size: 8,
+                      color: colors.amber,
                     ),
                   ),
                   const SizedBox(width: AppSpacing.iconTextGap),

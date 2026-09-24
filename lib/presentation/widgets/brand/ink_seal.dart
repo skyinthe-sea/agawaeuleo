@@ -4,19 +4,21 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../../config/theme/theme.dart';
+import '../surfaces/clay_sheen.dart';
 
-/// DESIGN v2 §4.1 낙관 도장 — 앱의 브랜드 오브제(印).
+/// 브랜드 오브제 — DESIGN v3 §5.4 **딸기 스티커 도장**(v2 §4.1 낙관 도장의 후신).
 ///
-/// 형태: 둥근 정사각(`size * 0.24` 라디우스) + 배경 `colors.seal` + 중앙 글리프
-/// "아"(명조 700, `size * 0.5`, `colors.paperBg`) + 내부 1px 헤어라인
-/// (`colors.ink900` 12%). 기본 -3도 기울기([tilt]로 끌 수 있음).
+/// 형태: 말랑한 스퀴클(`ContinuousRectangleBorder`) + `colors.seal`(딸기 핑크) 면에
+/// 클레이 광택([ClaySheen.gradient]) + **흰 스티커 테두리**(`paperRaised`, 2dp —
+/// 소형은 1.5dp) + e1 음영 + 중앙 글리프 "아"(주아체, `size * 0.52`, `paperRaised`).
+/// 기본 -3도 기울기([tilt]로 끌 수 있음) — 손으로 붙인 스티커 인상.
 ///
 /// [animate]가 true면 등장 시 opacity 0→1(fast) + scale 1.4→1.0(base, `curve.enter`)
-/// + rotate -6°→-3°로 "손으로 찍은" 스탬프 모션을 재생하고, 완료 시(옵션 [haptic])
+/// + rotate -6°→-3°로 "탁 붙이는" 스탬프 모션을 재생하고, 완료 시(옵션 [haptic])
 /// mediumImpact 햅틱을 울린다. reduce-motion 시에는 스케일/회전 없이 페이드만 재생한다.
 ///
-/// [watermark]가 true면 배경 `sealWash` + 글리프 `seal` 색으로 뒤집혀 낮은 존재감의
-/// 장식용 워터마크가 된다(설정>정보, 약관 뷰어 말미 등).
+/// [watermark]가 true면 `sealWash` 면 + `seal` 글리프(테두리·음영 없음)로 뒤집혀 낮은
+/// 존재감의 장식용 워터마크가 된다(설정>정보, 약관 뷰어 말미 등).
 class InkSeal extends StatefulWidget {
   const InkSeal({
     super.key,
@@ -88,13 +90,13 @@ class InkSeal extends StatefulWidget {
 
   final double size;
 
-  /// 손으로 찍은 인상의 기본 -3도 기울기. false면 수평.
+  /// 손으로 붙인 인상의 기본 -3도 기울기. false면 수평.
   final bool tilt;
 
   /// true면 스탬프인(stamp-in) 등장 모션 재생(마운트 1회).
   final bool animate;
 
-  /// true면 낮은 존재감의 워터마크 배색(배경 `sealWash` / 글리프 `seal`).
+  /// true면 낮은 존재감의 워터마크 배색(면 `sealWash` / 글리프 `seal`).
   final bool watermark;
 
   /// 스탬프 모션 완료 시 mediumImpact 햅틱을 울릴지([animate]가 true일 때만 의미).
@@ -213,36 +215,47 @@ class _SealBox extends StatelessWidget {
   final String glyph;
   final bool watermark;
 
-  static const List<FontVariation> _serifBold = [FontVariation('wght', 700)];
-
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
-    final background = watermark ? colors.sealWash : colors.seal;
-    final glyphColor = watermark ? colors.seal : colors.paperBg;
+    final glyphColor = watermark ? colors.seal : colors.paperRaised;
+    // 연속 곡률 스퀴클 — 같은 라디우스의 RRect보다 모서리가 부드럽게 흘러 점토처럼
+    // 말랑해 보인다. ContinuousRectangleBorder의 반경 r은 원호 반경 약 0.43r로 읽히므로
+    // 0.72 × size ≈ 원호 0.3 × size(v2 낙관 0.24보다 한 단계 통통하게).
+    final radius = BorderRadius.circular(size * 0.72);
+    final outline = size <= InkSeal.sizeSm ? 1.5 : 2.0;
+
+    final Decoration decoration = watermark
+        ? ShapeDecoration(
+            color: colors.sealWash,
+            shape: ContinuousRectangleBorder(borderRadius: radius),
+          )
+        : ShapeDecoration(
+            gradient: ClaySheen.gradient(context, colors.seal),
+            shape: ContinuousRectangleBorder(
+              borderRadius: radius,
+              side: BorderSide(color: colors.paperRaised, width: outline),
+            ),
+            shadows: context.shadows.e1,
+          );
 
     final content = Container(
       width: size,
       height: size,
       alignment: Alignment.center,
-      decoration: BoxDecoration(
-        color: background,
-        borderRadius: BorderRadius.circular(size * 0.24),
-        border: Border.all(color: colors.ink900.withValues(alpha: 0.12)),
-      ),
+      decoration: decoration,
       child: Text(
         glyph,
-        style: TextStyle(
-          fontFamily: AppFontFamily.serif,
-          fontVariations: _serifBold,
-          fontWeight: FontWeight.w700,
-          fontSize: size * 0.5,
+        textScaler: TextScaler.noScaling,
+        style: context.texts.title.copyWith(
+          fontSize: size * 0.52,
           height: 1,
+          letterSpacing: 0,
           color: glyphColor,
         ),
       ),
     );
 
-    return watermark ? Opacity(opacity: 0.55, child: content) : content;
+    return watermark ? Opacity(opacity: 0.7, child: content) : content;
   }
 }

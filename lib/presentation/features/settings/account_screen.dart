@@ -39,6 +39,8 @@ class AccountScreen extends ConsumerWidget {
                 label: isGuest ? '게스트로 이용 중' : '계정 연결됨',
                 subtitle: userId,
                 icon: Icons.person_outline,
+                iconWash: colors.lilacWash,
+                iconColor: colors.lilac,
               ),
             ],
           ),
@@ -61,6 +63,8 @@ class AccountScreen extends ConsumerWidget {
                 SettingsTile(
                   label: '로그아웃',
                   icon: Icons.logout_rounded,
+                  iconWash: colors.amberWash,
+                  iconColor: colors.amber,
                   onTap: () => showLogoutConfirmDialog(context, ref),
                 ),
               ],
@@ -71,6 +75,7 @@ class AccountScreen extends ConsumerWidget {
                 SettingsTile(
                   label: '계정 삭제',
                   icon: Icons.delete_outline_rounded,
+                  iconWash: colors.coralWash,
                   iconColor: colors.coral,
                   labelColor: colors.coral,
                   onTap: () => showDeleteAccountConfirmFlow(context, ref),

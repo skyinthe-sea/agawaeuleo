@@ -3,11 +3,11 @@ import 'package:flutter/material.dart';
 import '../../../config/theme/theme.dart';
 import '../surfaces/paper_background.dart';
 
-/// DESIGN v2 §4.6 표면 격 통일 — 바텀시트 공용 셸.
+/// 바텀시트 공용 셸(DESIGN v2 §4.6 표면 격 통일 → v3 §5.1 "몽글 클레이").
 ///
-/// `paperRaised` + 상단 `BorderRadius.vertical(top: r.lg)` + e3 + 그레인(0.6배) +
-/// 그래버(36×4, r.full, `lineStrong`, 상단 8dp) + 옵션 헤더(명조 `title` 22 +
-/// trailing 슬롯, 아래 12dp) + 하단 SafeArea.
+/// `paperRaised` + 상단 `BorderRadius.vertical(top: r.xl)`(34 — 말랑하게 둥근 윗변) +
+/// 장밋빛 음영 e3 + 무광 점토 결(그레인 0.6배) + 그래버(40×5 알약, `lineStrong`,
+/// 상단 12dp) + 옵션 헤더(주아체 `title` 22 + trailing 슬롯, 아래 12dp) + 하단 SafeArea.
 ///
 /// `showAppBottomSheet`의 `builder`가 반환하는 콘텐츠를 이 셸로 감싸 쓴다.
 /// `tracking_entry_sheet`·`backup_priming_sheet` 등 수제 시트 chrome(라운드/그림자
@@ -23,7 +23,7 @@ class AppSheetShell extends StatelessWidget {
 
   final Widget child;
 
-  /// 시트 헤더 제목(명조 title 22). null이면 헤더 행 자체를 생략.
+  /// 시트 헤더 제목(주아체 title 22). null이면 헤더 행 자체를 생략.
   final String? title;
 
   /// 헤더 우측 자유 슬롯(닫기 버튼 등). [title]이 null이면 무시된다.
@@ -36,7 +36,7 @@ class AppSheetShell extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = context.colors;
     final radius = const BorderRadius.vertical(
-      top: Radius.circular(AppRadius.lg),
+      top: Radius.circular(AppRadius.xl),
     );
 
     return DecoratedBox(
@@ -65,13 +65,13 @@ class AppSheetShell extends StatelessWidget {
                   if (showGrabber)
                     Padding(
                       padding: const EdgeInsets.only(
-                        top: AppSpacing.x8,
+                        top: AppSpacing.x12,
                         bottom: AppSpacing.x16,
                       ),
                       child: Center(
                         child: Container(
-                          width: 36,
-                          height: 4,
+                          width: 40,
+                          height: 5,
                           decoration: BoxDecoration(
                             color: colors.lineStrong,
                             borderRadius: AppRadius.brFull,

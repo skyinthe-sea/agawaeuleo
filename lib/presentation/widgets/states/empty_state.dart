@@ -5,17 +5,23 @@ import '../../../config/theme/theme.dart';
 import '../brand/ink_halo_icon.dart';
 import '../buttons/primary_button.dart';
 import '../dividers/brush_divider.dart';
+import 'clay_scene_art.dart';
 
-/// §11.17 빈 상태. DESIGN v2 §5.4 — 워시 원을 [InkHaloIcon](122, animate)로,
-/// 메시지 위에 [BrushDivider.center](위아래 12dp)를 추가했다. 진입 시 일러스트
-/// 1회 미세 흔들림 + 텍스트 fadeIn은 그대로 유지. 문구는 "무엇을 하면 되는지"를 담는다.
+/// §11.17 빈 상태 — DESIGN v3 §5.5 "몽글 클레이".
+///
+/// 그림 자리는 우선순위대로 [illustration](임의 위젯) → [illustrationAsset](클레이
+/// 장면 140 + 딸기 wash 쿠션, 보통 `ClayScenes.emptySearch/emptyHeart`) → 클레이 버블
+/// [InkHaloIcon](122, animate)이다. 제목은 주아체 `display`, 메시지 위에 몽글 점선
+/// [BrushDivider.center](위아래 12dp). 진입 시 그림 1회 미세 흔들림 + 텍스트 fadeIn은
+/// 그대로 유지. 문구는 "무엇을 하면 되는지"를 담는다.
 class EmptyState extends StatelessWidget {
   const EmptyState({
     required this.title,
     super.key,
     this.message,
-    this.icon = Icons.brush_outlined,
+    this.icon = Icons.auto_awesome_rounded,
     this.illustration,
+    this.illustrationAsset,
     this.actionLabel,
     this.onAction,
   });
@@ -24,8 +30,12 @@ class EmptyState extends StatelessWidget {
   final String? message;
   final IconData icon;
 
-  /// 커스텀 일러스트(미지정 시 [InkHaloIcon] 원형 자리표시자).
+  /// 커스텀 일러스트(최우선). 미지정 시 [illustrationAsset] → [InkHaloIcon] 순.
   final Widget? illustration;
+
+  /// 클레이 장면 에셋 경로(예: `ClayScenes.emptySearch`). 지정 시 아이콘 버블 대신
+  /// 딸기 wash 쿠션 위의 클레이 장면(140)을 그린다.
+  final String? illustrationAsset;
   final String? actionLabel;
   final VoidCallback? onAction;
 
@@ -35,16 +45,19 @@ class EmptyState extends StatelessWidget {
     final texts = context.texts;
     final reduce = context.reduceMotion;
 
+    final asset = illustrationAsset;
     Widget art =
         illustration ??
-        InkHaloIcon(
-          size: 122,
-          icon: icon,
-          washColor: colors.accentWash,
-          fgColor: colors.accent,
-          iconSize: 56,
-          animate: true,
-        );
+        (asset != null
+            ? ClaySceneArt(asset: asset, wash: colors.accentWash)
+            : InkHaloIcon(
+                size: 122,
+                icon: icon,
+                washColor: colors.accentWash,
+                fgColor: colors.accent,
+                iconSize: 56,
+                animate: true,
+              ));
     if (!reduce) {
       art = art.animate().shake(
         hz: 3,

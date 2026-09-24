@@ -41,7 +41,7 @@ class SymptomDetailScreen extends ConsumerWidget {
     return Scaffold(
       backgroundColor: colors.paperBg,
       appBar: const AppAppBar(),
-      // DESIGN v2 §7.3-7 — 화면 전체에 종이 그레인 표면을 얹는다.
+      // DESIGN v2 §7.3-7 → v3 — 화면 전체에 무광 점토 결 표면을 얹는다.
       body: PaperBackground(
         child: symptomAsync.when(
           loading: () => const _DetailSkeleton(),
@@ -77,7 +77,11 @@ class _DetailSkeleton extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    SkeletonLine(width: 96, height: 12),
+                    SkeletonLine(
+                      width: 116,
+                      height: 24,
+                      radius: AppRadius.brFull,
+                    ),
                     SizedBox(height: AppSpacing.x12),
                     SkeletonLine(width: 140, height: 28),
                     SizedBox(height: AppSpacing.x8),
@@ -94,7 +98,6 @@ class _DetailSkeleton extends StatelessWidget {
               color: colors.paperRaised,
               borderRadius: AppRadius.brLg,
               boxShadow: context.shadows.e2,
-              border: Border.all(color: colors.line),
             ),
             padding: const EdgeInsets.all(AppSpacing.cardPadding),
             child: const Column(

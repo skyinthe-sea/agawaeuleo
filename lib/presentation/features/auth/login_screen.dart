@@ -507,8 +507,10 @@ class GoogleGlyph extends StatelessWidget {
       child: Text(
         'G',
         style: TextStyle(
-          fontFamily: AppFontFamily.serif,
-          fontWeight: FontWeight.w700,
+          fontFamily: AppFontFamily.display,
+          fontFamilyFallback: AppFontFamily.displayFallback,
+          // 주아체는 한 가지 굵기(§3.3) — w700을 주면 가짜 볼드가 생긴다.
+          fontWeight: FontWeight.w400,
           fontSize: size * 0.5,
           height: 1,
           color: colors.ink900,

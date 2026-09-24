@@ -9,8 +9,8 @@ import '../../../config/theme/theme.dart';
 /// 대신 스펙 값을 [AnimationStyle]([sheetAnimationStyle])로 물려 slide 곡선/길이와
 /// 스크림 페이드를 스펙에 맞춘다. reduce-motion 시 즉시(0ms) 표시.
 ///
-/// 배경은 투명(시트 내용이 자체 `paper.raised` 표면·radius·e3를 그린다), 스크림은
-/// `ink.900` 32%로 통일한다.
+/// 배경은 투명(시트 내용이 자체 `paperRaised` 표면·윗변 xl 라디우스·e3를 그린다 —
+/// 보통 `AppSheetShell`), 스크림은 코코아(`ink900`) 32%로 통일한다(DESIGN v3 §5.1).
 Future<T?> showAppBottomSheet<T>(
   BuildContext context, {
   required WidgetBuilder builder,

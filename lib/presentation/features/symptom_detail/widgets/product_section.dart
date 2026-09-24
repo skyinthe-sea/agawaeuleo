@@ -1,11 +1,13 @@
 import 'package:agawaeuleo/config/theme/theme.dart';
 import 'package:agawaeuleo/domain/entities/entities.dart';
 import 'package:agawaeuleo/presentation/features/symptom_detail/symptom_detail_providers.dart';
+import 'package:agawaeuleo/presentation/features/symptom_detail/widgets/detail_clay.dart';
 import 'package:agawaeuleo/presentation/features/symptom_detail/widgets/product_card.dart';
 import 'package:agawaeuleo/presentation/widgets/animated/scroll_reveal.dart';
 import 'package:agawaeuleo/presentation/widgets/buttons/ghost_button.dart';
 import 'package:agawaeuleo/presentation/widgets/headers/section_header.dart';
 import 'package:agawaeuleo/presentation/widgets/skeletons/skeleton_blocks.dart';
+import 'package:agawaeuleo/presentation/widgets/surfaces/clay_sheen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -79,7 +81,7 @@ class ProductSection extends ConsumerWidget {
   }
 }
 
-/// 헤더 우측 개수 알약. 문자열("N개")은 그대로 두고 격만 올린다.
+/// 헤더 우측 개수 스티커(버터 톤). 문자열("N개")은 그대로 두고 격만 올린다.
 class _CountPill extends StatelessWidget {
   const _CountPill({required this.count});
 
@@ -88,24 +90,19 @@ class _CountPill extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
-    final texts = context.texts;
-    return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.x8,
-        vertical: AppSpacing.x2,
-      ),
-      decoration: BoxDecoration(
-        color: colors.paperCard,
-        borderRadius: AppRadius.brFull,
-        border: Border.all(color: colors.line),
-      ),
-      child: Text('$count개', style: texts.data.copyWith(color: colors.ink500)),
+    return StickerChip(
+      label: '$count개',
+      icon: Icons.auto_awesome_rounded,
+      wash: colors.amberWash,
+      fg: colors.amber,
+      dense: true,
     );
   }
 }
 
-/// §13.2 공정위 대가성 표시 배지. amber 옅은 톤 배경, 본문과 구분되는 색/크기.
-/// **문구는 원문 그대로 유지**(§13.2 불변 조항) — 시각 격만 정리한다.
+/// §13.2 공정위 대가성 표시 배지. 버터(amberWash) 메모 — 흰 스티커 테두리 + e1,
+/// 본문과 구분되는 색/크기. **문구는 원문 그대로 유지**(§13.2 불변 조항) — 시각
+/// 격만 정리한다(글자 ink700, 면 위 6:1 이상).
 class _CompensationBadge extends StatelessWidget {
   const _CompensationBadge();
 
@@ -115,29 +112,28 @@ class _CompensationBadge extends StatelessWidget {
     final texts = context.texts;
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.x12,
-        vertical: AppSpacing.x8,
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.x8,
+        AppSpacing.x8,
+        AppSpacing.x16,
+        AppSpacing.x8,
       ),
       decoration: BoxDecoration(
-        // DESIGN v2 §7.3-6 — amberWash 토큰(기존 amber.withValues 하드코딩 대체).
         color: colors.amberWash,
-        borderRadius: AppRadius.brSm,
-        border: Border.all(color: colors.amber.withValues(alpha: 0.4)),
+        borderRadius: AppRadius.brLg,
+        border: Border.all(color: colors.paperRaised, width: 2),
+        boxShadow: context.shadows.e1,
       ),
       child: Row(
         children: [
-          Container(
-            width: 24,
-            height: 24,
-            alignment: Alignment.center,
-            decoration: BoxDecoration(
-              color: colors.paperRaised,
-              shape: BoxShape.circle,
-            ),
-            child: Icon(Icons.campaign_rounded, size: 14, color: colors.amber),
+          ClayBubble(
+            size: 28,
+            wash: colors.paperRaised,
+            icon: Icons.campaign_rounded,
+            iconColor: colors.amber,
+            iconSize: 16,
           ),
-          const SizedBox(width: AppSpacing.x12),
+          const SizedBox(width: AppSpacing.x8),
           Expanded(
             child: Text(
               '쿠팡 파트너스 활동으로 수수료를 받습니다',
@@ -216,7 +212,6 @@ class _HeroSkeleton extends StatelessWidget {
         color: colors.paperRaised,
         borderRadius: AppRadius.brLg,
         boxShadow: context.shadows.e2,
-        border: Border.all(color: colors.line),
       ),
       padding: const EdgeInsets.all(AppSpacing.cardPadding),
       child: const Column(
@@ -224,16 +219,16 @@ class _HeroSkeleton extends StatelessWidget {
         children: [
           Row(
             children: [
-              SkeletonBox(size: 22, radius: AppRadius.brXs),
+              SkeletonBox(size: 26, circle: true),
               SizedBox(width: AppSpacing.iconTextGap),
-              SkeletonLine(width: 72, height: 10),
+              SkeletonLine(width: 104, height: 24, radius: AppRadius.brFull),
             ],
           ),
           SizedBox(height: AppSpacing.x16),
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              SkeletonBox(size: 104, radius: AppRadius.brMd),
+              SkeletonBox(size: 104, radius: AppRadius.brLg),
               SizedBox(width: AppSpacing.x16),
               Expanded(
                 child: Column(
@@ -249,8 +244,8 @@ class _HeroSkeleton extends StatelessWidget {
               ),
             ],
           ),
-          SizedBox(height: AppSpacing.x16),
-          SkeletonLine(height: 44, radius: AppRadius.brSm),
+          SizedBox(height: AppSpacing.x20),
+          SkeletonLine(height: 48, radius: AppRadius.brFull),
         ],
       ),
     );
@@ -267,14 +262,13 @@ class _RowSkeleton extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: colors.paperCard,
-        borderRadius: AppRadius.brMd,
+        borderRadius: AppRadius.brLg,
         boxShadow: context.shadows.e1,
-        border: Border.all(color: colors.line),
       ),
       padding: const EdgeInsets.all(AppSpacing.x12),
       child: const Row(
         children: [
-          SkeletonBox(size: 76),
+          SkeletonBox(size: 76, radius: AppRadius.brMd),
           SizedBox(width: AppSpacing.x12),
           Expanded(
             child: Column(
@@ -289,7 +283,7 @@ class _RowSkeleton extends StatelessWidget {
             ),
           ),
           SizedBox(width: AppSpacing.x8),
-          SkeletonBox(size: 32, circle: true),
+          SkeletonBox(size: 34, circle: true),
         ],
       ),
     );

@@ -74,4 +74,32 @@ void main() {
 
     await disposeApp(tester);
   });
+
+  testWidgets('무대 칩 "추천 용품 N"을 눌러도 추천 용품 장이 바로 열린다', (tester) async {
+    usePhoneView(tester);
+    await pumpBootedApp(tester);
+
+    await tester.tap(find.bySemanticsLabel('배앓이 추천 용품 3개 보기'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('쿠팡 파트너스 활동으로 수수료를 받습니다'), findsOneWidget);
+    expect(find.text('이럴 때 도움되는 용품'), findsOneWidget);
+
+    await disposeApp(tester);
+  });
+
+  testWidgets('글 영역의 "자세히 보기" 알약이 케어 노트를 연다', (tester) async {
+    usePhoneView(tester);
+    await pumpBootedApp(tester);
+
+    // 초보 사용자용 어피던스 — 무대 아무 데나가 아니라 글자 있는 버튼으로도 열린다.
+    expect(sceneText('자세히 보기'), findsOneWidget);
+
+    await tester.tap(sceneText('자세히 보기'));
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining('의학적 진단이 아니며'), findsOneWidget);
+
+    await disposeApp(tester);
+  });
 }

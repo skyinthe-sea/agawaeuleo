@@ -395,8 +395,8 @@ class _DeckBody extends StatelessWidget {
                             stageHeight: stageHeight,
                             active: i == settledIndex,
                             onOpen: () => onOpen(symptom),
-                            onOpenProducts: () =>
-                                onOpen(symptom, chapter: 'products'),
+                            onOpenChapter: (chapter) =>
+                                onOpen(symptom, chapter: chapter),
                           );
                         },
                       ),

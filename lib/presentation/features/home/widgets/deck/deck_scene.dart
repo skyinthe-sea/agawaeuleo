@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:agawaeuleo/config/theme/theme.dart';
 import 'package:agawaeuleo/domain/entities/entities.dart';
 import 'package:agawaeuleo/presentation/features/home/widgets/deck/deck_float_cards.dart';
+import 'package:agawaeuleo/presentation/features/symptom_detail/widgets/note/note_chapters.dart';
 import 'package:agawaeuleo/presentation/widgets/animated/tap_spring.dart';
 import 'package:agawaeuleo/presentation/widgets/symptom/symptom_icon.dart';
 import 'package:agawaeuleo/presentation/widgets/symptom/symptom_illustration.dart';
@@ -29,7 +30,7 @@ class DeckScene extends StatelessWidget {
     required this.stageHeight,
     required this.active,
     required this.onOpen,
-    required this.onOpenProducts,
+    required this.onOpenChapter,
     super.key,
   });
 
@@ -51,14 +52,17 @@ class DeckScene extends StatelessWidget {
   /// 덱이 이 장면에 안착했는지 — 1회성 마이크로 인터랙션 트리거.
   final bool active;
   final VoidCallback onOpen;
-  final VoidCallback onOpenProducts;
+
+  /// 무대 조각(칩·BEST 카드) 탭 — 상세를 그 장(`NoteChapter.slug`)으로 바로 연다.
+  final ValueChanged<String> onOpenChapter;
 
   /// 무대 설계 좌표계. 실제 영역에 contain으로 맞춘다.
   static const Size canvas = Size(360, 300);
   static const double illustrationSize = 212;
 
-  /// 글 영역 높이(오버라인 + 이름 + 설명).
-  static const double copyHeight = 112;
+  /// 글 영역 높이(오버라인 + 이름 + 설명 + '자세히 보기' 알약).
+  /// 글자 배율 상한(1.3)에서도 넘치지 않는 값.
+  static const double copyHeight = 186;
 
   double _offset() {
     final c = controller;
@@ -72,11 +76,11 @@ class DeckScene extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final illustration = _SceneIllustration(symptom: symptom, active: active);
-    final chip = DeckMetaChip(symptom: symptom);
+    final chip = DeckMetaChip(symptom: symptom, onOpenChapter: onOpenChapter);
     final best = DeckBestPickCard(
       symptom: symptom,
       active: active,
-      onTap: onOpenProducts,
+      onTap: () => onOpenChapter(NoteChapter.products.slug),
     );
 
     return LayoutBuilder(
@@ -417,24 +421,41 @@ class _SceneCopy extends StatelessWidget {
       style: texts.bodyL.copyWith(color: colors.ink500, height: 1.3),
     );
 
+    // 초보 사용자가 "어디를 눌러야 하는지" 한눈에 알도록, 먹색 원형 화살표 대신
+    // 글자가 있는 **전폭 먹 캡슐**을 둔다(하단 먹 캡슐 네비와 같은 문법).
+    // 무대·글 어디를 눌러도 같은 곳으로 가지만, 어피던스는 이 캡슐이 진다.
     final openButton = Semantics(
       button: true,
       label: '${symptom.name} 케어 노트 열기',
       excludeSemantics: true,
       child: TapSpring(
+        pressedScale: 0.98,
         onTap: onOpen,
         child: Container(
-          width: 52,
           height: 52,
+          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.x20),
           decoration: BoxDecoration(
             color: colors.ink900,
-            shape: BoxShape.circle,
+            borderRadius: AppRadius.brFull,
             boxShadow: context.shadows.e2,
           ),
-          child: Icon(
-            Icons.arrow_forward_rounded,
-            size: 22,
-            color: colors.paperRaised,
+          child: Row(
+            children: [
+              Expanded(
+                child: Text(
+                  '자세히 보기',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: texts.label.copyWith(color: colors.paperRaised),
+                ),
+              ),
+              const SizedBox(width: AppSpacing.x8),
+              Icon(
+                Icons.arrow_forward_rounded,
+                size: 20,
+                color: colors.paperRaised,
+              ),
+            ],
           ),
         ),
       ),
@@ -470,30 +491,21 @@ class _SceneCopy extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(
         AppSpacing.x24,
         AppSpacing.x8,
-        AppSpacing.x20,
+        AppSpacing.x24,
         0,
       ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.end,
+      child: Column(
+        // 캡슐이 글 폭을 그대로 채운다.
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                block(overline, 24, introBegin: 0.3),
-                const SizedBox(height: AppSpacing.x8),
-                block(name, 48, introBegin: 0.38),
-                const SizedBox(height: AppSpacing.x4),
-                block(tagline, 72, introBegin: 0.46),
-              ],
-            ),
-          ),
-          const SizedBox(width: AppSpacing.x12),
-          Padding(
-            padding: const EdgeInsets.only(bottom: AppSpacing.x2),
-            child: block(openButton, 96, introBegin: 0.5),
-          ),
+          block(overline, 24, introBegin: 0.3),
+          const SizedBox(height: AppSpacing.x8),
+          // 큰 글자 배율에서 먼저 양보하는 건 이름(FittedBox가 줄여 받는다).
+          Flexible(child: block(name, 48, introBegin: 0.38)),
+          const SizedBox(height: AppSpacing.x4),
+          block(tagline, 72, introBegin: 0.46),
+          const SizedBox(height: AppSpacing.x12),
+          block(openButton, 96, introBegin: 0.5),
         ],
       ),
     );

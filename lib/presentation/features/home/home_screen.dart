@@ -30,8 +30,8 @@ import 'package:go_router/go_router.dart';
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
 
-  /// 덱이 무너지지 않는 최소 높이(그룹 탭 + 무대 최소 + 글 + 레일).
-  static const double _deckMinHeight = 470;
+  /// 덱이 무너지지 않는 최소 높이(그룹 탭 44 + 무대 최소 ~218 + 글 186 + 레일 92).
+  static const double _deckMinHeight = 540;
 
   /// 인사 + 검색 바가 차지하는 대략 높이(최소 높이 계산용 — 실제 배치는 Column).
   static const double _headerEstimate = 176;
@@ -231,6 +231,11 @@ class _DeckSkeleton extends StatelessWidget {
                           SkeletonLine(width: 160, height: 30),
                           SizedBox(height: AppSpacing.x8),
                           SkeletonLine(width: 120, height: 14),
+                          SizedBox(height: AppSpacing.x20),
+                          ShimmerSkeleton(
+                            height: 52,
+                            borderRadius: AppRadius.brFull,
+                          ),
                         ],
                       ),
                     ),

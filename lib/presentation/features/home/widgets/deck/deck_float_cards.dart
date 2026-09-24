@@ -1,6 +1,7 @@
 import 'package:agawaeuleo/config/theme/theme.dart';
 import 'package:agawaeuleo/domain/entities/entities.dart';
 import 'package:agawaeuleo/presentation/features/symptom_detail/symptom_detail_providers.dart';
+import 'package:agawaeuleo/presentation/features/symptom_detail/widgets/note/note_chapters.dart';
 import 'package:agawaeuleo/presentation/widgets/animated/tap_spring.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -43,10 +44,20 @@ class DeckFloatSurface extends StatelessWidget {
 }
 
 /// 뒤 레이어 칩 — "추천 용품 N"(용품이 없으면 "병원 신호 N", 둘 다 없으면 숨김).
+///
+/// 탭하면 그 칩이 가리키는 장(추천 용품 / 병원 신호)으로 상세를 바로 연다 — 무대 위
+/// 조각은 전부 "누를 수 있는 것"이라는 규칙을 지키기 위해 끝에 쉐브론을 세운다.
 class DeckMetaChip extends ConsumerWidget {
-  const DeckMetaChip({required this.symptom, super.key});
+  const DeckMetaChip({
+    required this.symptom,
+    required this.onOpenChapter,
+    super.key,
+  });
 
   final Symptom symptom;
+
+  /// 상세를 그 장(`NoteChapter.slug`)으로 연다.
+  final ValueChanged<String> onOpenChapter;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -55,13 +66,21 @@ class DeckMetaChip extends ConsumerWidget {
     final products = ref.watch(symptomProductsProvider(symptom.id)).value;
     final info = ref.watch(symptomInfoProvider(symptom.id)).value;
 
-    final ({IconData icon, Color fg, String label, int count})? meta;
+    final ({
+      IconData icon,
+      Color fg,
+      String label,
+      int count,
+      NoteChapter chapter,
+    })?
+    meta;
     if (products != null && products.isNotEmpty) {
       meta = (
         icon: Icons.auto_awesome_rounded,
         fg: colors.amber,
         label: '추천 용품',
         count: products.length,
+        chapter: NoteChapter.products,
       );
     } else if (info != null && info.hasEmergency) {
       meta = (
@@ -69,6 +88,7 @@ class DeckMetaChip extends ConsumerWidget {
         fg: colors.coral,
         label: '병원 신호',
         count: info.emergency.length,
+        chapter: NoteChapter.emergency,
       );
     } else {
       meta = null;
@@ -78,34 +98,47 @@ class DeckMetaChip extends ConsumerWidget {
       duration: AppMotion.resolve(context, AppMotion.fast),
       child: meta == null
           ? const SizedBox.shrink()
-          : DeckFloatSurface(
+          : Semantics(
               key: ValueKey(meta.label),
-              borderRadius: AppRadius.brFull,
-              padding: const EdgeInsets.fromLTRB(
-                AppSpacing.x12,
-                AppSpacing.x8,
-                AppSpacing.x16,
-                AppSpacing.x8,
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(meta.icon, size: 16, color: meta.fg),
-                  const SizedBox(width: AppSpacing.x8),
-                  Text(
-                    meta.label,
-                    style: texts.caption.copyWith(
-                      color: colors.ink700,
-                      fontWeight: FontWeight.w600,
-                      letterSpacing: 0,
-                    ),
+              button: true,
+              label: '${symptom.name} ${meta.label} ${meta.count}개 보기',
+              excludeSemantics: true,
+              child: TapSpring(
+                onTap: () => onOpenChapter(meta!.chapter.slug),
+                child: DeckFloatSurface(
+                  borderRadius: AppRadius.brFull,
+                  padding: const EdgeInsets.fromLTRB(
+                    AppSpacing.x12,
+                    AppSpacing.x8,
+                    AppSpacing.x8,
+                    AppSpacing.x8,
                   ),
-                  const SizedBox(width: AppSpacing.x8),
-                  Text(
-                    '${meta.count}',
-                    style: texts.data.copyWith(color: meta.fg),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(meta.icon, size: 16, color: meta.fg),
+                      const SizedBox(width: AppSpacing.x8),
+                      Text(
+                        meta.label,
+                        style: texts.caption.copyWith(
+                          color: colors.ink700,
+                          fontWeight: FontWeight.w600,
+                          letterSpacing: 0,
+                        ),
+                      ),
+                      const SizedBox(width: AppSpacing.x8),
+                      Text(
+                        '${meta.count}',
+                        style: texts.data.copyWith(color: meta.fg),
+                      ),
+                      Icon(
+                        Icons.chevron_right_rounded,
+                        size: 18,
+                        color: colors.ink300,
+                      ),
+                    ],
                   ),
-                ],
+                ),
               ),
             ),
     );
@@ -197,7 +230,8 @@ class _DeckBestPickCardState extends ConsumerState<DeckBestPickCard>
 
       card = Semantics(
         button: true,
-        label: '${widget.symptom.name} 추천 용품 ${products!.length}개 보기',
+        // 좌상 칩과 같은 곳으로 가지만 라벨은 겹치지 않게 — 1위 제품을 읽어 준다.
+        label: '${widget.symptom.name} 추천 용품 1위 ${top.title}, 전체 보기',
         excludeSemantics: true,
         child: TapSpring(
           key: ValueKey(top.id),
@@ -222,8 +256,8 @@ class _DeckBestPickCardState extends ConsumerState<DeckBestPickCard>
                       ),
                     ),
                     Icon(
-                      Icons.arrow_outward_rounded,
-                      size: 16,
+                      Icons.chevron_right_rounded,
+                      size: 18,
                       color: colors.ink300,
                     ),
                   ],
